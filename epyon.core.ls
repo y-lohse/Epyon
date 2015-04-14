@@ -8,11 +8,15 @@ function epyon_debug(message){
 }
 
 function epyon_aquireTarget(){
-	debug('epyon: aquiring target');
-	var enemy = createLeek(getNearestEnemy());
-	EPYON_WATCHLIST = [enemy];
-	epyon_debug('target is now '+enemy['id']);
-	return enemy;
+	var enemy = epyon_getLeek(getNearestEnemy());
+	
+	if (enemy != target){
+		EPYON_WATCHLIST = [enemy];
+		target = enemy;
+		epyon_debug('target is now '+target['name']);
+	}
+	
+	return target;
 }
 
 function epyon_updateAgressions(){
@@ -22,7 +26,7 @@ function epyon_updateAgressions(){
 }
 
 function epyon_updateAgression(epyonLeek){
-	epyon_debug('update agression for '+epyonLeek['id']);
+	epyon_debug('update agression for '+epyonLeek['name']);
 	epyonLeek['agression'] = 1;
 }
 

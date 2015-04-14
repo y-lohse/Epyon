@@ -3,6 +3,7 @@ global EPYON_WATCHLIST = [];
 
 include('epyon.leek.ls');
 include('epyon.map.ls');
+include('epyon.behavior.ls');
 
 function epyon_debug(message){
 	debug('epyon: '+message);
@@ -43,6 +44,14 @@ function epyon_computeStrategy(){
 	
 	//we're not fleeing, so all MV to the attack
 	var allocatedMP = 3;
+	
+	for (var behaviorCandidate in EPYON_BEHAVIORS){
+		var result = behaviorCandidate(allocatedMP);
+		if (result){
+			//anaylser le candidat
+			push(behaviors, result['fn']);
+		}
+	}
 	
 	//...but no weapon or chips to use, so we allocate everything to moving
 	var remainingMP = 3;

@@ -57,9 +57,9 @@ function epyon_act(){
 		while(count(attacks = epyon_listAttacks(allocatedMP, allocatedAP)) > 0){
 			var selected = epyon_selectSuitableAttack(attacks);
 			epyon_debug('attacking with '+selected['name']+' for '+selected['AP']+'AP and '+selected['MP']+'MP');
-			selected['fn']();
 			allocatedAP -= selected['AP'];
 			allocatedMP -= selected['MP'];
+			selected['fn']();
 			foundSUitableAttacks = true;
 		};
 		
@@ -82,6 +82,8 @@ function epyon_act(){
 	}
 	
 	epyon_debug('remaining MP after attacks: '+remainingMP);
+	epyon_debug('remaining AP after attacks: '+remainingAP);
+	
 	if (remainingMP > 0) epyon_moveToSafety(remainingMP);
 	
 	if (remainingAP > 0) epyon_bonusBehaviors(remainingAP);//spend the remaining AP on whatever
@@ -107,9 +109,9 @@ function epyon_preparations(S, maxAP){
 	while(count(preparations = epyon_listPreparations(maxAP)) > 0){
 		var selected = epyon_selectSuitableBehavior(preparations);
 		epyon_debug('preparation '+selected['name']+' for '+selected['AP']+'AP');
-		selected['fn']();
 		maxAP -= selected['AP'];
 		APcounter += selected['AP'];
+		selected['fn']();
 	};
 	
 	return APcounter;
@@ -127,8 +129,8 @@ function epyon_bonusBehaviors(maxAP){
 	while(count(behaviors = epyon_listBonusBehaviors(maxAP)) > 0){
 		var selected = epyon_selectSuitableBehavior(behaviors);
 		epyon_debug('behavior '+selected['name']+' for '+selected['AP']+'AP');
-		selected['fn']();
 		maxAP -= selected['AP'];
+		selected['fn']();
 	};
 }
 

@@ -48,21 +48,20 @@ function epyon_act(){
 	if (allocatedMP > 0){
 		epyon_debug('allocated movement points: '+allocatedMP);
 		
-		var attacks = epyon_listAttacks(allocatedMP, allocatedAP);//getPotentialAttacks(allocatedMP, remainingAP)//renvois un cout en MP, AP, une estimation de degats et une fonctio na executer
+		//try to find attacks for as long as the AP & MP last
+		var attacks = [];
+		var foundSUitableAttacks = false;
+		while(count(attacks = epyon_listAttacks(allocatedMP, allocatedAP)) > 0){
+			var selected = epyon_selectSuitableAttack(attacks);
+			epyon_debug('attacking with '+selected['name']+' for '+selected['AP']+'AP and '+selected['MP']+'MP');
+			selected['fn']();
+			allocatedAP -= selected['AP'];
+			allocatedMP -= selected['MP'];
+			foundSUitableAttacks = true;
+		};
 		
-		if (count(attacks) > 0){
-			//@TODO: tarnsformer tout ce if en un while si possible?
-			var canAttack = true;
-			
-			while (canAttack){
-				canAttack = false;//hard limit to one attack
-				
-				//@TODO: trouver la meilleure attaque possible
-				attacks[0]['fn']();
-				allocatedAP -= attacks[0]['AP'];
-				allocatedMP -= attacks[0]['MP'];
-			};
-			
+		if (foundSUitableAttacks){
+			//re ttaribut unsuded points
 			remainingAP += allocatedAP;
 			remainingMP += allocatedMP;
 		}
@@ -79,6 +78,7 @@ function epyon_act(){
 		}
 	}
 	
+	epyon_debug('remaining MP after attacks: '+remainingMP);
 	epyon_moveToSafety(remainingMP);
 	
 	if (remainingAP > 0){
@@ -103,4 +103,8 @@ function epyon_priorityActions(S, AP){
 	//@TODO: s'équiper d'une arme
 	//@TODO: déterminer s'il faut se soigner en urgence
 	return 0;//didn't spend any AP
+}
+
+function epyon_selectSuitableAttack(attacks){
+	return attacks[0];
 }

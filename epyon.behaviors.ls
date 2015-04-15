@@ -34,6 +34,7 @@ epyon_registerAttack('pistol', function(maxMP, maxAP){
 		};
 		
 		return [
+			'name': 'pistol',
 			'MP': distance,
 			'AP': PISTOl_AP_COST,
 			'damage': 15,

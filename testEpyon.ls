@@ -3,6 +3,4 @@ include('epyon.ls');
 epyon_aquireTarget();
 epyon_updateAgressions();
 epyon_act();
-
-debug('instructions: '+getInstructionsCount()+'/'+INSTRUCTIONS_LIMIT);
-debug('operations: '+getOperations()+'/'+OPERATIONS_LIMIT);
+epyon_budget();

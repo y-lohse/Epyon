@@ -43,7 +43,7 @@ function epyon_act(){
 		totalAP = 10;
 		
 	var allocatedMP = epyon_allocateAttackMP(S, totalMP);
-	var spentAP = epyon_PriorityActions(S, totalAP);
+	var spentAP = epyon_priorityActions(S, totalAP);
 	var allocatedAP = totalAP - spentAP;
 	
 	var remainingMP = totalMP - allocatedMP;
@@ -52,10 +52,23 @@ function epyon_act(){
 	if (allocatedMP > 0){
 		epyon_debug('allocated movement points: '+AP);
 		
-		var attacks = [];//getPotentialAttacks(allocatedMP, remainingAP)//renvois un cout en MP, AP et estimation de degats
+		var attacks = epyon_listAttacks(allocatedMP, allocatedAP);//getPotentialAttacks(allocatedMP, remainingAP)//renvois un cout en MP, AP, une estimation de degats et une fonctio na executer
 		
 		if (count(attacks) > 0){
+			//@TODO: tarnsformer tout ce if en un while si possible?
+			var canAttack = true;
 			
+			while (canAttack){
+				canAttack = false;//hard limit to one attack
+				
+				//@TODO: trouver la meilleure attaque possible
+				attacks[0]['fn']();
+				allocatedAP -= attacks[0]['AP'];
+				allocatedMP -= attacks[0]['MP'];
+			};
+			
+			remainingAP += allocatedAP;
+			remainingMP += allocatedMP;
 		}
 		else if (S >= 0 - BERSERK){
 			epyon_debug('no suitable attacks found, moving towards enemy');
@@ -89,7 +102,7 @@ function epyon_allocateAttackMP(S, max){
 
 //spends AP on actions that are prioritzed over combat
 //returns the amount of AP spent
-function epyon_PriorityActions(S, AP){
+function epyon_priorityActions(S, AP){
 	//@TODO: activer les bouclier
 	//@TODO: s'équiper d'une arme
 	//@TODO: déterminer s'il faut se soigner en urgence

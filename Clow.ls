@@ -13,9 +13,14 @@ var result;
 // On avance vers l'ennemi (mais pas au contact)
 moveTowardCell(place);
 
+// Dés que possible, si on est proche, on essaye de lancer les buff bouclier/wall
 if(getCellDistance(myPlace,enemyPlace) <= 13) {
 	do{
 	result = useChip(CHIP_HELMET,me);
+	}
+	while(result === USE_SUCCESS or result === USE_FAILED);
+	do{
+	result = useChip(CHIP_WALL,me);
 	}
 	while(result === USE_SUCCESS or result === USE_FAILED);
 }
@@ -30,13 +35,11 @@ while(getTP() >= 3 and shot == 1) {
 }
 
 
-// Cassos !
-moveAwayFrom(enemy);
-
 // S'il nous reste des actions
 do{
 	result = useChip(CHIP_SPARK,enemy);
 }
 while(result === USE_SUCCESS or result === USE_FAILED);
 
-
+// Cassos !
+moveAwayFrom(enemy);

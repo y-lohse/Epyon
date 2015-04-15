@@ -1,4 +1,4 @@
-global EPYON_VERSION = '0.3.3';
+global EPYON_VERSION = '0.4.0';
 
 function epyon_debug(message){
 	debug('epyon: '+message);
@@ -388,7 +388,16 @@ function epyon_bonusBehaviors(maxAP){
 
 //selects what is estimated as the most suitable attack for whatever reason
 function epyon_selectSuitableAttack(attacks){
-	return attacks[0];
+	//find the one with the msot damages
+	var damages = [];
+	
+	var ratios = arrayIter(attacks, function(index, attack){
+		damages[attack['damage']] = attack;
+	});
+	
+	keySort(damages, SORT_DESC);
+	
+	return shift(damages);
 }
 
 //elects what is estimated as the most suitable ehavior for whatever reason

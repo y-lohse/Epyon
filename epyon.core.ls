@@ -81,12 +81,7 @@ function epyon_act(){
 	epyon_debug('remaining MP after attacks: '+remainingMP);
 	epyon_moveToSafety(remainingMP);
 	
-	if (remainingAP > 0){
-		//@TODO actions non prioritaires:
-		//- équiper une arme
-		//- se soigner
-		//- communiquer
-	}
+	epyon_bonusBehaviors(remainingAP);//spend th remaining AP on whatever
 }
 
 //determines how many Mp it is safe to spend on attacks this turn
@@ -105,8 +100,30 @@ function epyon_priorityActions(S, AP){
 	return 0;//didn't spend any AP
 }
 
+//spends the AP on bonus actions
+function epyon_bonusBehaviors(maxAP){
+	//@TODO actions non prioritaires:
+	//- équiper une arme
+	//- se soigner
+	//- communiquer
+	var behaviors = [];
+	
+	while(count(behaviors = epyon_listBonusBehaviors(maxAP)) > 0){
+		var selected = epyon_selectSuitableBehavior(behaviors);
+		epyon_debug('behavior '+selected['name']+' for '+selected['AP']+'AP');
+		selected['fn']();
+		maxAP -= selected['AP'];
+	};
+}
+
 //elects what is estimated as the mos tsuitable attack for whatever reason
 function epyon_selectSuitableAttack(attacks){
 	//@TODo: renvoyer celle qui consomme le moins de MP
 	return attacks[0];
+}
+
+//elects what is estimated as the most suitable ehavior for whatever reason
+function epyon_selectSuitableBehavior(behaviors){
+	//@TODo: faire un choix pertinent
+	return behaviors[0];
 }

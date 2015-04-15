@@ -1,4 +1,4 @@
-include('epyon.leek.ls');
+//include('epyon.leek.ls');
 
 function epyon_moveTowardsTarget(maxMp){
 	var cell = getCell(target['id']);

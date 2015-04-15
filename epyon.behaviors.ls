@@ -1,4 +1,4 @@
-include('epyon.leek.ls');
+//include('epyon.leek.ls');
 
 global EPYON_ATTACKS = [];
 
@@ -19,7 +19,7 @@ function epyon_listAttacks(maxMP, maxAP){
 
 epyon_registerAttack('pistol', function(maxMP, maxAP){
 	//candidature à l'appel. Doit décrire le mieux possible ce que ce comportement va faire
-	debug('candidating pistol attack');
+	epyon_debug('candidating pistol attack');
 	var PISTOl_AP_COST = 3;
 	var minCell = getCellToUseWeapon(WEAPON_PISTOL, target['id']);
 	var currentCell = getCell();
@@ -33,7 +33,7 @@ epyon_registerAttack('pistol', function(maxMP, maxAP){
 			useWeapon(target['id']);
 		};
 		
-		debug('pistol candidate for '+possibleShots+' shots');
+		epyon_debug('pistol candidate for '+possibleShots+' shots');
 		
 		return [
 			'MP': distance,

@@ -1,13 +1,7 @@
-global EPYON_VERSION = '0.0.0';
-global EPYON_WATCHLIST = [];
-
-include('epyon.leek.ls');
-include('epyon.map.ls');
-include('epyon.behavior.ls');
-
-function epyon_debug(message){
-	debug('epyon: '+message);
-}
+//include('epyon.core.ls');
+//include('epyon.leek.ls');
+//include('epyon.map.ls');
+//include('epyon.behavior.ls');
 
 function epyon_aquireTarget(){
 	var enemy = epyon_getLeek(getNearestEnemy());

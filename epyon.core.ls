@@ -20,12 +20,14 @@ function epyon_aquireTarget(){
 function epyon_updateAgressions(){
 	epyon_updateAgression(self);
 	
-	arrayIter(EPYON_WATCHLIST, epyon_updateAgression);
+	arrayIter(EPYON_WATCHLIST, function(epyonLeek){
+		epyon_debug('update agression for '+epyonLeek['name']);
+		epyonLeek['agression'] = epyon_updateAgression(epyonLeek);
+	});
 }
 
 function epyon_updateAgression(epyonLeek){
-	epyon_debug('update agression for '+epyonLeek['name']);
-	epyonLeek['agression'] = 1;
+	return 1;
 }
 
 function epyon_act(){
@@ -39,14 +41,15 @@ function epyon_act(){
 		totalAP = 10;
 		
 	var allocatedMP = epyon_allocateAttackMP(S, totalMP);
-	var spentAP = epyon_priorityActions(S, totalAP);
+	var spentAP = epyon_preparations(S, totalAP);
 	var allocatedAP = totalAP - spentAP;
 	
 	var remainingMP = totalMP - allocatedMP;
 	var remainingAP = 0;//totalAP - spentAP - allocatedAP is always 0
 	
 	if (allocatedMP > 0){
-		epyon_debug('allocated movement points: '+allocatedMP);
+		epyon_debug('allocated MP: '+allocatedMP);
+		epyon_debug('allocated AP: '+allocatedAP);
 		
 		//try to find attacks for as long as the AP & MP last
 		var attacks = [];
@@ -79,9 +82,9 @@ function epyon_act(){
 	}
 	
 	epyon_debug('remaining MP after attacks: '+remainingMP);
-	epyon_moveToSafety(remainingMP);
+	if (remainingMP > 0) epyon_moveToSafety(remainingMP);
 	
-	epyon_bonusBehaviors(remainingAP);//spend th remaining AP on whatever
+	if (remainingAP > 0) epyon_bonusBehaviors(remainingAP);//spend the remaining AP on whatever
 }
 
 //determines how many Mp it is safe to spend on attacks this turn
@@ -93,11 +96,23 @@ function epyon_allocateAttackMP(S, max){
 
 //spends AP on actions that are prioritzed over combat
 //returns the amount of AP spent
-function epyon_priorityActions(S, AP){
+function epyon_preparations(S, maxAP){
 	//@TODO: activer les bouclier
 	//@TODO: s'équiper d'une arme
 	//@TODO: déterminer s'il faut se soigner en urgence
-	return 0;//didn't spend any AP
+	epyon_debug('Running preparations');
+	var APcounter = 0;
+	var preparations = [];
+	
+	while(count(preparations = epyon_listPreparations(maxAP)) > 0){
+		var selected = epyon_selectSuitableBehavior(preparations);
+		epyon_debug('preparation '+selected['name']+' for '+selected['AP']+'AP');
+		selected['fn']();
+		maxAP -= selected['AP'];
+		APcounter += selected['AP'];
+	};
+	
+	return APcounter;
 }
 
 //spends the AP on bonus actions
@@ -106,6 +121,7 @@ function epyon_bonusBehaviors(maxAP){
 	//- équiper une arme
 	//- se soigner
 	//- communiquer
+	epyon_debug('Running bonus behaviors');
 	var behaviors = [];
 	
 	while(count(behaviors = epyon_listBonusBehaviors(maxAP)) > 0){
@@ -126,4 +142,10 @@ function epyon_selectSuitableAttack(attacks){
 function epyon_selectSuitableBehavior(behaviors){
 	//@TODo: faire un choix pertinent
 	return behaviors[0];
+}
+
+//same shit
+function epyon_selectSuitablePreparation(preparations){
+	//@TODo: faire un choix pertinent
+	return preparations[0];
 }

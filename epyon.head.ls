@@ -1,4 +1,4 @@
-global EPYON_VERSION = '0.2.0';
+global EPYON_VERSION = '0.3.0';
 
 function epyon_debug(message){
 	debug('epyon: '+message);
@@ -10,5 +10,4 @@ function epyon_budget(){
 }
 
 //@TODO: permettre de mesurer la conso de quelques lignes, avec un start/stop
-
-epyon_debug('v'+EPYON_VERSION);
+if (getTurn() == 1) epyon_debug('v'+EPYON_VERSION);//@TODO: virer la dépendence envers getTurn

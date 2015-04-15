@@ -32,43 +32,66 @@ function epyon_updateAgression(epyonLeek){
 	epyonLeek['agression'] = 1;
 }
 
-function epyon_computeStrategy(){
-	epyon_debug('computing strategy');
+function epyon_act(){
+	var BERSERK = 0.2;//a high valu in berserking will make the leek charge towards the enemy even when the fight is not estimaed in his favor. A low value will make him bck off more easily.
 	
-	var behaviors = [];
-	
+	//compute S
 	var S = self['agression'] - target['agression'];
 	epyon_debug('S computed to '+S);
 	
-	//S always = 0 for now, which means equals chances to win
+	var totalMP = 3,
+		totalAP = 10;
+		
+	var allocatedMP = epyon_allocateAttackMP(S, totalMP);
+	var spentAP = epyon_PriorityActions(S, totalAP);
+	var allocatedAP = totalAP - spentAP;
 	
-	//we're not fleeing, so all MV to the attack
-	var allocatedMP = 3;
+	var remainingMP = totalMP - allocatedMP;
+	var remainingAP = 0;//totalAP - spentAP - allocatedAP is always 0
 	
-	for (var behaviorCandidate in EPYON_BEHAVIORS){
-		var result = behaviorCandidate(allocatedMP);
-		if (result){
-			//anaylser le candidat
-			push(behaviors, result['fn']);
+	if (allocatedMP > 0){
+		epyon_debug('allocated movement points: '+AP);
+		
+		var attacks = [];//getPotentialAttacks(allocatedMP, remainingAP)//renvois un cout en MP, AP et estimation de degats
+		
+		if (count(attacks) > 0){
+			
+		}
+		else if (S >= 0 - BERSERK){
+			epyon_debug('no suitable attacks found, moving towards enemy');
+			remainingAP += allocatedAP;//re-aalocate all APs
+			epyon_moveTowardsTarget(allocatedMP);
+		}
+		else{
+			//this behavior could posibly lead to flee too easily
+			epyon_debug('no suitable attacks found, backing off');
+			remainingAP += allocatedAP;//re-aalocate all APs
+			remainingMP += allocatedMP;
 		}
 	}
 	
-	//...but no weapon or chips to use, so we allocate everything to moving
-	var remainingMP = 3;
+	epyon_moveToSafety(remainingMP);
 	
-	//we spend the remaining points moving either towards or away from the target
-	var cell = findBestCell(S, remainingMP);
-	epyon_debug('moving towards cell '+cell);
-	push(behaviors, function(){
-		moveTowardCell(cell, remainingMP);
-	});
-	
-	return behaviors;
+	if (remainingAP > 0){
+		//@TODO actions non prioritaires:
+		//- équiper une arme
+		//- se soigner
+		//- communiquer
+	}
 }
 
-function epyon_executeBehaviors(behaviors){
-	epyon_debug('executing behaviors');
-	arrayIter(behaviors, function(behavior){
-		behavior();
-	});
+//determines how many Mp it is safe to spend on attacks this turn
+function epyon_allocateAttackMP(S, max){
+	if (S < -0.5) return 0;
+	else if (S < 0) return round(max / 2);
+	else return max;
+}
+
+//spends AP on actions that are prioritzed over combat
+//returns the amount of AP spent
+function epyon_PriorityActions(S, AP){
+	//@TODO: activer les bouclier
+	//@TODO: s'équiper d'une arme
+	//@TODO: déterminer s'il faut se soigner en urgence
+	return 0;//didn't spend any AP
 }

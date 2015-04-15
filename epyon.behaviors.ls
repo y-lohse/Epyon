@@ -33,8 +33,6 @@ epyon_registerAttack('pistol', function(maxMP, maxAP){
 			useWeapon(target['id']);
 		};
 		
-		epyon_debug('pistol candidate for '+possibleShots+' shots');
-		
 		return [
 			'MP': distance,
 			'AP': PISTOl_AP_COST,

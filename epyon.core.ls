@@ -3,6 +3,8 @@
 //include('epyon.map.ls');
 //include('epyon.behavior.ls');
 
+global EPYON_WATCHLIST = [];
+
 function epyon_aquireTarget(){
 	var enemy = epyon_getLeek(getNearestEnemy());
 	
@@ -44,7 +46,7 @@ function epyon_act(){
 	var remainingAP = 0;//totalAP - spentAP - allocatedAP is always 0
 	
 	if (allocatedMP > 0){
-		epyon_debug('allocated movement points: '+AP);
+		epyon_debug('allocated movement points: '+allocatedMP);
 		
 		var attacks = epyon_listAttacks(allocatedMP, allocatedAP);//getPotentialAttacks(allocatedMP, remainingAP)//renvois un cout en MP, AP, une estimation de degats et une fonctio na executer
 		

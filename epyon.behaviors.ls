@@ -118,22 +118,22 @@ epyon_registerBehavior('equip_pistol', function(maxAP){
 	];
 });
 
-epyon_registerBehavior('bandage', function(maxAP){
-	var maxHeal = 15;
-	if (getTotalLife()-getLife() < maxHeal || maxAP < 2) return false;
-		
-	epyon_debug('bandage behavior is a candidate');
-
-	var fn = function(){
-		useChip(CHIP_BANDAGE, self['id']);
-	};
-
-	return [
-		'name': 'bandage',
-		'AP': 2,
-		'fn': fn
-	];
-});
+//epyon_registerBehavior('bandage', function(maxAP){
+//	var maxHeal = 15;
+//	if (getTotalLife()-getLife() < maxHeal || maxAP < 2) return false;
+//		
+//	epyon_debug('bandage behavior is a candidate');
+//
+//	var fn = function(){
+//		useChip(CHIP_BANDAGE, self['id']);
+//	};
+//
+//	return [
+//		'name': 'bandage',
+//		'AP': 2,
+//		'fn': fn
+//	];
+//});
 
 //prepartion turns
 global EPYON_PREPARATIONS = [];
@@ -159,8 +159,7 @@ epyon_registerPreparation('helmet', function(maxAP){
 	var shouldUseHelmetNow = true;
 	//if (getCoolDown(CHIP_HELMET) > 0) shouldUseHelmetNow = false;
 	if (getTurn() - lastHelmetUse <= 3) shouldUseHelmetNow = false;//trouver une façonn plus élégante de faire ca
-	
-	//se baser sur la distance avant impact aussi
+	if (EPYON_TARGET_DISTANCE > 13) shouldUseHelmetNow = false;//@TODO: esayer de mieux deviner quand aura lieu la prochaine attaque. ie forcer a regfarder l'ennemi el plus proche, predire ou il sera a la fin de son tour et sa portée d'attaque
 	
 	if (!shouldUseHelmetNow) return false;
 	
@@ -178,14 +177,17 @@ epyon_registerPreparation('helmet', function(maxAP){
 	];
 });
 
+global lastBandageUse = -5;
+
 epyon_registerPreparation('bandage', function(maxAP){
 	var maxHeal = 15;
-	if (getTotalLife()-getLife() < maxHeal || maxAP < 2) return false;
+	if (getTotalLife()-getLife() < maxHeal || maxAP < 2 || getTurn() - lastBandageUse <= 1) return false;
 	
 	epyon_debug('heal preparation is a candidate');
 
 	var fn = function(){
 		useChip(CHIP_BANDAGE, self['id']);
+		lastBandageUse = getTurn();
 	};
 
 	return [

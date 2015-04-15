@@ -8,6 +8,8 @@ global EPYON_WATCHLIST = [];
 function epyon_aquireTarget(){
 	var enemy = epyon_getLeek(getNearestEnemy());
 	
+	EPYON_TARGET_DISTANCE = getCellDistance(getCell(), getCell(enemy['id']));
+	
 	if (enemy != target){
 		EPYON_WATCHLIST = [enemy];
 		target = enemy;

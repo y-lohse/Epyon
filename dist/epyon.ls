@@ -1,4 +1,4 @@
-global EPYON_VERSION = '0.4.0';
+global EPYON_VERSION = '0.4.1';
 
 function epyon_debug(message){
 	debug('epyon: '+message);
@@ -210,8 +210,8 @@ global lastHelmetUse = -5;//juste pour commencers hors cooldown
 epyon_registerPreparation('helmet', function(maxAP){
 	var shouldUseHelmetNow = true;
 	//if (getCoolDown(CHIP_HELMET) > 0) shouldUseHelmetNow = false;
-	if (getTurn() - lastHelmetUse <= 3) shouldUseHelmetNow = false;//trouver une façonn plus élégante de faire ca
-	if (EPYON_TARGET_DISTANCE > 13) shouldUseHelmetNow = false;//@TODO: esayer de mieux deviner quand aura lieu la prochaine attaque. ie forcer a regfarder l'ennemi el plus proche, predire ou il sera a la fin de son tour et sa portée d'attaque
+	if (getTurn() - lastHelmetUse < 3) shouldUseHelmetNow = false;//trouver une façonn plus élégante de faire ca
+	if (EPYON_TARGET_DISTANCE > 15) shouldUseHelmetNow = false;//@TODO: esayer de mieux deviner quand aura lieu la prochaine attaque. ie forcer a regfarder l'ennemi el plus proche, predire ou il sera a la fin de son tour et sa portée d'attaque
 	
 	if (!shouldUseHelmetNow) return false;
 	
@@ -233,7 +233,7 @@ global lastBandageUse = -5;
 
 epyon_registerPreparation('bandage', function(maxAP){
 	var maxHeal = 15;
-	if (getTotalLife()-getLife() < maxHeal || maxAP < 2 || getTurn() - lastBandageUse <= 1) return false;
+	if (getTotalLife()-getLife() < maxHeal || maxAP < 2 || getTurn() - lastBandageUse < 1) return false;
 	
 	epyon_debug('heal preparation is a candidate');
 

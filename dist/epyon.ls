@@ -1,4 +1,4 @@
-global EPYON_VERSION = '0.3.2';
+global EPYON_VERSION = '0.3.3';
 
 function epyon_debug(message){
 	debug('epyon: '+message);
@@ -127,7 +127,7 @@ epyon_registerAttack('pistol', function(maxMP, maxAP){
 			'name': 'pistol',
 			'MP': distance,
 			'AP': PISTOl_AP_COST,
-			'damage': 15,
+			'damage': 20,
 			'fn': excute
 		];
 	}
@@ -218,8 +218,8 @@ epyon_registerPreparation('helmet', function(maxAP){
 	epyon_debug('helmet preparation is a candidate');
 
 	var fn = function(){
-		useChip(CHIP_HELMET, self['id']);
-		lastHelmetUse = getTurn();
+		var result = useChip(CHIP_HELMET, self['id']);
+		if (result === USE_SUCCESS) lastHelmetUse = getTurn();
 	};
 
 	return [
@@ -238,8 +238,8 @@ epyon_registerPreparation('bandage', function(maxAP){
 	epyon_debug('heal preparation is a candidate');
 
 	var fn = function(){
-		useChip(CHIP_BANDAGE, self['id']);
-		lastBandageUse = getTurn();
+		var result = useChip(CHIP_BANDAGE, self['id']);
+		if (result === USE_SUCCESS) lastBandageUse = getTurn();
 	};
 
 	return [
@@ -386,9 +386,8 @@ function epyon_bonusBehaviors(maxAP){
 	};
 }
 
-//elects what is estimated as the mos tsuitable attack for whatever reason
+//selects what is estimated as the most suitable attack for whatever reason
 function epyon_selectSuitableAttack(attacks){
-	//@TODo: renvoyer celle qui consomme le moins de MP
 	return attacks[0];
 }
 

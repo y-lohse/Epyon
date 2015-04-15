@@ -136,9 +136,8 @@ function epyon_bonusBehaviors(maxAP){
 	};
 }
 
-//elects what is estimated as the mos tsuitable attack for whatever reason
+//selects what is estimated as the most suitable attack for whatever reason
 function epyon_selectSuitableAttack(attacks){
-	//@TODo: renvoyer celle qui consomme le moins de MP
 	return attacks[0];
 }
 

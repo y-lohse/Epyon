@@ -75,7 +75,7 @@ epyon_registerAttack('pistol', function(maxMP, maxAP){
 			'name': 'pistol',
 			'MP': distance,
 			'AP': PISTOl_AP_COST,
-			'damage': 15,
+			'damage': 20,
 			'fn': excute
 		];
 	}
@@ -166,8 +166,8 @@ epyon_registerPreparation('helmet', function(maxAP){
 	epyon_debug('helmet preparation is a candidate');
 
 	var fn = function(){
-		useChip(CHIP_HELMET, self['id']);
-		lastHelmetUse = getTurn();
+		var result = useChip(CHIP_HELMET, self['id']);
+		if (result === USE_SUCCESS) lastHelmetUse = getTurn();
 	};
 
 	return [
@@ -186,8 +186,8 @@ epyon_registerPreparation('bandage', function(maxAP){
 	epyon_debug('heal preparation is a candidate');
 
 	var fn = function(){
-		useChip(CHIP_BANDAGE, self['id']);
-		lastBandageUse = getTurn();
+		var result = useChip(CHIP_BANDAGE, self['id']);
+		if (result === USE_SUCCESS) lastBandageUse = getTurn();
 	};
 
 	return [

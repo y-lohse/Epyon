@@ -105,6 +105,8 @@ function epyon_priorityActions(S, AP){
 	return 0;//didn't spend any AP
 }
 
+//elects what is estimated as the mos tsuitable attack for whatever reason
 function epyon_selectSuitableAttack(attacks){
+	//@TODo: renvoyer celle qui consomme le moins de MP
 	return attacks[0];
 }

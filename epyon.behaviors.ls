@@ -177,6 +177,29 @@ epyon_registerPreparation('helmet', function(maxAP){
 	];
 });
 
+global lastWallUse = -6;//juste pour commencers hors cooldown
+
+epyon_registerPreparation('wall', function(maxAP){
+	var shouldUseWallNow = true;
+	if (getTurn() - lastWallUse < 6) shouldUseWallNow = false;//trouver une façonn plus élégante de faire ca
+	if (EPYON_TARGET_DISTANCE > 15) shouldUseWallNow = false;//@TODO: esayer de mieux deviner quand aura lieu la prochaine attaque. ie forcer a regfarder l'ennemi el plus proche, predire ou il sera a la fin de son tour et sa portée d'attaque
+	
+	if (!shouldUseWallNow) return false;
+	
+	epyon_debug('wall preparation is a candidate');
+
+	var fn = function(){
+		var result = useChip(CHIP_WALL, self['id']);
+		if (result === USE_SUCCESS) lastWallUse = getTurn();
+	};
+
+	return [
+		'name': 'wall',
+		'AP': 4,
+		'fn': fn
+	];
+});
+
 global lastBandageUse = -5;
 
 epyon_registerPreparation('bandage', function(maxAP){

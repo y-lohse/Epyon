@@ -9,7 +9,7 @@ grunt.initConfig( {
 	},
 	concat: {
 		epyon: {
-			src: ['./epyon/head.js', './epyon/leek.js', './epyon/map.js', './epyon/behaviors.js', './epyon/core.js'],
+			src: ['./epyon/head.js', './epyon/config.js', './epyon/leek.js', './epyon/map.js', './epyon/behaviors.js', './epyon/core.js'],
 			dest: 'dist/epyon.ls'
 		},
 	},

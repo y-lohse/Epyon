@@ -210,7 +210,7 @@ if (getTurn() === 1){
 		};
 
 		return [
-			'name': 'heal',
+			'name': 'bandage',
 			'AP': 2,
 			'fn': fn
 		];

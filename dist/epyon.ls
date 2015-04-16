@@ -287,7 +287,7 @@ if (getTurn() === 1){
 		};
 
 		return [
-			'name': 'heal',
+			'name': 'bandage',
 			'AP': 2,
 			'fn': fn
 		];
@@ -434,21 +434,33 @@ function epyon_bonusBehaviors(maxAP){
 //selects what is estimated as the most suitable attack for whatever reason
 function epyon_selectSuitableAttack(attacks){
 	//find the one with the msot damages
-	var damages = [];
+	var byDamages = [];
 	
-	var ratios = arrayIter(attacks, function(index, attack){
-		damages[attack['damage']] = attack;
+	var ratios = arrayIter(attacks, function(attack){
+		byDamages[attack['damage']] = attack;
 	});
 	
-	keySort(damages, SORT_DESC);
+	keySort(byDamages, SORT_DESC);
 	
-	return shift(damages);
+	return shift(byDamages);
 }
 
 //elects what is estimated as the most suitable ehavior for whatever reason
 function epyon_selectSuitableBehavior(behaviors){
-	//@TODo: faire un choix pertinent
-	return behaviors[0];
+	var byPreference = [];
+	
+	var ratios = arrayIter(behaviors, function(behavior){
+		var score = 0;
+		if (behavior['name'] == 'helmet') score = 3;
+		else if (behavior['name'] == 'wall') score = 2;
+		else if (behavior['name'] == 'bandage') score = 1;
+		
+		byPreference[score] = behavior;
+	});
+	
+	keySort(byPreference, SORT_DESC);
+	
+	return shift(byPreference);
 }
 
 //same shit

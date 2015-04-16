@@ -109,7 +109,8 @@ function epyon_preparations(S, maxAP){
 	var preparations = [];
 	
 	while(count(preparations = epyon_listPreparations(maxAP)) > 0){
-		var selected = epyon_selectSuitableBehavior(preparations);
+		var selected = epyon_selectSuitablePreparation(preparations);
+		if (!selected) break;
 		epyon_debug('preparation '+selected['name']+' for '+selected['AP']+'AP');
 		maxAP -= selected['AP'];
 		APcounter += selected['AP'];
@@ -141,7 +142,7 @@ function epyon_selectSuitableAttack(attacks){
 	//find the one with the msot damages
 	var byDamages = [];
 	
-	var ratios = arrayIter(attacks, function(attack){
+	arrayIter(attacks, function(attack){
 		byDamages[attack['damage']] = attack;
 	});
 	
@@ -152,24 +153,31 @@ function epyon_selectSuitableAttack(attacks){
 
 //elects what is estimated as the most suitable ehavior for whatever reason
 function epyon_selectSuitableBehavior(behaviors){
+	return behaviors[0];
+}
+
+//same shit
+function epyon_selectSuitablePreparation(preparations){
 	var byPreference = [];
 	
-	var ratios = arrayIter(behaviors, function(behavior){
+	arrayIter(preparations, function(preparation){
 		var score = 0;
-		if (behavior['name'] == 'helmet') score = 3;
-		else if (behavior['name'] == 'wall') score = 2;
-		else if (behavior['name'] == 'bandage') score = 1;
+		if (preparation['name'] == 'helmet'){
+			score = (EPYON_TARGET_DISTANCE < 15) ? 3 : 0;
+		}
+		else if (preparation['name'] == 'wall'){
+			score = (EPYON_TARGET_DISTANCE < 15) ? 2 : 0;
+		}
+		else if (preparation['name'] == 'bandage'){
+			score = 1;
+		}
 		
-		byPreference[score] = behavior;
+		debug('preparation '+preparation['name']+' scored '+score);
+		
+		if (score > 0) byPreference[score] = preparation;
 	});
 	
 	keySort(byPreference, SORT_DESC);
 	
 	return shift(byPreference);
-}
-
-//same shit
-function epyon_selectSuitablePreparation(preparations){
-	//@TODo: faire un choix pertinent
-	return preparations[0];
 }

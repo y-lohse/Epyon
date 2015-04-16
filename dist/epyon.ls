@@ -234,7 +234,6 @@ if (getTurn() === 1){
 		var shouldUseHelmetNow = true;
 		//if (getCoolDown(CHIP_HELMET) > 0) shouldUseHelmetNow = false;
 		if (getTurn() - lastHelmetUse < 3) shouldUseHelmetNow = false;//trouver une façonn plus élégante de faire ca
-		if (EPYON_TARGET_DISTANCE > 15) shouldUseHelmetNow = false;//@TODO: esayer de mieux deviner quand aura lieu la prochaine attaque. ie forcer a regfarder l'ennemi el plus proche, predire ou il sera a la fin de son tour et sa portée d'attaque
 		if (maxAP < 3) shouldUseHelmetNow = false;
 
 		if (!shouldUseHelmetNow) return false;
@@ -255,8 +254,7 @@ if (getTurn() === 1){
 
 	EPYON_PREPARATIONS['wall'] = function(maxAP){
 		var shouldUseWallNow = true;
-		if (getTurn() - lastWallUse < 6) shouldUseWallNow = false;//trouver une façonn plus élégante de faire ca
-		if (EPYON_TARGET_DISTANCE > 15) shouldUseWallNow = false;//@TODO: esayer de mieux deviner quand aura lieu la prochaine attaque. ie forcer a regfarder l'ennemi el plus proche, predire ou il sera a la fin de son tour et sa portée d'attaque
+		if (getTurn() - lastWallUse < 6) shouldUseWallNow = false;//trouver une façon plus élégante de faire ca
 		if (maxAP < 4) shouldUseWallNow = false;
 
 		if (!shouldUseWallNow) return false;
@@ -404,7 +402,8 @@ function epyon_preparations(S, maxAP){
 	var preparations = [];
 	
 	while(count(preparations = epyon_listPreparations(maxAP)) > 0){
-		var selected = epyon_selectSuitableBehavior(preparations);
+		var selected = epyon_selectSuitablePreparation(preparations);
+		if (!selected) break;
 		epyon_debug('preparation '+selected['name']+' for '+selected['AP']+'AP');
 		maxAP -= selected['AP'];
 		APcounter += selected['AP'];
@@ -436,7 +435,7 @@ function epyon_selectSuitableAttack(attacks){
 	//find the one with the msot damages
 	var byDamages = [];
 	
-	var ratios = arrayIter(attacks, function(attack){
+	arrayIter(attacks, function(attack){
 		byDamages[attack['damage']] = attack;
 	});
 	
@@ -447,26 +446,33 @@ function epyon_selectSuitableAttack(attacks){
 
 //elects what is estimated as the most suitable ehavior for whatever reason
 function epyon_selectSuitableBehavior(behaviors){
+	return behaviors[0];
+}
+
+//same shit
+function epyon_selectSuitablePreparation(preparations){
 	var byPreference = [];
 	
-	var ratios = arrayIter(behaviors, function(behavior){
+	arrayIter(preparations, function(preparation){
 		var score = 0;
-		if (behavior['name'] == 'helmet') score = 3;
-		else if (behavior['name'] == 'wall') score = 2;
-		else if (behavior['name'] == 'bandage') score = 1;
+		if (preparation['name'] == 'helmet'){
+			score = (EPYON_TARGET_DISTANCE < 15) ? 3 : 0;
+		}
+		else if (preparation['name'] == 'wall'){
+			score = (EPYON_TARGET_DISTANCE < 15) ? 2 : 0;
+		}
+		else if (preparation['name'] == 'bandage'){
+			score = 1;
+		}
 		
-		byPreference[score] = behavior;
+		debug('preparation '+preparation['name']+' scored '+score);
+		
+		if (score > 0) byPreference[score] = preparation;
 	});
 	
 	keySort(byPreference, SORT_DESC);
 	
 	return shift(byPreference);
-}
-
-//same shit
-function epyon_selectSuitablePreparation(preparations){
-	//@TODo: faire un choix pertinent
-	return preparations[0];
 }
 if (getTurn() == 1){
 	var initStats = epyon_stopStats('init');

@@ -1,4 +1,42 @@
-global EPYON_VERSION = '0.6.0';
+function canUseWeapon(weapon, leek){
+	//handles the polimorphic nature of the original function
+	if (!leek){
+		leek = weapon;
+		weapon = getWeapon();
+	}
+
+	var myCell = getCell(),
+		leekCell = getCell(leek);
+
+	var maxScope = getWeaponMaxScope(weapon),
+		minScope = getWeaponMinScope(weapon),
+		inline = isInlineWeapon(weapon),
+		distance = getDistance(myCell, leekCell);
+
+	var lineIsOk;
+	if (!inline) lineIsOk = true;
+	else lineIsOk = isOnSameLine(myCell, leekCell);
+
+	//should work the same for all area types
+	return distance <= maxScope && distance >= minScope && lineIsOk && lineOfSight(myCell, leekCell);
+}
+global PF_CHIP_COOLDOWNS = [];
+global PF_CHIP_COOLDOWNS_MIN_LVL = 36;
+	
+//only works for own chips
+function getCoolDown(CHIP){
+	if (PF_CHIP_COOLDOWNS[CHIP]){
+		return max(0, getChipCooldown(CHIP) - (getTurn() - PF_CHIP_COOLDOWNS[CHIP]));
+	}
+	else return 0;
+}
+
+function useChipShim(CHIP, leek){
+	var r = useChip(CHIP, leek);
+	if (r === USE_SUCCESS) PF_CHIP_COOLDOWNS[CHIP] = getTurn();
+	return r;
+}
+global EPYON_VERSION = '0.6.1';
 
 function epyon_debug(message){
 	debug('epyon: '+message);
@@ -126,12 +164,6 @@ function epyon_listPreparations(maxAP){
 }
 
 //actual behaviors
-//juste pour commencers hors cooldown
-global lastHelmetUse = -5;
-global lastWallUse = -6;
-global lastBandageUse = -5;
-
-
 if (getTurn() === 1){
 	EPYON_ATTACKS['spark'] = function(maxMP, maxAP){
 		var SPARK_AP_COST = 3;
@@ -147,7 +179,7 @@ if (getTurn() === 1){
 			var excute = function(){
 				//@TODO: verifier  si on e peut pas déja tirer
 				moveTowardCell(minCell);//, maxMP? 
-				useChip(CHIP_SPARK, target['id']);
+				useChipShim(CHIP_SPARK, target['id']);
 			};
 
 			return [
@@ -231,18 +263,12 @@ if (getTurn() === 1){
 	//});
 
 	EPYON_PREPARATIONS['helmet'] = function(maxAP){
-		var shouldUseHelmetNow = true;
-		//if (getCoolDown(CHIP_HELMET) > 0) shouldUseHelmetNow = false;
-		if (getTurn() - lastHelmetUse < 3) shouldUseHelmetNow = false;//trouver une façonn plus élégante de faire ca
-		if (maxAP < 3) shouldUseHelmetNow = false;
-
-		if (!shouldUseHelmetNow) return false;
+		if (getCoolDown(CHIP_HELMET) > 0 || maxAP < getChipCost(CHIP_HELMET)) return false;
 
 		epyon_debug('helmet preparation is a candidate');
 
 		var fn = function(){
-			var result = useChip(CHIP_HELMET, self['id']);
-			if (result === USE_SUCCESS) lastHelmetUse = getTurn();
+			useChipShim(CHIP_HELMET, self['id']);
 		};
 
 		return [
@@ -253,17 +279,12 @@ if (getTurn() === 1){
 	};
 
 	EPYON_PREPARATIONS['wall'] = function(maxAP){
-		var shouldUseWallNow = true;
-		if (getTurn() - lastWallUse < 6) shouldUseWallNow = false;//trouver une façon plus élégante de faire ca
-		if (maxAP < 4) shouldUseWallNow = false;
-
-		if (!shouldUseWallNow) return false;
+		if (getCoolDown(CHIP_WALL) > 0 || maxAP < getChipCost(CHIP_WALL)) return false;
 
 		epyon_debug('wall preparation is a candidate');
 
 		var fn = function(){
-			var result = useChip(CHIP_WALL, self['id']);
-			if (result === USE_SUCCESS) lastWallUse = getTurn();
+			useChipShim(CHIP_WALL, self['id']);
 		};
 
 		return [
@@ -275,13 +296,12 @@ if (getTurn() === 1){
 
 	EPYON_PREPARATIONS['bandage'] = function(maxAP){
 		var maxHeal = 15;
-		if (getTotalLife()-getLife() < maxHeal || maxAP < 2 || getTurn() - lastBandageUse < 1) return false;
+		if (getTotalLife()-getLife() < maxHeal || maxAP < 2 || getCoolDown(CHIP_BANDAGE) > 0) return false;
 
 		epyon_debug('heal preparation is a candidate');
 
 		var fn = function(){
-			var result = useChip(CHIP_BANDAGE, self['id']);
-			if (result === USE_SUCCESS) lastBandageUse = getTurn();
+			useChipShim(CHIP_BANDAGE, self['id']);
 		};
 
 		return [

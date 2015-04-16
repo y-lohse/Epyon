@@ -1,13 +1,31 @@
-global EPYON_VERSION = '0.4.1';
+global EPYON_VERSION = '0.5.0';
 
 function epyon_debug(message){
 	debug('epyon: '+message);
 }
+//compute the amount of operations & instructions between two arbitrary moments
+global epyon_stats = [];
 
-function epyon_budget(){
-	epyon_debug('instructions: '+getInstructionsCount()+'/'+INSTRUCTIONS_LIMIT);
-	epyon_debug('operations: '+getOperations()+'/'+OPERATIONS_LIMIT);
+function epyon_startStats(name){
+	epyon_stats[name] = [
+		'i': getInstructionsCount(),
+		'o': getOperations()
+	];
 }
 
-//@TODO: permettre de mesurer la conso de quelques lignes, avec un start/stop
-if (getTurn() == 1) epyon_debug('v'+EPYON_VERSION);//@TODO: virer la dépendence envers getTurn
+function epyon_stopStats(name){
+	if (epyon_stats[name]){
+		var instructionDif = getInstructionsCount() - epyon_stats[name]['i'];
+		var operationDif = getOperations() - epyon_stats[name]['o'];
+		
+		return ['i': instructionDif, 'o': operationDif];
+	}
+	else{
+		return ['i': 'err', 'o': 'err'];
+	}
+}
+
+if (getTurn() == 1){
+	epyon_debug('v'+EPYON_VERSION);
+	epyon_startStats('init');
+}

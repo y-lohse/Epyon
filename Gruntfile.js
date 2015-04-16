@@ -4,14 +4,24 @@ module.exports = function(grunt) {
 grunt.initConfig( {
 	pkg: grunt.file.readJSON('package.json'),
 	watch: {
-		files: ['./*.ls', 'Gruntfile.js'],
+		files: ['./epyon/*.js', 'Gruntfile.js'],
 		tasks: ['build']
 	},
 	concat: {
 		epyon: {
-			src: ['./epyon/head.ls', './epyon/leek.ls', './epyon/map.ls', './epyon/behaviors.ls', './epyon/core.ls'],
+			src: [	'./epyon/head.js', 
+					'./epyon/config.js', 
+					'./epyon/leek.js',
+					'./epyon/map.js', 
+					'./epyon/behaviors.js', 
+					'./epyon/core.js', 
+					'./epyon/footer.js'],
 			dest: 'dist/epyon.ls'
 		},
+		polyfill: {
+			src: [	'./polyfill/polyfill.js' ],
+			dest: 'dist/polyfill.ls'
+		}
 	},
 });
 

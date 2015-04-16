@@ -80,10 +80,6 @@ function epyon_moveToSafety(maxMp){
 //attacking behaviors
 global EPYON_ATTACKS = [];
 
-function epyon_registerAttack(name, candidateFn){
-	EPYON_ATTACKS[name] = candidateFn;
-}
-
 function epyon_listAttacks(maxMP, maxAP){
 	var attacks = [];
 	
@@ -100,10 +96,6 @@ function epyon_listAttacks(maxMP, maxAP){
 //regular, bonus behaviors
 global EPYON_BONUS_BEHAVIORS = [];
 
-function epyon_registerBehavior(name, candidateFn){
-	EPYON_BONUS_BEHAVIORS[name] = candidateFn;
-}
-
 function epyon_listBonusBehaviors(maxAP){
 	var behaviors = [];
 	
@@ -119,10 +111,6 @@ function epyon_listBonusBehaviors(maxAP){
 
 //prepartion turns
 global EPYON_PREPARATIONS = [];
-
-function epyon_registerPreparation(name, candidateFn){
-	EPYON_PREPARATIONS[name] = candidateFn;
-}
 
 function epyon_listPreparations(maxAP){
 	var preparations = [];
@@ -145,8 +133,7 @@ global lastBandageUse = -5;
 
 
 if (getTurn() === 1){
-	epyon_registerAttack('spark', function(maxMP, maxAP){
-		//candidature à l'appel. Doit décrire le mieux possible ce que ce comportement va faire
+	EPYON_ATTACKS['spark'] = function(maxMP, maxAP){
 		var SPARK_AP_COST = 3;
 		//@TODO: si utiliser la fonction canUseWeaponOnCell, faire un polyfill pour les niveaux moins de 40
 		var minCell = getCellToUseChip(CHIP_SPARK, target['id']);
@@ -174,10 +161,9 @@ if (getTurn() === 1){
 		else{
 			return false;
 		}
-	});
+	};
 
-	epyon_registerAttack('pistol', function(maxMP, maxAP){
-		//candidature à l'appel. Doit décrire le mieux possible ce que ce comportement va faire
+	EPYON_ATTACKS['pistol'] = function(maxMP, maxAP){
 		var PISTOl_AP_COST = 3;
 		//@TODO: si utiliser la fonction canUseWeaponOnCell, faire un polyfill pour les niveaux moins de 40
 		var minCell = getCellToUseWeapon(WEAPON_PISTOL, target['id']);
@@ -209,9 +195,9 @@ if (getTurn() === 1){
 		else{
 			return false;
 		}
-	});
+	};
 
-	epyon_registerBehavior('equip_pistol', function(maxAP){
+	EPYON_BONUS_BEHAVIORS['equip_pistol'] = function(maxAP){
 		if (getWeapon() == WEAPON_PISTOL || maxAP < 1) return false;
 
 		epyon_debug('pistol equip behavior is a candidate');
@@ -225,7 +211,7 @@ if (getTurn() === 1){
 			'AP': 1,
 			'fn': fn
 		];
-	});
+	};
 
 	//epyon_registerBehavior('bandage', function(maxAP){
 	//	var maxHeal = 15;
@@ -244,7 +230,7 @@ if (getTurn() === 1){
 	//	];
 	//});
 
-	epyon_registerPreparation('helmet', function(maxAP){
+	EPYON_PREPARATIONS['helmet'] = function(maxAP){
 		var shouldUseHelmetNow = true;
 		//if (getCoolDown(CHIP_HELMET) > 0) shouldUseHelmetNow = false;
 		if (getTurn() - lastHelmetUse < 3) shouldUseHelmetNow = false;//trouver une façonn plus élégante de faire ca
@@ -265,9 +251,9 @@ if (getTurn() === 1){
 			'AP': 3,
 			'fn': fn
 		];
-	});
+	};
 
-	epyon_registerPreparation('wall', function(maxAP){
+	EPYON_PREPARATIONS['wall'] = function(maxAP){
 		var shouldUseWallNow = true;
 		if (getTurn() - lastWallUse < 6) shouldUseWallNow = false;//trouver une façonn plus élégante de faire ca
 		if (EPYON_TARGET_DISTANCE > 15) shouldUseWallNow = false;//@TODO: esayer de mieux deviner quand aura lieu la prochaine attaque. ie forcer a regfarder l'ennemi el plus proche, predire ou il sera a la fin de son tour et sa portée d'attaque
@@ -287,9 +273,9 @@ if (getTurn() === 1){
 			'AP': 4,
 			'fn': fn
 		];
-	});
+	};
 
-	epyon_registerPreparation('bandage', function(maxAP){
+	EPYON_PREPARATIONS['bandage'] = function(maxAP){
 		var maxHeal = 15;
 		if (getTotalLife()-getLife() < maxHeal || maxAP < 2 || getTurn() - lastBandageUse < 1) return false;
 
@@ -305,7 +291,7 @@ if (getTurn() === 1){
 			'AP': 2,
 			'fn': fn
 		];
-	});
+	};
 }
 //include('epyon.core.ls');
 //include('epyon.leek.ls');

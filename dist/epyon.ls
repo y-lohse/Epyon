@@ -1,4 +1,4 @@
-global EPYON_VERSION = '0.4.1';
+global EPYON_VERSION = '0.4.2';
 
 function epyon_debug(message){
 	debug('epyon: '+message);
@@ -212,6 +212,7 @@ epyon_registerPreparation('helmet', function(maxAP){
 	//if (getCoolDown(CHIP_HELMET) > 0) shouldUseHelmetNow = false;
 	if (getTurn() - lastHelmetUse < 3) shouldUseHelmetNow = false;//trouver une façonn plus élégante de faire ca
 	if (EPYON_TARGET_DISTANCE > 15) shouldUseHelmetNow = false;//@TODO: esayer de mieux deviner quand aura lieu la prochaine attaque. ie forcer a regfarder l'ennemi el plus proche, predire ou il sera a la fin de son tour et sa portée d'attaque
+	if (maxAP < 3) shouldUseHelmetNow = false;
 	
 	if (!shouldUseHelmetNow) return false;
 	
@@ -225,6 +226,30 @@ epyon_registerPreparation('helmet', function(maxAP){
 	return [
 		'name': 'helmet',
 		'AP': 3,
+		'fn': fn
+	];
+});
+
+global lastWallUse = -6;//juste pour commencers hors cooldown
+
+epyon_registerPreparation('wall', function(maxAP){
+	var shouldUseWallNow = true;
+	if (getTurn() - lastWallUse < 6) shouldUseWallNow = false;//trouver une façonn plus élégante de faire ca
+	if (EPYON_TARGET_DISTANCE > 15) shouldUseWallNow = false;//@TODO: esayer de mieux deviner quand aura lieu la prochaine attaque. ie forcer a regfarder l'ennemi el plus proche, predire ou il sera a la fin de son tour et sa portée d'attaque
+	if (maxAP < 4) shouldUseWallNow = false;
+	
+	if (!shouldUseWallNow) return false;
+	
+	epyon_debug('wall preparation is a candidate');
+
+	var fn = function(){
+		var result = useChip(CHIP_WALL, self['id']);
+		if (result === USE_SUCCESS) lastWallUse = getTurn();
+	};
+
+	return [
+		'name': 'wall',
+		'AP': 4,
 		'fn': fn
 	];
 });
@@ -248,6 +273,7 @@ epyon_registerPreparation('bandage', function(maxAP){
 		'fn': fn
 	];
 });
+
 //include('epyon.core.ls');
 //include('epyon.leek.ls');
 //include('epyon.map.ls');

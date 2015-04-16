@@ -11,13 +11,17 @@ grunt.initConfig( {
 		epyon: {
 			src: [	'./epyon/head.js', 
 					'./epyon/config.js', 
-					'./epyon/leek.js', 
+					'./epyon/leek.js',
 					'./epyon/map.js', 
 					'./epyon/behaviors.js', 
 					'./epyon/core.js', 
 					'./epyon/footer.js'],
 			dest: 'dist/epyon.ls'
 		},
+		polyfill: {
+			src: [	'./polyfill/polyfill.js' ],
+			dest: 'dist/polyfill.ls'
+		}
 	},
 });
 

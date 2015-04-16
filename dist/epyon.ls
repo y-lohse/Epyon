@@ -27,11 +27,14 @@ function epyon_stopStats(name){
 
 if (getTurn() == 1){
 	epyon_debug('v'+EPYON_VERSION);
+	epyon_startStats('init');
 }
 global EPYON_CONFIG = [];
 
 if (getTurn() === 1){
-	EPYON_CONFIG['dummy'] = 1.0;
+	EPYON_CONFIG['attacks'] = [];
+	EPYON_CONFIG['preparations'] = [];
+	EPYON_CONFIG['behaviors'] = [];
 }
 global EPYON_LEEKS = [];
 global EPYON_TARGET_DISTANCE; 
@@ -84,9 +87,11 @@ function epyon_registerAttack(name, candidateFn){
 function epyon_listAttacks(maxMP, maxAP){
 	var attacks = [];
 	
-	arrayIter(EPYON_ATTACKS, function(candidateFn){
-		var result = candidateFn(maxMP, maxAP);
-		if (result) push(attacks, result);
+	arrayIter(EPYON_ATTACKS, function(candidateName, candidateFn){
+		if (inArray(EPYON_CONFIG['attacks'], candidateName)){
+			var result = candidateFn(maxMP, maxAP);
+			if (result) push(attacks, result);
+		}
 	});
 	
 	return attacks;
@@ -102,9 +107,11 @@ function epyon_registerBehavior(name, candidateFn){
 function epyon_listBonusBehaviors(maxAP){
 	var behaviors = [];
 	
-	arrayIter(EPYON_BONUS_BEHAVIORS, function(candidateFn){
-		var result = candidateFn(maxAP);
-		if (result) push(behaviors, result);
+	arrayIter(EPYON_BONUS_BEHAVIORS, function(candidateName, candidateFn){
+		if (inArray(EPYON_CONFIG['behaviors'], candidateName)){
+			var result = candidateFn(maxAP);
+			if (result) push(behaviors, result);
+		}
 	});
 	
 	return behaviors;
@@ -120,9 +127,11 @@ function epyon_registerPreparation(name, candidateFn){
 function epyon_listPreparations(maxAP){
 	var preparations = [];
 	
-	arrayIter(EPYON_PREPARATIONS, function(candidateFn){
-		var result = candidateFn(maxAP);
-		if (result) push(preparations, result);
+	arrayIter(EPYON_PREPARATIONS, function(candidateName, candidateFn){
+		if (inArray(EPYON_CONFIG['preparations'], candidateName)){
+			var result = candidateFn(maxAP);
+			if (result) push(preparations, result);
+		}
 	});
 	
 	return preparations;
@@ -460,4 +469,8 @@ function epyon_selectSuitableBehavior(behaviors){
 function epyon_selectSuitablePreparation(preparations){
 	//@TODo: faire un choix pertinent
 	return preparations[0];
+}
+if (getTurn() == 1){
+	var initStats = epyon_stopStats('init');
+	epyon_debug('init '+initStats['i']+' i & '+initStats['o']+' o');
 }

@@ -27,4 +27,5 @@ function epyon_stopStats(name){
 
 if (getTurn() == 1){
 	epyon_debug('v'+EPYON_VERSION);
+	epyon_startStats('init');
 }

@@ -1,6 +1,6 @@
 include('epyon.ls');
 
-function prefightByPreference(behaviors){
+function prefightByPreference(behaviors, allocatedAP, allocatedMP){
 	var byPreference = [];
 	
 	arrayIter(behaviors, function(behavior){
@@ -25,11 +25,11 @@ function prefightByPreference(behaviors){
 	return shift(byPreference);
 }
 
-function postfightByPreference(behaviors){
+function postfightByPreference(behaviors, allocatedAP, allocatedMP){
 	return behaviors[0];
 }
 
-function attackByDamage(attacks){
+function attackByDamage(attacks, allocatedAP, allocatedMP){
 	//find the one with the msot damages
 	var byDamages = [];
 	

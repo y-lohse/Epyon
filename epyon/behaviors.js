@@ -119,6 +119,22 @@ if (getTurn() === 1){
 	//		'fn': fn
 	//	];
 	//});
+	
+	EPYON_BEHAVIORS[EPYON_PREFIGHT][CHIP_SHIELD] = function(maxAP, maxMP){
+		if (getCoolDown(CHIP_SHIELD) > 0 || maxAP < getChipCost(CHIP_SHIELD)) return false;
+
+		epyon_debug('shield preparation is a candidate');
+
+		var fn = function(){
+			useChipShim(CHIP_SHIELD, self['id']);
+		};
+
+		return [
+			'name': 'shield',
+			'AP': 4,
+			'fn': fn
+		];
+	};
 
 	EPYON_BEHAVIORS[EPYON_PREFIGHT][CHIP_HELMET] = function(maxAP, maxMP){
 		if (getCoolDown(CHIP_HELMET) > 0 || maxAP < getChipCost(CHIP_HELMET)) return false;
@@ -135,6 +151,7 @@ if (getTurn() === 1){
 			'fn': fn
 		];
 	};
+	
 
 	EPYON_BEHAVIORS[EPYON_PREFIGHT][CHIP_WALL] = function(maxAP, maxMP){
 		if (getCoolDown(CHIP_WALL) > 0 || maxAP < getChipCost(CHIP_WALL)) return false;

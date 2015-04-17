@@ -36,7 +36,7 @@ function useChipShim(CHIP, leek){
 	if (r === USE_SUCCESS) PF_CHIP_COOLDOWNS[CHIP] = getTurn();
 	return r;
 }
-global EPYON_VERSION = '0.8.0';
+global EPYON_VERSION = '0.9.0';
 
 function epyon_debug(message){
 	debug('epyon: '+message);
@@ -106,6 +106,13 @@ function epyon_moveToSafety(maxMp){
 	//@TODO:essayer de se mettre à l'abris plutot que fuir en ligne droite
 	moveAwayFrom(target['id'], maxMp);
 }
+function epyon_aScorerHealth(eLeek){
+	return getLife(eLeek['id']) / getTotalLife(eLeek['id']) + EPYON_CONFIG['suicidal'];
+}
+
+//function epyon_aScorerAbsoluteShield(){
+//	if (epyon_has(PREFIGHT, SHIELD));
+//}
 global EPYON_PREFIGHT = 'prefight';
 global EPYON_FIGHT = 'fight';
 global EPYON_POSTFIGHT = 'postfight';
@@ -227,6 +234,22 @@ if (getTurn() === 1){
 	//		'fn': fn
 	//	];
 	//});
+	
+	EPYON_BEHAVIORS[EPYON_PREFIGHT][CHIP_SHIELD] = function(maxAP, maxMP){
+		if (getCoolDown(CHIP_SHIELD) > 0 || maxAP < getChipCost(CHIP_SHIELD)) return false;
+
+		epyon_debug('shield preparation is a candidate');
+
+		var fn = function(){
+			useChipShim(CHIP_SHIELD, self['id']);
+		};
+
+		return [
+			'name': 'shield',
+			'AP': 4,
+			'fn': fn
+		];
+	};
 
 	EPYON_BEHAVIORS[EPYON_PREFIGHT][CHIP_HELMET] = function(maxAP, maxMP){
 		if (getCoolDown(CHIP_HELMET) > 0 || maxAP < getChipCost(CHIP_HELMET)) return false;
@@ -243,6 +266,7 @@ if (getTurn() === 1){
 			'fn': fn
 		];
 	};
+	
 
 	EPYON_BEHAVIORS[EPYON_PREFIGHT][CHIP_WALL] = function(maxAP, maxMP){
 		if (getCoolDown(CHIP_WALL) > 0 || maxAP < getChipCost(CHIP_WALL)) return false;
@@ -277,6 +301,7 @@ if (getTurn() === 1){
 		];
 	};
 }
+
 global EPYON_CONFIG = [];
 
 global epyon_dummy_selector = function(candidates){
@@ -284,19 +309,23 @@ global epyon_dummy_selector = function(candidates){
 };
 
 if (getTurn() === 1){
+	//inventory
 	EPYON_CONFIG[EPYON_PREFIGHT] = [];
 	EPYON_CONFIG[EPYON_FIGHT] = [];
 	EPYON_CONFIG[EPYON_POSTFIGHT] = [];
 	
+	//selectors
 	EPYON_CONFIG['select_prefight'] = epyon_dummy_selector;
 	EPYON_CONFIG['select_fight'] = epyon_dummy_selector;
 	EPYON_CONFIG['select_postfight'] = epyon_dummy_selector;
+	
+	EPYON_CONFIG['A'] = [
+		'health': ['fn': epyon_aScorerHealth, 'coef': 1],
+	];
+	
+	//charcter traits
+	EPYON_CONFIG['suicidal'] = 0;//[0;1] with a higher suicidal value, the leek will stay agressive despite beeing low on health
 }
-//include('epyon.core.ls');
-//include('epyon.leek.ls');
-//include('epyon.map.ls');
-//include('epyon.behavior.ls');
-
 global EPYON_WATCHLIST = [];
 
 function epyon_aquireTarget(){
@@ -305,8 +334,8 @@ function epyon_aquireTarget(){
 	EPYON_TARGET_DISTANCE = getCellDistance(getCell(), getCell(enemy['id']));
 	
 	if (enemy != target){
-		EPYON_WATCHLIST = [enemy];
 		target = enemy;
+//		EPYON_WATCHLIST = [target];
 		epyon_debug('target is now '+target['name']);
 	}
 	
@@ -314,22 +343,45 @@ function epyon_aquireTarget(){
 }
 
 function epyon_updateAgressions(){
-	epyon_updateAgression(self);
+	epyon_debug('update own agression');
+	self['agression'] = epyon_computeAgression(self);
+	epyon_debug('A:'+self['agression']);
 	
-	arrayIter(EPYON_WATCHLIST, function(epyonLeek){
-		epyon_debug('update agression for '+epyonLeek['name']);
-		epyonLeek['agression'] = epyon_updateAgression(epyonLeek);
-	});
+	epyon_debug('update agression for '+target['name']);
+	target['agression'] = epyon_computeAgression(target);
+	epyon_debug('A:'+target['agression']);
+	
+	var l = count(EPYON_WATCHLIST);
+	for (var i = 0; i < l; i++){
+		epyon_debug('update agression for '+EPYON_WATCHLIST[i]['name']);
+		EPYON_WATCHLIST[i]['agression'] = epyon_computeAgression(EPYON_WATCHLIST[i]);
+		epyon_debug('A:'+EPYON_WATCHLIST[i]['agression']);
+		
+	}
 }
 
-function epyon_updateAgression(epyonLeek){
-	return 1;
+function epyon_computeAgression(epyonLeek){
+	var cumulatedA = 0,
+		totalCoef = 0;
+	
+	arrayIter(EPYON_CONFIG['A'], function(scorerName, scorer){
+		if (scorer['coef'] > 0){
+			var score = min(1, max(scorer['fn'](epyonLeek), 0));
+			epyon_debug(scorerName+' score '+score+' coef '+scorer['coef']);
+			cumulatedA += score;
+			totalCoef += scorer['coef'];
+		}
+	});
+	
+	return (totalCoef > 0) ? cumulatedA / totalCoef : 1;
 }
 
 function epyon_act(){
 	var BERSERK = 0.2;//a high valu in berserking will make the leek charge towards the enemy even when the fight is not estimaed in his favor. A low value will make him bck off more easily.
 	
 	//compute S
+	debug('own agression: '+self['agression']);
+	debug('target agression: '+target['agression']+' ('+target['name']+')');
 	var S = self['agression'] - target['agression'];
 	epyon_debug('S computed to '+S);
 	
@@ -376,6 +428,9 @@ function epyon_act(){
 			remainingAP += allocatedAP;//re-alocate all APs
 			remainingMP += allocatedMP;
 		}
+	}
+	else{
+		remainingAP = allocatedAP;
 	}
 	
 	epyon_debug('remaining MP after attacks: '+remainingMP);

@@ -5,11 +5,14 @@ function prefightByPreference(behaviors, allocatedAP, allocatedMP){
 	
 	arrayIter(behaviors, function(behavior){
 		var score = 0;
-		if (behavior['name'] == 'helmet'){
+		if (behavior['name'] == 'shield'){
 			score = (EPYON_TARGET_DISTANCE < 15) ? 3 : 0;
 		}
+		if (behavior['name'] == 'helmet'){
+			score = (EPYON_TARGET_DISTANCE < 15 && getCoolDown(CHIP_SHIELD) > 0) ? 3 : 0;
+		}
 		else if (behavior['name'] == 'wall'){
-			score = (EPYON_TARGET_DISTANCE < 15) ? 2 : 0;
+			score = (EPYON_TARGET_DISTANCE < 15 ) ? 2 : 0;
 		}
 		else if (behavior['name'] == 'bandage'){
 			score = 1;
@@ -44,7 +47,7 @@ function attackByDamage(attacks, allocatedAP, allocatedMP){
 
 if (getTurn() == 1){
 	EPYON_CONFIG[EPYON_FIGHT] = [WEAPON_PISTOL, CHIP_SPARK];
-	EPYON_CONFIG[EPYON_PREFIGHT] = [CHIP_BANDAGE, CHIP_HELMET, CHIP_WALL];
+	EPYON_CONFIG[EPYON_PREFIGHT] = [CHIP_BANDAGE, CHIP_HELMET, CHIP_WALL,CHIP_SHIELD];
 	EPYON_CONFIG[EPYON_POSTFIGHT] = [EQUIP_PISTOL];
 	
 	EPYON_CONFIG['select_prefight'] = prefightByPreference;

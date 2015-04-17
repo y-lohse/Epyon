@@ -36,7 +36,7 @@ function useChipShim(CHIP, leek){
 	if (r === USE_SUCCESS) PF_CHIP_COOLDOWNS[CHIP] = getTurn();
 	return r;
 }
-global EPYON_VERSION = '0.8.0';
+global EPYON_VERSION = '0.9.0';
 
 function epyon_debug(message){
 	debug('epyon: '+message);

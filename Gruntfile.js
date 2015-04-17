@@ -6,7 +6,8 @@ var polyfills = ['./polyfill/*.js'].concat(['!./polyfill/getTurn.js']);
 var epyonFiles = [	'./epyon/head.js', 
 					'./epyon/leek.js',
 					'./epyon/map.js', 
-					'./epyon/behaviors.js', 
+					'./epyon/Ascorers.js',
+					'./epyon/behaviors.js',
 					'./epyon/config.js', 
 					'./epyon/core.js', 
 					'./epyon/footer.js'];

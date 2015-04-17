@@ -1,7 +1,7 @@
 global EPYON_CONFIG = [];
 
 if (getTurn() === 1){
-	EPYON_CONFIG['attacks'] = [];
-	EPYON_CONFIG['preparations'] = [];
-	EPYON_CONFIG['behaviors'] = [];
+	EPYON_CONFIG[EPYON_PREFIGHT] = [];
+	EPYON_CONFIG[EPYON_FIGHT] = [];
+	EPYON_CONFIG[EPYON_POSTFIGHT] = [];
 }

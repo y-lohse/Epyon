@@ -36,7 +36,7 @@ function useChipShim(CHIP, leek){
 	if (r === USE_SUCCESS) PF_CHIP_COOLDOWNS[CHIP] = getTurn();
 	return r;
 }
-global EPYON_VERSION = '0.6.1';
+global EPYON_VERSION = '0.7.0';
 
 function epyon_debug(message){
 	debug('epyon: '+message);
@@ -66,13 +66,6 @@ function epyon_stopStats(name){
 if (getTurn() == 1){
 	epyon_debug('v'+EPYON_VERSION);
 	epyon_startStats('init');
-}
-global EPYON_CONFIG = [];
-
-if (getTurn() === 1){
-	EPYON_CONFIG['attacks'] = [];
-	EPYON_CONFIG['preparations'] = [];
-	EPYON_CONFIG['behaviors'] = [];
 }
 global EPYON_LEEKS = [];
 global EPYON_TARGET_DISTANCE; 
@@ -113,33 +106,22 @@ function epyon_moveToSafety(maxMp){
 	//@TODO:essayer de se mettre à l'abris plutot que fuir en ligne droite
 	moveAwayFrom(target['id'], maxMp);
 }
-//include('epyon.leek.ls');
+global EPYON_PREFIGHT = 'prefight';
+global EPYON_FIGHT = 'fight';
+global EPYON_POSTFIGHT = 'postfight';
+global EPYON_BEHAVIORS = [EPYON_PREFIGHT: [], EPYON_FIGHT: [], EPYON_POSTFIGHT: []];
 
-//attacking behaviors
-global EPYON_ATTACKS = [];
+global EQUIP_PISTOL = 80484;//arbitrary & hopefully temporary
 
-function epyon_listAttacks(maxMP, maxAP){
-	var attacks = [];
-	
-	arrayIter(EPYON_ATTACKS, function(candidateName, candidateFn){
-		if (inArray(EPYON_CONFIG['attacks'], candidateName)){
-			var result = candidateFn(maxMP, maxAP);
-			if (result) push(attacks, result);
-		}
-	});
-	
-	return attacks;
-}
-
-//regular, bonus behaviors
-global EPYON_BONUS_BEHAVIORS = [];
-
-function epyon_listBonusBehaviors(maxAP){
+/*
+* @param type EPYON_PREFIGHT || EPYON_FIGHT || EPYON_POSTFIGHT
+*/
+function epyon_listBehaviors(type, maxAP, maxMP){
 	var behaviors = [];
 	
-	arrayIter(EPYON_BONUS_BEHAVIORS, function(candidateName, candidateFn){
-		if (inArray(EPYON_CONFIG['behaviors'], candidateName)){
-			var result = candidateFn(maxAP);
+	arrayIter(EPYON_BEHAVIORS[type], function(candidateName, candidateFn){
+		if (inArray(EPYON_CONFIG[type], candidateName)){
+			var result = candidateFn(maxAP, maxMP);
 			if (result) push(behaviors, result);
 		}
 	});
@@ -147,34 +129,18 @@ function epyon_listBonusBehaviors(maxAP){
 	return behaviors;
 }
 
-//prepartion turns
-global EPYON_PREPARATIONS = [];
-
-function epyon_listPreparations(maxAP){
-	var preparations = [];
-	
-	arrayIter(EPYON_PREPARATIONS, function(candidateName, candidateFn){
-		if (inArray(EPYON_CONFIG['preparations'], candidateName)){
-			var result = candidateFn(maxAP);
-			if (result) push(preparations, result);
-		}
-	});
-	
-	return preparations;
-}
-
 //actual behaviors
 if (getTurn() === 1){
-	EPYON_ATTACKS['spark'] = function(maxMP, maxAP){
-		var SPARK_AP_COST = 3;
+	EPYON_BEHAVIORS[EPYON_FIGHT][CHIP_SPARK] = function(maxAP, maxMP){
+		var cost = getChipCost(CHIP_SPARK);
 		//@TODO: si utiliser la fonction canUseWeaponOnCell, faire un polyfill pour les niveaux moins de 40
 		var minCell = getCellToUseChip(CHIP_SPARK, target['id']);
 		var currentCell = getCell();
 
 		var distance = getCellDistance(minCell, currentCell);
 
-		if (distance <= maxMP && SPARK_AP_COST <= maxAP){
-			epyon_debug('spark attack is a candidate');
+		if (distance <= maxMP && cost <= maxAP){
+			epyon_debug('spark is a candidate');
 
 			var excute = function(){
 				//@TODO: verifier  si on e peut pas déja tirer
@@ -185,7 +151,7 @@ if (getTurn() === 1){
 			return [
 				'name': 'spark',
 				'MP': distance,
-				'AP': SPARK_AP_COST,
+				'AP': cost,
 				'damage': 16,
 				'fn': excute
 			];
@@ -195,16 +161,16 @@ if (getTurn() === 1){
 		}
 	};
 
-	EPYON_ATTACKS['pistol'] = function(maxMP, maxAP){
-		var PISTOl_AP_COST = 3;
+	EPYON_BEHAVIORS[EPYON_FIGHT][WEAPON_PISTOL] = function(maxAP, maxMP){
+		var cost = getWeaponCost(WEAPON_PISTOL);
 		//@TODO: si utiliser la fonction canUseWeaponOnCell, faire un polyfill pour les niveaux moins de 40
 		var minCell = getCellToUseWeapon(WEAPON_PISTOL, target['id']);
 		var currentCell = getCell();
 
 		var distance = getCellDistance(minCell, currentCell);
 
-		if (distance <= maxMP && PISTOl_AP_COST <= maxAP){
-			epyon_debug('pistol attack is a candidate');
+		if (distance <= maxMP && cost <= maxAP){
+			epyon_debug('pistol is a candidate');
 
 			var excute = function(){
 				//@TODO: verifier  si on e peut pas déja tirer
@@ -219,7 +185,7 @@ if (getTurn() === 1){
 			return [
 				'name': 'pistol',
 				'MP': distance,
-				'AP': PISTOl_AP_COST,
+				'AP': cost,
 				'damage': 20,
 				'fn': excute
 			];
@@ -229,7 +195,7 @@ if (getTurn() === 1){
 		}
 	};
 
-	EPYON_BONUS_BEHAVIORS['equip_pistol'] = function(maxAP){
+	EPYON_BEHAVIORS[EPYON_POSTFIGHT][EQUIP_PISTOL] = function(maxAP, maxMP){
 		if (getWeapon() == WEAPON_PISTOL || maxAP < 1) return false;
 
 		epyon_debug('pistol equip behavior is a candidate');
@@ -262,7 +228,7 @@ if (getTurn() === 1){
 	//	];
 	//});
 
-	EPYON_PREPARATIONS['helmet'] = function(maxAP){
+	EPYON_BEHAVIORS[EPYON_PREFIGHT][CHIP_HELMET] = function(maxAP, maxMP){
 		if (getCoolDown(CHIP_HELMET) > 0 || maxAP < getChipCost(CHIP_HELMET)) return false;
 
 		epyon_debug('helmet preparation is a candidate');
@@ -278,7 +244,7 @@ if (getTurn() === 1){
 		];
 	};
 
-	EPYON_PREPARATIONS['wall'] = function(maxAP){
+	EPYON_BEHAVIORS[EPYON_PREFIGHT][CHIP_WALL] = function(maxAP, maxMP){
 		if (getCoolDown(CHIP_WALL) > 0 || maxAP < getChipCost(CHIP_WALL)) return false;
 
 		epyon_debug('wall preparation is a candidate');
@@ -294,7 +260,7 @@ if (getTurn() === 1){
 		];
 	};
 
-	EPYON_PREPARATIONS['bandage'] = function(maxAP){
+	EPYON_BEHAVIORS[EPYON_PREFIGHT][CHIP_BANDAGE] = function(maxAP, maxMP){
 		var maxHeal = 15;
 		if (getTotalLife()-getLife() < maxHeal || maxAP < 2 || getCoolDown(CHIP_BANDAGE) > 0) return false;
 
@@ -310,6 +276,13 @@ if (getTurn() === 1){
 			'fn': fn
 		];
 	};
+}
+global EPYON_CONFIG = [];
+
+if (getTurn() === 1){
+	EPYON_CONFIG[EPYON_PREFIGHT] = [];
+	EPYON_CONFIG[EPYON_FIGHT] = [];
+	EPYON_CONFIG[EPYON_POSTFIGHT] = [];
 }
 //include('epyon.core.ls');
 //include('epyon.leek.ls');
@@ -356,7 +329,7 @@ function epyon_act(){
 		totalAP = 10;
 		
 	var allocatedMP = epyon_allocateAttackMP(S, totalMP);
-	var spentAP = epyon_preparations(S, totalAP);
+	var spentAP = epyon_prefight(S, totalAP, 0);
 	var allocatedAP = totalAP - spentAP;
 	
 	var remainingMP = totalMP - allocatedMP;
@@ -368,17 +341,17 @@ function epyon_act(){
 		
 		//try to find attacks for as long as the AP & MP last
 		var attacks = [];
-		var foundSUitableAttacks = false;
-		while(count(attacks = epyon_listAttacks(allocatedMP, allocatedAP)) > 0){
-			var selected = epyon_selectSuitableAttack(attacks);
-			epyon_debug('attacking with '+selected['name']+' for '+selected['AP']+'AP and '+selected['MP']+'MP');
+		var foundSuitableAttacks = false;
+		while(count(attacks = epyon_listBehaviors(EPYON_FIGHT, allocatedAP, allocatedMP)) > 0){
+			var selected = epyon_selectBestAttack(attacks);
+			epyon_debug('using fight move '+selected['name']+' for '+selected['AP']+'AP and '+selected['MP']+'MP');
 			allocatedAP -= selected['AP'];
 			allocatedMP -= selected['MP'];
 			selected['fn']();
-			foundSUitableAttacks = true;
+			foundSuitableAttacks = true;
 		};
 		
-		if (foundSUitableAttacks){
+		if (foundSuitableAttacks){
 			//re ttaribut unsuded points
 			remainingAP += allocatedAP;
 			remainingMP += allocatedMP;
@@ -391,7 +364,7 @@ function epyon_act(){
 		else{
 			//this behavior could posibly lead to flee too easily
 			epyon_debug('no suitable attacks found, backing off');
-			remainingAP += allocatedAP;//re-aalocate all APs
+			remainingAP += allocatedAP;//re-alocate all APs
 			remainingMP += allocatedMP;
 		}
 	}
@@ -401,7 +374,7 @@ function epyon_act(){
 	
 	if (remainingMP > 0) epyon_moveToSafety(remainingMP);
 	
-	if (remainingAP > 0) epyon_bonusBehaviors(remainingAP);//spend the remaining AP on whatever
+	if (remainingAP > 0) epyon_postfight(remainingAP, 0);//spend the remaining AP on whatever
 }
 
 //determines how many Mp it is safe to spend on attacks this turn
@@ -411,20 +384,20 @@ function epyon_allocateAttackMP(S, max){
 	else return max;
 }
 
-//spends AP on actions that are prioritzed over combat
+
+
+
+//spends AP on actions that are prioritized over combat
 //returns the amount of AP spent
-function epyon_preparations(S, maxAP){
-	//@TODO: activer les bouclier
-	//@TODO: s'équiper d'une arme
-	//@TODO: déterminer s'il faut se soigner en urgence
-	epyon_debug('Running preparations');
+function epyon_prefight(S, maxAP, maxMP){
+	epyon_debug('Running prefight');
 	var APcounter = 0;
-	var preparations = [];
+	var behaviors = [];
 	
-	while(count(preparations = epyon_listPreparations(maxAP)) > 0){
-		var selected = epyon_selectSuitablePreparation(preparations);
+	while(count(behaviors = epyon_listBehaviors(EPYON_PREFIGHT, maxAP, maxMP)) > 0){
+		var selected = epyon_selectBestPrefight(behaviors);
 		if (!selected) break;
-		epyon_debug('preparation '+selected['name']+' for '+selected['AP']+'AP');
+		epyon_debug('using prefight '+selected['name']+' for '+selected['AP']+'AP');
 		maxAP -= selected['AP'];
 		APcounter += selected['AP'];
 		selected['fn']();
@@ -433,25 +406,55 @@ function epyon_preparations(S, maxAP){
 	return APcounter;
 }
 
+function epyon_selectBestPrefight(behaviors){
+	var byPreference = [];
+	
+	arrayIter(behaviors, function(behavior){
+		var score = 0;
+		if (behavior['name'] == 'helmet'){
+			score = (EPYON_TARGET_DISTANCE < 15) ? 3 : 0;
+		}
+		else if (behavior['name'] == 'wall'){
+			score = (EPYON_TARGET_DISTANCE < 15) ? 2 : 0;
+		}
+		else if (behavior['name'] == 'bandage'){
+			score = 1;
+		}
+		
+		debug('preparation '+behavior['name']+' scored '+score);
+		
+		if (score > 0) byPreference[score] = behavior;
+	});
+	
+	keySort(byPreference, SORT_DESC);
+	
+	return shift(byPreference);
+}
+
+
+
+
 //spends the AP on bonus actions
-function epyon_bonusBehaviors(maxAP){
-	//@TODO actions non prioritaires:
-	//- équiper une arme
-	//- se soigner
-	//- communiquer
-	epyon_debug('Running bonus behaviors');
+function epyon_postfight(maxAP, maxMP){
+	epyon_debug('Running postfight');
 	var behaviors = [];
 	
-	while(count(behaviors = epyon_listBonusBehaviors(maxAP)) > 0){
-		var selected = epyon_selectSuitableBehavior(behaviors);
-		epyon_debug('behavior '+selected['name']+' for '+selected['AP']+'AP');
+	while(count(behaviors = epyon_listBehaviors(EPYON_POSTFIGHT, maxAP, maxMP)) > 0){
+		var selected = epyon_selectBestPostfight(behaviors);
+		epyon_debug('using postfight '+selected['name']+' for '+selected['AP']+'AP');
 		maxAP -= selected['AP'];
 		selected['fn']();
 	};
 }
 
+function epyon_selectBestPostfight(behaviors){
+	return behaviors[0];
+}
+
+
+
 //selects what is estimated as the most suitable attack for whatever reason
-function epyon_selectSuitableAttack(attacks){
+function epyon_selectBestAttack(attacks){
 	//find the one with the msot damages
 	var byDamages = [];
 	
@@ -462,37 +465,6 @@ function epyon_selectSuitableAttack(attacks){
 	keySort(byDamages, SORT_DESC);
 	
 	return shift(byDamages);
-}
-
-//elects what is estimated as the most suitable ehavior for whatever reason
-function epyon_selectSuitableBehavior(behaviors){
-	return behaviors[0];
-}
-
-//same shit
-function epyon_selectSuitablePreparation(preparations){
-	var byPreference = [];
-	
-	arrayIter(preparations, function(preparation){
-		var score = 0;
-		if (preparation['name'] == 'helmet'){
-			score = (EPYON_TARGET_DISTANCE < 15) ? 3 : 0;
-		}
-		else if (preparation['name'] == 'wall'){
-			score = (EPYON_TARGET_DISTANCE < 15) ? 2 : 0;
-		}
-		else if (preparation['name'] == 'bandage'){
-			score = 1;
-		}
-		
-		debug('preparation '+preparation['name']+' scored '+score);
-		
-		if (score > 0) byPreference[score] = preparation;
-	});
-	
-	keySort(byPreference, SORT_DESC);
-	
-	return shift(byPreference);
 }
 if (getTurn() == 1){
 	var initStats = epyon_stopStats('init');

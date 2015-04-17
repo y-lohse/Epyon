@@ -36,7 +36,7 @@ function useChipShim(CHIP, leek){
 	if (r === USE_SUCCESS) PF_CHIP_COOLDOWNS[CHIP] = getTurn();
 	return r;
 }
-global EPYON_VERSION = '0.7.0';
+global EPYON_VERSION = '0.8.0';
 
 function epyon_debug(message){
 	debug('epyon: '+message);
@@ -279,10 +279,18 @@ if (getTurn() === 1){
 }
 global EPYON_CONFIG = [];
 
+global epyon_dummy_selector = function(candidates){
+	return candidates[0];
+};
+
 if (getTurn() === 1){
 	EPYON_CONFIG[EPYON_PREFIGHT] = [];
 	EPYON_CONFIG[EPYON_FIGHT] = [];
 	EPYON_CONFIG[EPYON_POSTFIGHT] = [];
+	
+	EPYON_CONFIG['select_prefight'] = epyon_dummy_selector;
+	EPYON_CONFIG['select_fight'] = epyon_dummy_selector;
+	EPYON_CONFIG['select_postfight'] = epyon_dummy_selector;
 }
 //include('epyon.core.ls');
 //include('epyon.leek.ls');
@@ -343,7 +351,8 @@ function epyon_act(){
 		var attacks = [];
 		var foundSuitableAttacks = false;
 		while(count(attacks = epyon_listBehaviors(EPYON_FIGHT, allocatedAP, allocatedMP)) > 0){
-			var selected = epyon_selectBestAttack(attacks);
+			var selected = EPYON_CONFIG['select_fight'](attacks);
+			if (!selected) break;
 			epyon_debug('using fight move '+selected['name']+' for '+selected['AP']+'AP and '+selected['MP']+'MP');
 			allocatedAP -= selected['AP'];
 			allocatedMP -= selected['MP'];
@@ -384,9 +393,6 @@ function epyon_allocateAttackMP(S, max){
 	else return max;
 }
 
-
-
-
 //spends AP on actions that are prioritized over combat
 //returns the amount of AP spent
 function epyon_prefight(S, maxAP, maxMP){
@@ -395,7 +401,7 @@ function epyon_prefight(S, maxAP, maxMP){
 	var behaviors = [];
 	
 	while(count(behaviors = epyon_listBehaviors(EPYON_PREFIGHT, maxAP, maxMP)) > 0){
-		var selected = epyon_selectBestPrefight(behaviors);
+		var selected = EPYON_CONFIG['select_prefight'](behaviors);
 		if (!selected) break;
 		epyon_debug('using prefight '+selected['name']+' for '+selected['AP']+'AP');
 		maxAP -= selected['AP'];
@@ -406,65 +412,18 @@ function epyon_prefight(S, maxAP, maxMP){
 	return APcounter;
 }
 
-function epyon_selectBestPrefight(behaviors){
-	var byPreference = [];
-	
-	arrayIter(behaviors, function(behavior){
-		var score = 0;
-		if (behavior['name'] == 'helmet'){
-			score = (EPYON_TARGET_DISTANCE < 15) ? 3 : 0;
-		}
-		else if (behavior['name'] == 'wall'){
-			score = (EPYON_TARGET_DISTANCE < 15) ? 2 : 0;
-		}
-		else if (behavior['name'] == 'bandage'){
-			score = 1;
-		}
-		
-		debug('preparation '+behavior['name']+' scored '+score);
-		
-		if (score > 0) byPreference[score] = behavior;
-	});
-	
-	keySort(byPreference, SORT_DESC);
-	
-	return shift(byPreference);
-}
-
-
-
-
 //spends the AP on bonus actions
 function epyon_postfight(maxAP, maxMP){
 	epyon_debug('Running postfight');
 	var behaviors = [];
 	
 	while(count(behaviors = epyon_listBehaviors(EPYON_POSTFIGHT, maxAP, maxMP)) > 0){
-		var selected = epyon_selectBestPostfight(behaviors);
+		var selected = EPYON_CONFIG['select_postfight'](behaviors);
+		if (!selected) break;
 		epyon_debug('using postfight '+selected['name']+' for '+selected['AP']+'AP');
 		maxAP -= selected['AP'];
 		selected['fn']();
 	};
-}
-
-function epyon_selectBestPostfight(behaviors){
-	return behaviors[0];
-}
-
-
-
-//selects what is estimated as the most suitable attack for whatever reason
-function epyon_selectBestAttack(attacks){
-	//find the one with the msot damages
-	var byDamages = [];
-	
-	arrayIter(attacks, function(attack){
-		byDamages[attack['damage']] = attack;
-	});
-	
-	keySort(byDamages, SORT_DESC);
-	
-	return shift(byDamages);
 }
 if (getTurn() == 1){
 	var initStats = epyon_stopStats('init');

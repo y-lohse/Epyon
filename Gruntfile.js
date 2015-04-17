@@ -1,27 +1,27 @@
 module.exports = function(grunt) {
 
 // Project configuration.
+var polyfills = ['./polyfill/*.js'].concat(['!./polyfill/getTurn.js']);
+
+var epyonFiles = [	'./epyon/head.js', 
+					'./epyon/leek.js',
+					'./epyon/map.js', 
+					'./epyon/behaviors.js', 
+					'./epyon/config.js', 
+					'./epyon/core.js', 
+					'./epyon/footer.js'];
+
 grunt.initConfig( {
 	pkg: grunt.file.readJSON('package.json'),
 	watch: {
-		files: ['./epyon/*.js', 'Gruntfile.js'],
+		files: ['./epyon/*.js', './polyfill/*.js', 'Gruntfile.js'],
 		tasks: ['build']
 	},
 	concat: {
 		epyon: {
-			src: [	'./epyon/head.js', 
-					'./epyon/config.js', 
-					'./epyon/leek.js',
-					'./epyon/map.js', 
-					'./epyon/behaviors.js', 
-					'./epyon/core.js', 
-					'./epyon/footer.js'],
+			src: polyfills.concat(epyonFiles),
 			dest: 'dist/epyon.ls'
 		},
-		polyfill: {
-			src: [	'./polyfill/polyfill.js' ],
-			dest: 'dist/polyfill.ls'
-		}
 	},
 });
 

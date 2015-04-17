@@ -43,7 +43,7 @@ function epyon_act(){
 		totalAP = 10;
 		
 	var allocatedMP = epyon_allocateAttackMP(S, totalMP);
-	var spentAP = epyon_preparations(S, totalAP);
+	var spentAP = epyon_prefight(S, totalAP, 0);
 	var allocatedAP = totalAP - spentAP;
 	
 	var remainingMP = totalMP - allocatedMP;
@@ -55,17 +55,18 @@ function epyon_act(){
 		
 		//try to find attacks for as long as the AP & MP last
 		var attacks = [];
-		var foundSUitableAttacks = false;
-		while(count(attacks = epyon_listAttacks(allocatedMP, allocatedAP)) > 0){
-			var selected = epyon_selectSuitableAttack(attacks);
-			epyon_debug('attacking with '+selected['name']+' for '+selected['AP']+'AP and '+selected['MP']+'MP');
+		var foundSuitableAttacks = false;
+		while(count(attacks = epyon_listBehaviors(EPYON_FIGHT, allocatedAP, allocatedMP)) > 0){
+			var selected = EPYON_CONFIG['select_fight'](attacks, allocatedAP, allocatedMP);
+			if (!selected) break;
+			epyon_debug('using fight move '+selected['name']+' for '+selected['AP']+'AP and '+selected['MP']+'MP');
 			allocatedAP -= selected['AP'];
 			allocatedMP -= selected['MP'];
 			selected['fn']();
-			foundSUitableAttacks = true;
+			foundSuitableAttacks = true;
 		};
 		
-		if (foundSUitableAttacks){
+		if (foundSuitableAttacks){
 			//re ttaribut unsuded points
 			remainingAP += allocatedAP;
 			remainingMP += allocatedMP;
@@ -78,7 +79,7 @@ function epyon_act(){
 		else{
 			//this behavior could posibly lead to flee too easily
 			epyon_debug('no suitable attacks found, backing off');
-			remainingAP += allocatedAP;//re-aalocate all APs
+			remainingAP += allocatedAP;//re-alocate all APs
 			remainingMP += allocatedMP;
 		}
 	}
@@ -88,7 +89,7 @@ function epyon_act(){
 	
 	if (remainingMP > 0) epyon_moveToSafety(remainingMP);
 	
-	if (remainingAP > 0) epyon_bonusBehaviors(remainingAP);//spend the remaining AP on whatever
+	if (remainingAP > 0) epyon_postfight(remainingAP, 0);//spend the remaining AP on whatever
 }
 
 //determines how many Mp it is safe to spend on attacks this turn
@@ -98,20 +99,17 @@ function epyon_allocateAttackMP(S, max){
 	else return max;
 }
 
-//spends AP on actions that are prioritzed over combat
+//spends AP on actions that are prioritized over combat
 //returns the amount of AP spent
-function epyon_preparations(S, maxAP){
-	//@TODO: activer les bouclier
-	//@TODO: s'équiper d'une arme
-	//@TODO: déterminer s'il faut se soigner en urgence
-	epyon_debug('Running preparations');
+function epyon_prefight(S, maxAP, maxMP){
+	epyon_debug('Running prefight');
 	var APcounter = 0;
-	var preparations = [];
+	var behaviors = [];
 	
-	while(count(preparations = epyon_listPreparations(maxAP)) > 0){
-		var selected = epyon_selectSuitablePreparation(preparations);
+	while(count(behaviors = epyon_listBehaviors(EPYON_PREFIGHT, maxAP, maxMP)) > 0){
+		var selected = EPYON_CONFIG['select_prefight'](behaviors, maxAP, maxMP);
 		if (!selected) break;
-		epyon_debug('preparation '+selected['name']+' for '+selected['AP']+'AP');
+		epyon_debug('using prefight '+selected['name']+' for '+selected['AP']+'AP');
 		maxAP -= selected['AP'];
 		APcounter += selected['AP'];
 		selected['fn']();
@@ -121,63 +119,15 @@ function epyon_preparations(S, maxAP){
 }
 
 //spends the AP on bonus actions
-function epyon_bonusBehaviors(maxAP){
-	//@TODO actions non prioritaires:
-	//- équiper une arme
-	//- se soigner
-	//- communiquer
-	epyon_debug('Running bonus behaviors');
+function epyon_postfight(maxAP, maxMP){
+	epyon_debug('Running postfight');
 	var behaviors = [];
 	
-	while(count(behaviors = epyon_listBonusBehaviors(maxAP)) > 0){
-		var selected = epyon_selectSuitableBehavior(behaviors);
-		epyon_debug('behavior '+selected['name']+' for '+selected['AP']+'AP');
+	while(count(behaviors = epyon_listBehaviors(EPYON_POSTFIGHT, maxAP, maxMP)) > 0){
+		var selected = EPYON_CONFIG['select_postfight'](behaviors, maxAP, maxMP);
+		if (!selected) break;
+		epyon_debug('using postfight '+selected['name']+' for '+selected['AP']+'AP');
 		maxAP -= selected['AP'];
 		selected['fn']();
 	};
-}
-
-//selects what is estimated as the most suitable attack for whatever reason
-function epyon_selectSuitableAttack(attacks){
-	//find the one with the msot damages
-	var byDamages = [];
-	
-	arrayIter(attacks, function(attack){
-		byDamages[attack['damage']] = attack;
-	});
-	
-	keySort(byDamages, SORT_DESC);
-	
-	return shift(byDamages);
-}
-
-//elects what is estimated as the most suitable ehavior for whatever reason
-function epyon_selectSuitableBehavior(behaviors){
-	return behaviors[0];
-}
-
-//same shit
-function epyon_selectSuitablePreparation(preparations){
-	var byPreference = [];
-	
-	arrayIter(preparations, function(preparation){
-		var score = 0;
-		if (preparation['name'] == 'helmet'){
-			score = (EPYON_TARGET_DISTANCE < 15) ? 3 : 0;
-		}
-		else if (preparation['name'] == 'wall'){
-			score = (EPYON_TARGET_DISTANCE < 15) ? 2 : 0;
-		}
-		else if (preparation['name'] == 'bandage'){
-			score = 1;
-		}
-		
-		debug('preparation '+preparation['name']+' scored '+score);
-		
-		if (score > 0) byPreference[score] = preparation;
-	});
-	
-	keySort(byPreference, SORT_DESC);
-	
-	return shift(byPreference);
 }

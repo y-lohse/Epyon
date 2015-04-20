@@ -254,4 +254,20 @@ if (getTurn() === 1){
 			'fn': fn
 		];
 	};
+	
+	EPYON_BEHAVIORS[EPYON_PREFIGHT][CHIP_STEROID] = function(maxAP, maxMP){
+		if (getCoolDown(CHIP_STEROID) > 0 || maxAP < getChipCost(CHIP_STEROID)) return false;
+
+		epyon_debug('steroid preparation is a candidate');
+
+		var fn = function(){
+			useChipShim(CHIP_STEROID, self['id']);
+		};
+
+		return [
+			'name': 'steroid',
+			'AP': 6,
+			'fn': fn
+		];
+	};
 }

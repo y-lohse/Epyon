@@ -1,8 +1,16 @@
 module.exports = function(grunt) {
 
+var level = 37;
+
 // Project configuration.
 //var polyfills = ['./polyfill/*.js'].concat(['!./polyfill/getTurn.js']);
 var polyfills = [];
+
+if (level < 12) polyfills.push('./polyfill/getTurn.js');
+if (level < 29) polyfills.push('./polyfill/canUseWeapon.js');
+
+if (level < 36) polyfills.push('./polyfill/getCooldown.js');
+else polyfills.push('./polyfill/useChipShim.js');
 
 var epyonFiles = [	'./epyon/head.js', 
 					'./epyon/leek.js',

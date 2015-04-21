@@ -1,0 +1,1 @@
+global useChipShim = useChip;

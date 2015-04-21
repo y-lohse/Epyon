@@ -116,12 +116,12 @@ function epyon_listBehaviors(type, maxAP, maxMP){
 //factories to create behavior with less code
 function epyon_weaponBehaviorFactory(WEAPON_ID, name, damage){//damage is temp
 	var cost = getWeaponCost(WEAPON_ID);
-	var distance;
+	var distance, minCell;
 	
 	return function(maxAP, maxMP){	
 		if (canUseWeapon(target['id'], WEAPON_ID)) distance = 0;
 		else{
-			var minCell = getCellToUseWeapon(WEAPON_ID, target['id']);
+			minCell = getCellToUseWeapon(WEAPON_ID, target['id']);
 			var currentCell = getCell();
 
 			distance = getCellDistance(minCell, currentCell);
@@ -173,7 +173,7 @@ function epyon_simpleSelfChipBehaviorFactory(CHIP_ID, name){
 	var cost = getChipCost(CHIP_ID);
 	
 	return function(maxAP, maxMP){
-		if (getCoolDown(CHIP_ID) > 0 || maxAP < cost) return false;
+		if (getCooldown(CHIP_ID) > 0 || maxAP < cost) return false;
 
 		epyon_debug(name+' is a candidate');
 
@@ -193,7 +193,7 @@ function epyon_healChipBehaviorFactory(CHIP_ID, name, maxHeal){
 	var cost = getChipCost(CHIP_ID);
 	
 	return function(maxAP, maxMP){
-		if (getTotalLife()-getLife() < maxHeal || getCoolDown(CHIP_ID) > 0 || maxAP < cost) return false;
+		if (getTotalLife()-getLife() < maxHeal || getCooldown(CHIP_ID) > 0 || maxAP < cost) return false;
 
 		epyon_debug(name+' preparation is a candidate');
 
@@ -281,18 +281,18 @@ global epyon_dummy_selector = function(candidates){
 global EPYON_EVAl_RECKLESS = function(t){
 	//http://fooplot.com/#W3sidHlwZSI6MCwiZXEiOiItMSooKHgtMSkqKHgtMSkqKHgtMSkqKHgtMSktMSkiLCJjb2xvciI6IiMwMDAwMDAifSx7InR5cGUiOjEwMDAsIndpbmRvdyI6WyItMS40MjQ5OTk5OTk5OTk5OTk0IiwiMS44MjUwMDAwMDAwMDAwMDA2IiwiLTAuNzE5OTk5OTk5OTk5OTk5OCIsIjEuMjgwMDAwMDAwMDAwMDAwMiJdfV0-
 	return -1 * ((t-1) * (t-1) * (t-1) * (t-1) -1);
-}
+};
 
 //quad out
 global EPYON_EVAl_BRAVE = function(t){
 	//http://fooplot.com/#W3sidHlwZSI6MCwiZXEiOiItMSooeCooeC0yKSkiLCJjb2xvciI6IiMwMDAwMDAifSx7InR5cGUiOjEwMDAsIndpbmRvdyI6WyItMS40MjQ5OTk5OTk5OTk5OTk0IiwiMS44MjUwMDAwMDAwMDAwMDA2IiwiLTAuNzE5OTk5OTk5OTk5OTk5OCIsIjEuMjgwMDAwMDAwMDAwMDAwMiJdfV0-
 	return -1 * (t * (t-2));
-}
+};
 
 //linear
 global EPYON_EVAl_NORMAL = function(t){
 	return t;
-}
+};
 
 if (getTurn() === 1){
 	//inventory
@@ -337,20 +337,18 @@ function epyon_updateAgressions(){
 	epyon_debug('A:'+self['agression']);
 	
 	epyon_debug('update agression for '+target['name']);
-	target['agression'] = epyon_computeAgression(target);
+	target['agression'] = epyon_computeAgression(target, EPYON_EVAl_NORMAL);
 	epyon_debug('A:'+target['agression']);
 	
 	var l = count(EPYON_WATCHLIST);
 	for (var i = 0; i < l; i++){
 		epyon_debug('update agression for '+EPYON_WATCHLIST[i]['name']);
-		EPYON_WATCHLIST[i]['agression'] = epyon_computeAgression(EPYON_WATCHLIST[i]);
+		EPYON_WATCHLIST[i]['agression'] = epyon_computeAgression(EPYON_WATCHLIST[i], EPYON_EVAl_NORMAL);
 		epyon_debug('A:'+EPYON_WATCHLIST[i]['agression']);
 	}
 }
 
 function epyon_computeAgression(epyonLeek, evalFunction){
-	if (!evalFunction) evalFunction = EPYON_EVAl_NORMAL;
-	
 	var cumulatedA = 0,
 		totalCoef = 0;
 	

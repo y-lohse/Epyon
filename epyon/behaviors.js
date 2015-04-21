@@ -26,12 +26,12 @@ function epyon_listBehaviors(type, maxAP, maxMP){
 //factories to create behavior with less code
 function epyon_weaponBehaviorFactory(WEAPON_ID, name, damage){//damage is temp
 	var cost = getWeaponCost(WEAPON_ID);
-	var distance;
+	var distance, minCell;
 	
 	return function(maxAP, maxMP){	
 		if (canUseWeapon(target['id'], WEAPON_ID)) distance = 0;
 		else{
-			var minCell = getCellToUseWeapon(WEAPON_ID, target['id']);
+			minCell = getCellToUseWeapon(WEAPON_ID, target['id']);
 			var currentCell = getCell();
 
 			distance = getCellDistance(minCell, currentCell);
@@ -83,7 +83,7 @@ function epyon_simpleSelfChipBehaviorFactory(CHIP_ID, name){
 	var cost = getChipCost(CHIP_ID);
 	
 	return function(maxAP, maxMP){
-		if (getCoolDown(CHIP_ID) > 0 || maxAP < cost) return false;
+		if (getCooldown(CHIP_ID) > 0 || maxAP < cost) return false;
 
 		epyon_debug(name+' is a candidate');
 
@@ -103,7 +103,7 @@ function epyon_healChipBehaviorFactory(CHIP_ID, name, maxHeal){
 	var cost = getChipCost(CHIP_ID);
 	
 	return function(maxAP, maxMP){
-		if (getTotalLife()-getLife() < maxHeal || getCoolDown(CHIP_ID) > 0 || maxAP < cost) return false;
+		if (getTotalLife()-getLife() < maxHeal || getCooldown(CHIP_ID) > 0 || maxAP < cost) return false;
 
 		epyon_debug(name+' preparation is a candidate');
 

@@ -20,20 +20,18 @@ function epyon_updateAgressions(){
 	epyon_debug('A:'+self['agression']);
 	
 	epyon_debug('update agression for '+target['name']);
-	target['agression'] = epyon_computeAgression(target);
+	target['agression'] = epyon_computeAgression(target, EPYON_EVAl_NORMAL);
 	epyon_debug('A:'+target['agression']);
 	
 	var l = count(EPYON_WATCHLIST);
 	for (var i = 0; i < l; i++){
 		epyon_debug('update agression for '+EPYON_WATCHLIST[i]['name']);
-		EPYON_WATCHLIST[i]['agression'] = epyon_computeAgression(EPYON_WATCHLIST[i]);
+		EPYON_WATCHLIST[i]['agression'] = epyon_computeAgression(EPYON_WATCHLIST[i], EPYON_EVAl_NORMAL);
 		epyon_debug('A:'+EPYON_WATCHLIST[i]['agression']);
 	}
 }
 
 function epyon_computeAgression(epyonLeek, evalFunction){
-	if (!evalFunction) evalFunction = EPYON_EVAl_NORMAL;
-	
 	var cumulatedA = 0,
 		totalCoef = 0;
 	

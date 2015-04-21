@@ -11,18 +11,18 @@ global epyon_dummy_selector = function(candidates){
 global EPYON_EVAl_RECKLESS = function(t){
 	//http://fooplot.com/#W3sidHlwZSI6MCwiZXEiOiItMSooKHgtMSkqKHgtMSkqKHgtMSkqKHgtMSktMSkiLCJjb2xvciI6IiMwMDAwMDAifSx7InR5cGUiOjEwMDAsIndpbmRvdyI6WyItMS40MjQ5OTk5OTk5OTk5OTk0IiwiMS44MjUwMDAwMDAwMDAwMDA2IiwiLTAuNzE5OTk5OTk5OTk5OTk5OCIsIjEuMjgwMDAwMDAwMDAwMDAwMiJdfV0-
 	return -1 * ((t-1) * (t-1) * (t-1) * (t-1) -1);
-}
+};
 
 //quad out
 global EPYON_EVAl_BRAVE = function(t){
 	//http://fooplot.com/#W3sidHlwZSI6MCwiZXEiOiItMSooeCooeC0yKSkiLCJjb2xvciI6IiMwMDAwMDAifSx7InR5cGUiOjEwMDAsIndpbmRvdyI6WyItMS40MjQ5OTk5OTk5OTk5OTk0IiwiMS44MjUwMDAwMDAwMDAwMDA2IiwiLTAuNzE5OTk5OTk5OTk5OTk5OCIsIjEuMjgwMDAwMDAwMDAwMDAwMiJdfV0-
 	return -1 * (t * (t-2));
-}
+};
 
 //linear
 global EPYON_EVAl_NORMAL = function(t){
 	return t;
-}
+};
 
 if (getTurn() === 1){
 	//inventory

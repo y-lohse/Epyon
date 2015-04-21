@@ -9,7 +9,6 @@ function prefightByPreference(behaviors, allocatedAP, allocatedMP){
 			score = (EPYON_TARGET_DISTANCE < 15) ? 4 : 0;
 		}
 		if (behavior['name'] == 'helmet'){
-			debug("shield cd : "+getCoolDown(CHIP_SHIELD));
 			score = (EPYON_TARGET_DISTANCE < 15 && (!inArray(EPYON_CONFIG[EPYON_PREFIGHT], CHIP_SHIELD) || getCoolDown(CHIP_SHIELD) < 3)) ? 3 : 0;
 		}
 		else if (behavior['name'] == 'steroid'){

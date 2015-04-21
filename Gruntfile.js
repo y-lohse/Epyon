@@ -1,7 +1,8 @@
 module.exports = function(grunt) {
 
 // Project configuration.
-var polyfills = ['./polyfill/*.js'].concat(['!./polyfill/getTurn.js']);
+//var polyfills = ['./polyfill/*.js'].concat(['!./polyfill/getTurn.js']);
+var polyfills = [];
 
 var epyonFiles = [	'./epyon/head.js', 
 					'./epyon/leek.js',

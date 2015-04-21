@@ -73,8 +73,20 @@ function epyon_aScorerHealth(eLeek){
 	return getLife(eLeek['id']) / getTotalLife(eLeek['id']) + EPYON_CONFIG['suicidal'];
 }
 
-//function epyon_aScorerAbsoluteShield(){
-//	if (epyon_has(PREFIGHT, SHIELD));
+//requires lvl40
+//function epyon_aScorerAbsoluteShield(eLeek){
+//	var level = getlevel(eLeek['id']);
+//	var maxAbsShield = 1;
+//	
+//	//@TODO: utiliser getChips() pour lister les puces équipés
+//	if (level >= 11) maxAbsShield += 15;//helmet
+//	if (level >= 19) maxAbsShield += 20;//shield
+//	if (level >= 55) maxAbsShield += 25;//armor
+//	if (level >= 259) maxAbsShield += 55;//carapace
+//	
+//	maxAbsShield = max(maxAbsShield, 100);//chances that everything is used at once is rather low
+//	
+//	return getAbsoluteShield(eLeek['id']) / maxAbsShield;
 //}
 global EPYON_PREFIGHT = 'prefight';
 global EPYON_FIGHT = 'fight';
@@ -262,6 +274,26 @@ global epyon_dummy_selector = function(candidates){
 	return candidates[0];
 };
 
+//easing functions, see http://gizma.com/easing/
+//b=0,  c=1, d=1
+
+//quart out
+global EPYON_EVAl_RECKLESS = function(t){
+	//http://fooplot.com/#W3sidHlwZSI6MCwiZXEiOiItMSooKHgtMSkqKHgtMSkqKHgtMSkqKHgtMSktMSkiLCJjb2xvciI6IiMwMDAwMDAifSx7InR5cGUiOjEwMDAsIndpbmRvdyI6WyItMS40MjQ5OTk5OTk5OTk5OTk0IiwiMS44MjUwMDAwMDAwMDAwMDA2IiwiLTAuNzE5OTk5OTk5OTk5OTk5OCIsIjEuMjgwMDAwMDAwMDAwMDAwMiJdfV0-
+	return -1 * ((t-1) * (t-1) * (t-1) * (t-1) -1);
+}
+
+//quad out
+global EPYON_EVAl_BRAVE = function(t){
+	//http://fooplot.com/#W3sidHlwZSI6MCwiZXEiOiItMSooeCooeC0yKSkiLCJjb2xvciI6IiMwMDAwMDAifSx7InR5cGUiOjEwMDAsIndpbmRvdyI6WyItMS40MjQ5OTk5OTk5OTk5OTk0IiwiMS44MjUwMDAwMDAwMDAwMDA2IiwiLTAuNzE5OTk5OTk5OTk5OTk5OCIsIjEuMjgwMDAwMDAwMDAwMDAwMiJdfV0-
+	return -1 * (t * (t-2));
+}
+
+//linear
+global EPYON_EVAl_NORMAL = function(t){
+	return t;
+}
+
 if (getTurn() === 1){
 	//inventory
 	EPYON_CONFIG[EPYON_PREFIGHT] = [];
@@ -273,12 +305,15 @@ if (getTurn() === 1){
 	EPYON_CONFIG['select_fight'] = epyon_dummy_selector;
 	EPYON_CONFIG['select_postfight'] = epyon_dummy_selector;
 	
+	//socrer functions receive a leek as parameter and score him on any criteria the ysee fit, where 0 is shit and 1 is great. Return values are clamped between 0 and 1 anyway. Each scorer is weighted. If the weight (coef) is 0 for a scorer, the scorer is ignored.
 	EPYON_CONFIG['A'] = [
 		'health': ['fn': epyon_aScorerHealth, 'coef': 1],
 	];
 	
 	//charcter traits
-	EPYON_CONFIG['suicidal'] = 0;//[0;1] with a higher suicidal value, the leek will stay agressive despite beeing low on health
+	EPYON_CONFIG['evaluation'] = EPYON_EVAl_BRAVE;//this must be a function that receives a value between 0 and 1, and rreturns another value between 0 and 1. Built-ins are EPYON_EVAl_NORMAL, EPYON_EVAl_BRAVE, and EPYON_EVAl_RECKLESS. It influences how the AI will 
+	
+	EPYON_CONFIG['suicidal'] = 0;//[0;1] with a higher suicidal value, the leek will stay agressive despite being low on health
 }
 global EPYON_WATCHLIST = [];
 
@@ -298,7 +333,7 @@ function epyon_aquireTarget(){
 
 function epyon_updateAgressions(){
 	epyon_debug('update own agression');
-	self['agression'] = epyon_computeAgression(self);
+	self['agression'] = epyon_computeAgression(self, EPYON_CONFIG['evaluation']);
 	epyon_debug('A:'+self['agression']);
 	
 	epyon_debug('update agression for '+target['name']);
@@ -310,17 +345,20 @@ function epyon_updateAgressions(){
 		epyon_debug('update agression for '+EPYON_WATCHLIST[i]['name']);
 		EPYON_WATCHLIST[i]['agression'] = epyon_computeAgression(EPYON_WATCHLIST[i]);
 		epyon_debug('A:'+EPYON_WATCHLIST[i]['agression']);
-		
 	}
 }
 
-function epyon_computeAgression(epyonLeek){
+function epyon_computeAgression(epyonLeek, evalFunction){
+	if (!evalFunction) evalFunction = EPYON_EVAl_NORMAL;
+	
 	var cumulatedA = 0,
 		totalCoef = 0;
 	
 	arrayIter(EPYON_CONFIG['A'], function(scorerName, scorer){
 		if (scorer['coef'] > 0){
 			var score = min(1, max(scorer['fn'](epyonLeek), 0));
+			score = evalFunction(score);
+			
 			epyon_debug(scorerName+' score '+score+' coef '+scorer['coef']);
 			cumulatedA += score;
 			totalCoef += scorer['coef'];

@@ -16,7 +16,7 @@ function epyon_aquireTarget(){
 
 function epyon_updateAgressions(){
 	epyon_debug('update own agression');
-	self['agression'] = epyon_computeAgression(self);
+	self['agression'] = epyon_computeAgression(self, EPYON_CONFIG['evaluation']);
 	epyon_debug('A:'+self['agression']);
 	
 	epyon_debug('update agression for '+target['name']);
@@ -28,17 +28,20 @@ function epyon_updateAgressions(){
 		epyon_debug('update agression for '+EPYON_WATCHLIST[i]['name']);
 		EPYON_WATCHLIST[i]['agression'] = epyon_computeAgression(EPYON_WATCHLIST[i]);
 		epyon_debug('A:'+EPYON_WATCHLIST[i]['agression']);
-		
 	}
 }
 
-function epyon_computeAgression(epyonLeek){
+function epyon_computeAgression(epyonLeek, evalFunction){
+	if (!evalFunction) evalFunction = EPYON_EVAl_NORMAL;
+	
 	var cumulatedA = 0,
 		totalCoef = 0;
 	
 	arrayIter(EPYON_CONFIG['A'], function(scorerName, scorer){
 		if (scorer['coef'] > 0){
 			var score = min(1, max(scorer['fn'](epyonLeek), 0));
+			score = evalFunction(score);
+			
 			epyon_debug(scorerName+' score '+score+' coef '+scorer['coef']);
 			cumulatedA += score;
 			totalCoef += scorer['coef'];

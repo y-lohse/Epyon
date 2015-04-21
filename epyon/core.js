@@ -109,7 +109,10 @@ function epyon_act(){
 	epyon_debug('remaining MP after attacks: '+remainingMP);
 	epyon_debug('remaining AP after attacks: '+remainingAP);
 	
-	if (remainingMP > 0) epyon_moveToSafety(remainingMP);
+	if (remainingMP > 0){
+		if (S < 0) epyon_moveToSafety(remainingMP);
+		else epyon_moveTowardsTarget(remainingMP);
+	}
 	
 	if (remainingAP > 0) epyon_postfight(remainingAP, 0);//spend the remaining AP on whatever
 }

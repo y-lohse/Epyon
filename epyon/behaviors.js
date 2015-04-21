@@ -4,6 +4,8 @@ global EPYON_POSTFIGHT = 'postfight';
 global EPYON_BEHAVIORS = [EPYON_PREFIGHT: [], EPYON_FIGHT: [], EPYON_POSTFIGHT: []];
 
 global EQUIP_PISTOL = 80484;//arbitrary & hopefully temporary
+global EQUIP_MAGNUM = 80485;//arbitrary & hopefully temporary
+
 
 /*
 * @param type EPYON_PREFIGHT || EPYON_FIGHT || EPYON_POSTFIGHT
@@ -86,6 +88,40 @@ if (getTurn() === 1){
 			return false;
 		}
 	};
+	
+	EPYON_BEHAVIORS[EPYON_FIGHT][WEAPON_MAGNUM] = function(maxAP, maxMP){
+		var cost = getWeaponCost(WEAPON_MAGNUM);
+		//@TODO: si utiliser la fonction canUseWeaponOnCell, faire un polyfill pour les niveaux moins de 40
+		var minCell = getCellToUseWeapon(WEAPON_MAGNUM, target['id']);
+		var currentCell = getCell();
+
+		var distance = getCellDistance(minCell, currentCell);
+
+		if (distance <= maxMP && cost <= maxAP){
+			epyon_debug('magnum is a candidate');
+
+			var excute = function(){
+				//@TODO: verifier  si on e peut pas déja tirer
+				moveTowardCell(minCell);//, maxMP? 
+				if (getWeapon() != WEAPON_MAGNUM){
+					debugW('Epyon: 1 extra AP was spent on equiping the magnum');
+					setWeapon(WEAPON_MAGNUM);
+				}
+				useWeapon(target['id']);
+			};
+
+			return [
+				'name': 'magnum',
+				'MP': distance,
+				'AP': cost,
+				'damage': 40,
+				'fn': excute
+			];
+		}
+		else{
+			return false;
+		}
+	};
 
 	EPYON_BEHAVIORS[EPYON_POSTFIGHT][EQUIP_PISTOL] = function(maxAP, maxMP){
 		if (getWeapon() == WEAPON_PISTOL || maxAP < 1) return false;
@@ -98,6 +134,22 @@ if (getTurn() === 1){
 
 		return [
 			'name': 'equip_pistol',
+			'AP': 1,
+			'fn': fn
+		];
+	};
+	
+	EPYON_BEHAVIORS[EPYON_POSTFIGHT][EQUIP_MAGNUM] = function(maxAP, maxMP){
+		if (getWeapon() == WEAPON_MAGNUM || maxAP < 1) return false;
+
+		epyon_debug('magnum equip behavior is a candidate');
+
+		var fn = function(){
+			if (getWeapon() != WEAPON_MAGNUM) setWeapon(WEAPON_MAGNUM);
+		};
+
+		return [
+			'name': 'equip_magnum',
 			'AP': 1,
 			'fn': fn
 		];
@@ -182,6 +234,39 @@ if (getTurn() === 1){
 		return [
 			'name': 'bandage',
 			'AP': 2,
+			'fn': fn
+		];
+	};
+	
+	EPYON_BEHAVIORS[EPYON_PREFIGHT][CHIP_CURE] = function(maxAP, maxMP){
+		var maxHeal = 70;
+		if (getTotalLife()-getLife() < (maxHeal) || maxAP < 4 || getCoolDown(CHIP_CURE) > 0) return false;
+
+		epyon_debug('cure preparation is a candidate');
+
+		var fn = function(){
+			useChipShim(CHIP_CURE, self['id']);
+		};
+
+		return [
+			'name': 'cure',
+			'AP': 4,
+			'fn': fn
+		];
+	};
+	
+	EPYON_BEHAVIORS[EPYON_PREFIGHT][CHIP_STEROID] = function(maxAP, maxMP){
+		if (getCoolDown(CHIP_STEROID) > 0 || maxAP < getChipCost(CHIP_STEROID)) return false;
+
+		epyon_debug('steroid preparation is a candidate');
+
+		var fn = function(){
+			useChipShim(CHIP_STEROID, self['id']);
+		};
+
+		return [
+			'name': 'steroid',
+			'AP': 6,
 			'fn': fn
 		];
 	};

@@ -1,4 +1,4 @@
-global EPYON_VERSION = '0.9.0';
+global EPYON_VERSION = '0.9.1';
 
 function epyon_debug(message){
 	debug('epyon: '+message);

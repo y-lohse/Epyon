@@ -34,7 +34,7 @@ function epyon_weaponBehaviorFactory(WEAPON_ID, name, damage){//damage is temp
 			minCell = getCellToUseWeapon(WEAPON_ID, target['id']);
 			var currentCell = eGetCell(self);
 
-			distance = getCellDistance(minCell, currentCell);
+			distance = getPathLength(minCell, currentCell);
 		}
 
 		if (cost > maxAP || distance > maxMP) return false;
@@ -143,7 +143,7 @@ if (getTurn() === 1){
 		var minCell = getCellToUseChip(CHIP_SPARK, target['id']);
 		var currentCell = eGetCell(self);
 
-		var distance = getCellDistance(minCell, currentCell);
+		var distance = getPathLength(minCell, currentCell);
 
 		if (distance <= maxMP && cost <= maxAP){
 			epyon_debug('spark is a candidate');

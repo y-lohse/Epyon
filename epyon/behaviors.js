@@ -32,7 +32,7 @@ function epyon_weaponBehaviorFactory(WEAPON_ID, name, damage){//damage is temp
 		if (canUseWeapon(target['id'], WEAPON_ID)) distance = 0;
 		else{
 			minCell = getCellToUseWeapon(WEAPON_ID, target['id']);
-			var currentCell = getCell();
+			var currentCell = eGetCell(self);
 
 			distance = getCellDistance(minCell, currentCell);
 		}
@@ -43,10 +43,10 @@ function epyon_weaponBehaviorFactory(WEAPON_ID, name, damage){//damage is temp
 
 		var excute = function(){
 			//@TODO: verifier  si on e peut pas déja tirer
-			if (!canUseWeapon(target['id'], WEAPON_ID)) moveTowardCell(minCell);//, maxMP? 
-			if (getWeapon() != WEAPON_ID){
+			if (!canUseWeapon(target['id'], WEAPON_ID)) eMoveTowardCell(minCell);//, maxMP? 
+			if (eGetWeapon(self) != WEAPON_ID){
 				debugW('Epyon: 1 extra AP was spent on equiping '+name);
-				setWeapon(WEAPON_ID);
+				eSetWeapon(WEAPON_ID);
 			}
 			useWeapon(target['id']);
 		};
@@ -63,12 +63,12 @@ function epyon_weaponBehaviorFactory(WEAPON_ID, name, damage){//damage is temp
 
 function epyon_equipBehaviorFactory(WEAPON_ID, name){
 	return function(maxAP, maxMP){
-		if (getWeapon() == WEAPON_ID || maxAP < 1) return false;
+		if (eGetWeapon(self) == WEAPON_ID || maxAP < 1) return false;
 
 		epyon_debug('equiping '+name+' is a candidate');
 
 		var fn = function(){
-			if (getWeapon() != WEAPON_ID) setWeapon(WEAPON_ID);
+			if (eGetWeapon(self) != WEAPON_ID) eSetWeapon(WEAPON_ID);
 		};
 
 		return [
@@ -103,7 +103,7 @@ function epyon_healChipBehaviorFactory(CHIP_ID, name, maxHeal){
 	var cost = getChipCost(CHIP_ID);
 	
 	return function(maxAP, maxMP){
-		if (getTotalLife()-getLife() < maxHeal || getCooldown(CHIP_ID) > 0 || maxAP < cost) return false;
+		if (self['totalLife']-eGetLife(self) < maxHeal || getCooldown(CHIP_ID) > 0 || maxAP < cost) return false;
 
 		epyon_debug(name+' preparation is a candidate');
 
@@ -141,7 +141,7 @@ if (getTurn() === 1){
 		var cost = getChipCost(CHIP_SPARK);
 		//@TODO: si utiliser la fonction canUseWeaponOnCell, faire un polyfill pour les niveaux moins de 40
 		var minCell = getCellToUseChip(CHIP_SPARK, target['id']);
-		var currentCell = getCell();
+		var currentCell = eGetCell(self);
 
 		var distance = getCellDistance(minCell, currentCell);
 
@@ -150,7 +150,7 @@ if (getTurn() === 1){
 
 			var excute = function(){
 				//@TODO: verifier  si on e peut pas déja tirer
-				moveTowardCell(minCell);//, maxMP? 
+				eMoveTowardCell(minCell);//, maxMP? 
 				useChipShim(CHIP_SPARK, target['id']);
 			};
 

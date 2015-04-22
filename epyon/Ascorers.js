@@ -1,5 +1,5 @@
 function epyon_aScorerHealth(eLeek){
-	return getLife(eLeek['id']) / getTotalLife(eLeek['id']) + EPYON_CONFIG['suicidal'];
+	return eGetLife(eLeek) / eLeek['totalLife'] + EPYON_CONFIG['suicidal'];
 }
 
 //requires lvl40

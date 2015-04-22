@@ -1,5 +1,5 @@
 global useChipShim = useChip;
-global EPYON_VERSION = '1.2.1';
+global EPYON_VERSION = '1.2.2';
 
 function epyon_debug(message){
 	debug('epyon: '+message);
@@ -115,8 +115,13 @@ function epyon_moveToSafety(maxMp){
 	//@TODO:essayer de se mettre à l'abris plutot que fuir en ligne droite
 	eMoveAwayFrom(target, maxMp);
 }
+//Each scorer returns a value between 0 and 1, representing the level of aggression relative to a particular aspect.
+//0 is flee, .5 is normal and 1 is engage
+
 function epyon_aScorerHealth(eLeek){
-	return eGetLife(eLeek) / eLeek['totalLife'] + EPYON_CONFIG['suicidal'];
+	// see http://gizma.com/easing/	//http://fooplot.com/#W3sidHlwZSI6MCwiZXEiOiItMSooeCooeC0yKSkiLCJjb2xvciI6IiMwMDAwMDAifSx7InR5cGUiOjEwMDAsIndpbmRvdyI6WyItMS40MjQ5OTk5OTk5OTk5OTk0IiwiMS44MjUwMDAwMDAwMDAwMDA2IiwiLTAuNzE5OTk5OTk5OTk5OTk5OCIsIjEuMjgwMDAwMDAwMDAwMDAwMiJdfV0-
+	var t = eGetLife(eLeek) / eLeek['totalLife'];
+	return -1 * (t * (t-2)) + EPYON_CONFIG['suicidal'];
 }
 
 //requires lvl40
@@ -322,26 +327,6 @@ global epyon_dummy_selector = function(candidates){
 	return candidates[0];
 };
 
-//easing functions, see http://gizma.com/easing/
-//b=0,  c=1, d=1
-
-//quart out
-global EPYON_EVAl_RECKLESS = function(t){
-	//http://fooplot.com/#W3sidHlwZSI6MCwiZXEiOiItMSooKHgtMSkqKHgtMSkqKHgtMSkqKHgtMSktMSkiLCJjb2xvciI6IiMwMDAwMDAifSx7InR5cGUiOjEwMDAsIndpbmRvdyI6WyItMS40MjQ5OTk5OTk5OTk5OTk0IiwiMS44MjUwMDAwMDAwMDAwMDA2IiwiLTAuNzE5OTk5OTk5OTk5OTk5OCIsIjEuMjgwMDAwMDAwMDAwMDAwMiJdfV0-
-	return -1 * ((t-1) * (t-1) * (t-1) * (t-1) -1);
-};
-
-//quad out
-global EPYON_EVAl_BRAVE = function(t){
-	//http://fooplot.com/#W3sidHlwZSI6MCwiZXEiOiItMSooeCooeC0yKSkiLCJjb2xvciI6IiMwMDAwMDAifSx7InR5cGUiOjEwMDAsIndpbmRvdyI6WyItMS40MjQ5OTk5OTk5OTk5OTk0IiwiMS44MjUwMDAwMDAwMDAwMDA2IiwiLTAuNzE5OTk5OTk5OTk5OTk5OCIsIjEuMjgwMDAwMDAwMDAwMDAwMiJdfV0-
-	return -1 * (t * (t-2));
-};
-
-//linear
-global EPYON_EVAl_NORMAL = function(t){
-	return t;
-};
-
 if (getTurn() === 1){
 	//inventory
 	EPYON_CONFIG[EPYON_PREFIGHT] = [];
@@ -363,9 +348,6 @@ if (getTurn() === 1){
 	EPYON_CONFIG['A'] = [
 		'health': ['fn': epyon_aScorerHealth, 'coef': 1],
 	];
-	
-	//charcter traits
-	EPYON_CONFIG['evaluation'] = EPYON_EVAl_NORMAL;//this must be a function that receives a value between 0 and 1, and rreturns another value between 0 and 1. Built-ins are EPYON_EVAl_NORMAL, EPYON_EVAl_BRAVE, and EPYON_EVAl_RECKLESS. It influences how the AI will 
 	
 	EPYON_CONFIG['suicidal'] = 0;//[0;1] with a higher suicidal value, the leek will stay agressive despite being low on health
 	
@@ -390,30 +372,28 @@ function epyon_aquireTarget(){
 
 function epyon_updateAgressions(){
 	epyon_debug('update own agression');
-	self['agression'] = epyon_computeAgression(self, EPYON_CONFIG['evaluation']);
+	self['agression'] = epyon_computeAgression(self);
 	epyon_debug('A:'+self['agression']);
 	
 	epyon_debug('update agression for '+target['name']);
-	target['agression'] = epyon_computeAgression(target, EPYON_EVAl_NORMAL);
+	target['agression'] = epyon_computeAgression(target);
 	epyon_debug('A:'+target['agression']);
 	
 	var l = count(EPYON_WATCHLIST);
 	for (var i = 0; i < l; i++){
 		epyon_debug('update agression for '+EPYON_WATCHLIST[i]['name']);
-		EPYON_WATCHLIST[i]['agression'] = epyon_computeAgression(EPYON_WATCHLIST[i], EPYON_EVAl_NORMAL);
+		EPYON_WATCHLIST[i]['agression'] = epyon_computeAgression(EPYON_WATCHLIST[i]);
 		epyon_debug('A:'+EPYON_WATCHLIST[i]['agression']);
 	}
 }
 
-function epyon_computeAgression(epyonLeek, evalFunction){
+function epyon_computeAgression(epyonLeek){
 	var cumulatedA = 0,
 		totalCoef = 0;
 	
 	arrayIter(EPYON_CONFIG['A'], function(scorerName, scorer){
 		if (scorer['coef'] > 0){
 			var score = min(1, max(scorer['fn'](epyonLeek), 0));
-			score = evalFunction(score);
-			
 			epyon_debug(scorerName+' score '+score+' coef '+scorer['coef']);
 			cumulatedA += score;
 			totalCoef += scorer['coef'];

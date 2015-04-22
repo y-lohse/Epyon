@@ -26,15 +26,15 @@ function epyon_listBehaviors(type, maxAP, maxMP){
 //factories to create behavior with less code
 function epyon_weaponBehaviorFactory(WEAPON_ID, name, damage){//damage is temp
 	var cost = getWeaponCost(WEAPON_ID);
-	var distance;
+	var distance, minCell;
 	
 	return function(maxAP, maxMP){	
-		if (canUseWeapon(target['id'], WEAPON_ID)) distance = 0;
+		if (canUseWeapon(WEAPON_ID, target['id'])) distance = 0;
 		else{
-			var minCell = getCellToUseWeapon(WEAPON_ID, target['id']);
-			var currentCell = getCell();
+			minCell = getCellToUseWeapon(WEAPON_ID, target['id']);
+			var currentCell = eGetCell(self);
 
-			distance = getCellDistance(minCell, currentCell);
+			distance = getPathLength(minCell, currentCell);
 		}
 
 		if (cost > maxAP || distance > maxMP) return false;
@@ -43,10 +43,10 @@ function epyon_weaponBehaviorFactory(WEAPON_ID, name, damage){//damage is temp
 
 		var excute = function(){
 			//@TODO: verifier  si on e peut pas déja tirer
-			if (!canUseWeapon(target['id'], WEAPON_ID)) moveTowardCell(minCell);//, maxMP? 
-			if (getWeapon() != WEAPON_ID){
+			if (!canUseWeapon(WEAPON_ID, target['id'])) eMoveTowardCell(minCell);//, maxMP? 
+			if (eGetWeapon(self) != WEAPON_ID){
 				debugW('Epyon: 1 extra AP was spent on equiping '+name);
-				setWeapon(WEAPON_ID);
+				eSetWeapon(WEAPON_ID);
 			}
 			useWeapon(target['id']);
 		};
@@ -63,12 +63,12 @@ function epyon_weaponBehaviorFactory(WEAPON_ID, name, damage){//damage is temp
 
 function epyon_equipBehaviorFactory(WEAPON_ID, name){
 	return function(maxAP, maxMP){
-		if (getWeapon() == WEAPON_ID || maxAP < 1) return false;
+		if (eGetWeapon(self) == WEAPON_ID || maxAP < 1) return false;
 
 		epyon_debug('equiping '+name+' is a candidate');
 
 		var fn = function(){
-			if (getWeapon() != WEAPON_ID) setWeapon(WEAPON_ID);
+			if (eGetWeapon(self) != WEAPON_ID) eSetWeapon(WEAPON_ID);
 		};
 
 		return [
@@ -83,7 +83,7 @@ function epyon_simpleSelfChipBehaviorFactory(CHIP_ID, name){
 	var cost = getChipCost(CHIP_ID);
 	
 	return function(maxAP, maxMP){
-		if (getCoolDown(CHIP_ID) > 0 || maxAP < cost) return false;
+		if (getCooldown(CHIP_ID) > 0 || maxAP < cost) return false;
 
 		epyon_debug(name+' is a candidate');
 
@@ -103,7 +103,7 @@ function epyon_healChipBehaviorFactory(CHIP_ID, name, maxHeal){
 	var cost = getChipCost(CHIP_ID);
 	
 	return function(maxAP, maxMP){
-		if (getTotalLife()-getLife() < maxHeal || getCoolDown(CHIP_ID) > 0 || maxAP < cost) return false;
+		if (self['totalLife']-eGetLife(self) < maxHeal || getCooldown(CHIP_ID) > 0 || maxAP < cost) return false;
 
 		epyon_debug(name+' preparation is a candidate');
 
@@ -139,32 +139,32 @@ if (getTurn() === 1){
 	//FIGHT
 	EPYON_BEHAVIORS[EPYON_FIGHT][CHIP_SPARK] = function(maxAP, maxMP){
 		var cost = getChipCost(CHIP_SPARK);
-		//@TODO: si utiliser la fonction canUseWeaponOnCell, faire un polyfill pour les niveaux moins de 40
-		var minCell = getCellToUseChip(CHIP_SPARK, target['id']);
-		var currentCell = getCell();
-
-		var distance = getCellDistance(minCell, currentCell);
-
-		if (distance <= maxMP && cost <= maxAP){
-			epyon_debug('spark is a candidate');
-
-			var excute = function(){
-				//@TODO: verifier  si on e peut pas déja tirer
-				moveTowardCell(minCell);//, maxMP? 
-				useChipShim(CHIP_SPARK, target['id']);
-			};
-
-			return [
-				'name': 'spark',
-				'MP': distance,
-				'AP': cost,
-				'damage': 16,
-				'fn': excute
-			];
-		}
+		var distance, minCell;
+		
+		if (canUseChip(CHIP_SPARK, target['id'])) distance = 0;
 		else{
-			return false;
+			minCell = getCellToUseChip(CHIP_SPARK, target['id']);
+			var currentCell = eGetCell(self);
+
+			distance = getPathLength(minCell, currentCell);
 		}
+
+		if (cost > maxAP || distance > maxMP) return false;
+		
+		epyon_debug('spark is a candidate');
+
+		var excute = function(){
+			if (!canUseChip(CHIP_SPARK, target['id'])) eMoveTowardCell(minCell);
+			useChipShim(CHIP_SPARK, target['id']);
+		};
+
+		return [
+			'name': 'spark',
+			'MP': distance,
+			'AP': cost,
+			'damage': 16,
+			'fn': excute
+		];
 	};
 	
 	EPYON_BEHAVIORS[EPYON_FIGHT][WEAPON_PISTOL] = epyon_weaponBehaviorFactory(WEAPON_PISTOL, 'pîstol', 20);
@@ -176,4 +176,6 @@ if (getTurn() === 1){
 	EPYON_BEHAVIORS[EPYON_POSTFIGHT][EQUIP_MAGNUM] = epyon_equipBehaviorFactory(WEAPON_MAGNUM, 'magnum');
 
 	EPYON_BEHAVIORS[EPYON_POSTFIGHT][CHIP_BANDAGE] = epyon_healChipBehaviorFactory(CHIP_BANDAGE, 'bandage', 15);
+	EPYON_BEHAVIORS[EPYON_POSTFIGHT][CHIP_CURE] = epyon_healChipBehaviorFactory(CHIP_CURE, 'cure', 70);
+	EPYON_BEHAVIORS[EPYON_POSTFIGHT][CHIP_SPARK] = EPYON_BEHAVIORS[EPYON_FIGHT][CHIP_SPARK];
 }

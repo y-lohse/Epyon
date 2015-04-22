@@ -3,7 +3,7 @@ global EPYON_WATCHLIST = [];
 function epyon_aquireTarget(){
 	var enemy = epyon_getLeek(getNearestEnemy());
 	
-	EPYON_TARGET_DISTANCE = getCellDistance(getCell(), getCell(enemy['id']));
+	EPYON_TARGET_DISTANCE = getPathLength(eGetCell(self), eGetCell(enemy));
 	
 	if (enemy != target){
 		target = enemy;
@@ -28,7 +28,6 @@ function epyon_updateAgressions(){
 		epyon_debug('update agression for '+EPYON_WATCHLIST[i]['name']);
 		EPYON_WATCHLIST[i]['agression'] = epyon_computeAgression(EPYON_WATCHLIST[i]);
 		epyon_debug('A:'+EPYON_WATCHLIST[i]['agression']);
-		
 	}
 }
 
@@ -49,8 +48,6 @@ function epyon_computeAgression(epyonLeek){
 }
 
 function epyon_act(){
-	var BERSERK = 0.2;//a high valu in berserking will make the leek charge towards the enemy even when the fight is not estimaed in his favor. A low value will make him bck off more easily.
-	
 	//compute S
 	debug('own agression: '+self['agression']);
 	debug('target agression: '+target['agression']+' ('+target['name']+')');
@@ -89,16 +86,11 @@ function epyon_act(){
 			remainingAP += allocatedAP;
 			remainingMP += allocatedMP;
 		}
-		else if (S >= 0 - BERSERK){
-			epyon_debug('no suitable attacks found, moving towards enemy');
-			remainingAP += allocatedAP;//re-aalocate all APs
-			epyon_moveTowardsTarget(allocatedMP);
-		}
 		else{
 			//this behavior could posibly lead to flee too easily
-			epyon_debug('no suitable attacks found, backing off');
+			epyon_debug('no suitable attacks found');
 			remainingAP += allocatedAP;//re-alocate all APs
-			remainingMP += allocatedMP;
+			remainingMP += allocatedMP;//and MPs
 		}
 	}
 	else{
@@ -108,14 +100,27 @@ function epyon_act(){
 	epyon_debug('remaining MP after attacks: '+remainingMP);
 	epyon_debug('remaining AP after attacks: '+remainingAP);
 	
-	if (remainingMP > 0) epyon_moveToSafety(remainingMP);
+	if (remainingMP > 0){
+		//do we move forward, back off or staywhere we are?
+		if (S >= EPYON_CONFIG['march']){
+			epyon_debug('moving closer');
+			epyon_moveTowardsTarget(remainingMP);
+		}
+		else if (S <= EPYON_CONFIG['flee']){
+			epyon_debug('backing off');
+			epyon_moveToSafety(remainingMP);
+		}
+		else{
+			epyon_debug('staying in position');
+		}
+	}
 	
 	if (remainingAP > 0) epyon_postfight(remainingAP, 0);//spend the remaining AP on whatever
 }
 
 //determines how many Mp it is safe to spend on attacks this turn
 function epyon_allocateAttackMP(S, max){
-	if (S < -0.5) return 0;
+	if (S <= EPYON_CONFIG['flee']) return 0;
 	else if (S < 0) return round(max / 2);
 	else return max;
 }
@@ -151,4 +156,28 @@ function epyon_postfight(maxAP, maxMP){
 		maxAP -= selected['AP'];
 		selected['fn']();
 	};
+}
+
+function epyon_denyChallenge(){
+	if (getFightContext() === FIGHT_CONTEXT_CHALLENGE){
+		var denied = true,
+			enemies = getEnemies(),
+			l = count(enemies);
+		
+		for (var i = 0; i < l; i++){
+			if (inArray(EPYON_CONFIG['whitelist']['farmers'], getFarmerName(enemies[i])) ||
+				inArray(EPYON_CONFIG['whitelist']['teams'], getTeamName(enemies[i]))){
+				denied = false;
+				break;
+			}
+		}
+		
+		//challenge denied, just fuck up everything
+		if (denied){
+			debugW('challenge denied');
+			EPYON_CONFIG[EPYON_PREFIGHT] = [];
+			EPYON_CONFIG[EPYON_FIGHT] = [];
+			EPYON_CONFIG[EPYON_POSTFIGHT] = [];
+		}
+	}
 }

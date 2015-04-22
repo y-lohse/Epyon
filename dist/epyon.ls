@@ -285,10 +285,7 @@ if (getTurn() === 1){
 			distance = getPathLength(minCell, currentCell);
 		}
 
-		if (cost > maxAP || distance > maxMP){
-			debug('cant use spark: '+distance+' '+maxAP);
-			return false;
-		}
+		if (cost > maxAP || distance > maxMP) return false;
 		
 		epyon_debug('spark is a candidate');
 

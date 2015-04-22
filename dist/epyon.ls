@@ -1,5 +1,5 @@
 global useChipShim = useChip;
-global EPYON_VERSION = '1.2.0';
+global EPYON_VERSION = '1.2.1';
 
 function epyon_debug(message){
 	debug('epyon: '+message);
@@ -165,7 +165,7 @@ function epyon_weaponBehaviorFactory(WEAPON_ID, name, damage){//damage is temp
 	var distance, minCell;
 	
 	return function(maxAP, maxMP){	
-		if (canUseWeapon(target['id'], WEAPON_ID)) distance = 0;
+		if (canUseWeapon(WEAPON_ID, target['id'])) distance = 0;
 		else{
 			minCell = getCellToUseWeapon(WEAPON_ID, target['id']);
 			var currentCell = eGetCell(self);
@@ -179,7 +179,7 @@ function epyon_weaponBehaviorFactory(WEAPON_ID, name, damage){//damage is temp
 
 		var excute = function(){
 			//@TODO: verifier  si on e peut pas déja tirer
-			if (!canUseWeapon(target['id'], WEAPON_ID)) eMoveTowardCell(minCell);//, maxMP? 
+			if (!canUseWeapon(WEAPON_ID, target['id'])) eMoveTowardCell(minCell);//, maxMP? 
 			if (eGetWeapon(self) != WEAPON_ID){
 				debugW('Epyon: 1 extra AP was spent on equiping '+name);
 				eSetWeapon(WEAPON_ID);
@@ -275,32 +275,35 @@ if (getTurn() === 1){
 	//FIGHT
 	EPYON_BEHAVIORS[EPYON_FIGHT][CHIP_SPARK] = function(maxAP, maxMP){
 		var cost = getChipCost(CHIP_SPARK);
-		//@TODO: si utiliser la fonction canUseWeaponOnCell, faire un polyfill pour les niveaux moins de 40
-		var minCell = getCellToUseChip(CHIP_SPARK, target['id']);
-		var currentCell = eGetCell(self);
-
-		var distance = getPathLength(minCell, currentCell);
-
-		if (distance <= maxMP && cost <= maxAP){
-			epyon_debug('spark is a candidate');
-
-			var excute = function(){
-				//@TODO: verifier  si on e peut pas déja tirer
-				eMoveTowardCell(minCell);//, maxMP? 
-				useChipShim(CHIP_SPARK, target['id']);
-			};
-
-			return [
-				'name': 'spark',
-				'MP': distance,
-				'AP': cost,
-				'damage': 16,
-				'fn': excute
-			];
-		}
+		var distance, minCell;
+		
+		if (canUseChip(CHIP_SPARK, target['id'])) distance = 0;
 		else{
+			minCell = getCellToUseChip(CHIP_SPARK, target['id']);
+			var currentCell = eGetCell(self);
+
+			distance = getPathLength(minCell, currentCell);
+		}
+
+		if (cost > maxAP || distance > maxMP){
+			debug('cant use spark: '+distance+' '+maxAP);
 			return false;
 		}
+		
+		epyon_debug('spark is a candidate');
+
+		var excute = function(){
+			if (!canUseChip(CHIP_SPARK, target['id'])) eMoveTowardCell(minCell);
+			useChipShim(CHIP_SPARK, target['id']);
+		};
+
+		return [
+			'name': 'spark',
+			'MP': distance,
+			'AP': cost,
+			'damage': 16,
+			'fn': excute
+		];
 	};
 	
 	EPYON_BEHAVIORS[EPYON_FIGHT][WEAPON_PISTOL] = epyon_weaponBehaviorFactory(WEAPON_PISTOL, 'pîstol', 20);
@@ -313,6 +316,7 @@ if (getTurn() === 1){
 
 	EPYON_BEHAVIORS[EPYON_POSTFIGHT][CHIP_BANDAGE] = epyon_healChipBehaviorFactory(CHIP_BANDAGE, 'bandage', 15);
 	EPYON_BEHAVIORS[EPYON_POSTFIGHT][CHIP_CURE] = epyon_healChipBehaviorFactory(CHIP_CURE, 'cure', 70);
+	EPYON_BEHAVIORS[EPYON_POSTFIGHT][CHIP_SPARK] = EPYON_BEHAVIORS[EPYON_FIGHT][CHIP_SPARK];
 }
 
 global EPYON_CONFIG = [];

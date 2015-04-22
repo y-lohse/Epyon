@@ -30,6 +30,12 @@ if (getTurn() === 1){
 	EPYON_CONFIG[EPYON_FIGHT] = [];
 	EPYON_CONFIG[EPYON_POSTFIGHT] = [];
 	
+	//chanllenge whitelisting
+	EPYON_CONFIG['whitelist'] = [
+		'farmers': [],
+		'teams': []
+	];
+	
 	//selectors
 	EPYON_CONFIG['select_prefight'] = epyon_dummy_selector;
 	EPYON_CONFIG['select_fight'] = epyon_dummy_selector;

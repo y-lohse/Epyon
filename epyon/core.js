@@ -159,3 +159,27 @@ function epyon_postfight(maxAP, maxMP){
 		selected['fn']();
 	};
 }
+
+function epyon_denyChallenge(){
+	if (getFightContext() === FIGHT_CONTEXT_CHALLENGE){
+		var denied = true,
+			enemies = getEnemies(),
+			l = count(enemies);
+		
+		for (var i = 0; i < l; i++){
+			if (inArray(EPYON_CONFIG['whitelist']['farmers'], getFarmerName(enemies[i])) ||
+				inArray(EPYON_CONFIG['whitelist']['teams'], getTeamName(enemies[i]))){
+				denied = false;
+				break;
+			}
+		}
+		
+		//challenge denied, just fuck up everything
+		if (denied){
+			debugW('challenge denied');
+			EPYON_CONFIG[EPYON_PREFIGHT] = [];
+			EPYON_CONFIG[EPYON_FIGHT] = [];
+			EPYON_CONFIG[EPYON_POSTFIGHT] = [];
+		}
+	}
+}

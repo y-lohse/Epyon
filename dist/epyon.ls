@@ -1,5 +1,5 @@
 global useChipShim = useChip;
-global EPYON_VERSION = '1.1.1';
+global EPYON_VERSION = '1.2.0';
 
 function epyon_debug(message){
 	debug('epyon: '+message);
@@ -41,9 +41,18 @@ function epyon_getLeek(leekId){
 	debug('creating leek '+leekId);
 	var leek = [];
 	
+	//static props
 	leek['id'] = leekId;
 	leek['name'] = getName(leekId);
+	leek['totalLife'] = getTotalLife(leekId);
+	
+	//dynamic props
 	leek['agression'] = 1;
+	
+	//private props
+	leek['_cell'] = getCell(leekId);
+	leek['_cellIsDirty'] = false;
+	leek['_weapon'] = getWeapon(leekId);
 	
 	EPYON_LEEKS[leekId] = leek;
 	
@@ -51,8 +60,43 @@ function epyon_getLeek(leekId){
 }
 
 function epyon_updateLeek(epyonLeek){
-	//@TODO: maj des propriétés qui changent
+	leek['_cell'] = getCell(leekId);
+	leek['_cellIsDirty'] = false;
+	leek['_weapon'] = getWeapon(leekId);
 	return epyonLeek;
+}
+
+function eGetCell(eLeek){
+	if (eLeek['_cellIsDirty']) eLeek['cell'] = getCell(eLeek['id']);
+	return eLeek['_cell'];
+}
+
+function eGetLife(eLeek){
+	return getLife(eLeek['id']);
+}
+
+function eGetWeapon(eLeek){
+	return leek['_weapon'];
+}
+
+function eSetWeapon(WEAPON_ID){
+	leek['_weapon'] = WEAPON_ID;
+	return setWeapon(WEAPON_ID);
+}
+
+function eMoveTowardCell(cell){
+	eLeek['_cellIsDirty'] = true;
+	return moveTowardCell(cell);
+}
+
+function eMoveTowardCellWithMax(cell, max){
+	eLeek['_cellIsDirty'] = true;
+	return moveTowardCell(cell, max);
+}
+
+function eMoveAwayFrom(eLeek, max){
+	eLeek['_cellIsDirty'] = true;
+	return moveAwayFrom(eLeek['id'], max);
 }
 
 global self = epyon_getLeek(getLeek());
@@ -62,15 +106,15 @@ global target = null;
 function epyon_moveTowardsTarget(maxMp){
 	//@TODO: se déplace vers l'adversaire mais essayer de rester a couvert
 	var cell = getCell(target['id']);
-	moveTowardCell(cell, maxMp);
+	eMoveTowardCellWithMax(cell, maxMp);
 }
 
 function epyon_moveToSafety(maxMp){
 	//@TODO:essayer de se mettre à l'abris plutot que fuir en ligne droite
-	moveAwayFrom(target['id'], maxMp);
+	eMoveAwayFrom(target, maxMp);
 }
 function epyon_aScorerHealth(eLeek){
-	return getLife(eLeek['id']) / getTotalLife(eLeek['id']) + EPYON_CONFIG['suicidal'];
+	return eGetLife(eLeek) / eLeek['totalLife'] + EPYON_CONFIG['suicidal'];
 }
 
 //requires lvl40
@@ -122,7 +166,7 @@ function epyon_weaponBehaviorFactory(WEAPON_ID, name, damage){//damage is temp
 		if (canUseWeapon(target['id'], WEAPON_ID)) distance = 0;
 		else{
 			minCell = getCellToUseWeapon(WEAPON_ID, target['id']);
-			var currentCell = getCell();
+			var currentCell = eGetCell(self);
 
 			distance = getCellDistance(minCell, currentCell);
 		}
@@ -133,10 +177,10 @@ function epyon_weaponBehaviorFactory(WEAPON_ID, name, damage){//damage is temp
 
 		var excute = function(){
 			//@TODO: verifier  si on e peut pas déja tirer
-			if (!canUseWeapon(target['id'], WEAPON_ID)) moveTowardCell(minCell);//, maxMP? 
-			if (getWeapon() != WEAPON_ID){
+			if (!canUseWeapon(target['id'], WEAPON_ID)) eMoveTowardCell(minCell);//, maxMP? 
+			if (eGetWeapon(self) != WEAPON_ID){
 				debugW('Epyon: 1 extra AP was spent on equiping '+name);
-				setWeapon(WEAPON_ID);
+				eSetWeapon(WEAPON_ID);
 			}
 			useWeapon(target['id']);
 		};
@@ -153,12 +197,12 @@ function epyon_weaponBehaviorFactory(WEAPON_ID, name, damage){//damage is temp
 
 function epyon_equipBehaviorFactory(WEAPON_ID, name){
 	return function(maxAP, maxMP){
-		if (getWeapon() == WEAPON_ID || maxAP < 1) return false;
+		if (eGetWeapon(self) == WEAPON_ID || maxAP < 1) return false;
 
 		epyon_debug('equiping '+name+' is a candidate');
 
 		var fn = function(){
-			if (getWeapon() != WEAPON_ID) setWeapon(WEAPON_ID);
+			if (eGetWeapon(self) != WEAPON_ID) eSetWeapon(WEAPON_ID);
 		};
 
 		return [
@@ -193,7 +237,7 @@ function epyon_healChipBehaviorFactory(CHIP_ID, name, maxHeal){
 	var cost = getChipCost(CHIP_ID);
 	
 	return function(maxAP, maxMP){
-		if (getTotalLife()-getLife() < maxHeal || getCooldown(CHIP_ID) > 0 || maxAP < cost) return false;
+		if (self['totalLife']-eGetLife(self) < maxHeal || getCooldown(CHIP_ID) > 0 || maxAP < cost) return false;
 
 		epyon_debug(name+' preparation is a candidate');
 
@@ -231,7 +275,7 @@ if (getTurn() === 1){
 		var cost = getChipCost(CHIP_SPARK);
 		//@TODO: si utiliser la fonction canUseWeaponOnCell, faire un polyfill pour les niveaux moins de 40
 		var minCell = getCellToUseChip(CHIP_SPARK, target['id']);
-		var currentCell = getCell();
+		var currentCell = eGetCell(self);
 
 		var distance = getCellDistance(minCell, currentCell);
 
@@ -240,7 +284,7 @@ if (getTurn() === 1){
 
 			var excute = function(){
 				//@TODO: verifier  si on e peut pas déja tirer
-				moveTowardCell(minCell);//, maxMP? 
+				eMoveTowardCell(minCell);//, maxMP? 
 				useChipShim(CHIP_SPARK, target['id']);
 			};
 
@@ -324,7 +368,7 @@ global EPYON_WATCHLIST = [];
 function epyon_aquireTarget(){
 	var enemy = epyon_getLeek(getNearestEnemy());
 	
-	EPYON_TARGET_DISTANCE = getPathLength(getCell(), getCell(enemy['id']));
+	EPYON_TARGET_DISTANCE = getPathLength(eGetCell(self), eGetCell(enemy));
 	
 	if (enemy != target){
 		target = enemy;

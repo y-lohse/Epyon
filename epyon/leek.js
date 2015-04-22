@@ -9,10 +9,18 @@ function epyon_getLeek(leekId){
 	debug('creating leek '+leekId);
 	var leek = [];
 	
+	//static props
 	leek['id'] = leekId;
 	leek['name'] = getName(leekId);
 	leek['totalLife'] = getTotalLife(leekId);
+	
+	//dynamic props
 	leek['agression'] = 1;
+	
+	//private props
+	leek['_cell'] = getCell(leekId);
+	leek['_cellIsDirty'] = false;
+	leek['_weapon'] = getWeapon(leekId);
 	
 	EPYON_LEEKS[leekId] = leek;
 	
@@ -20,12 +28,15 @@ function epyon_getLeek(leekId){
 }
 
 function epyon_updateLeek(epyonLeek){
-	//@TODO: maj des propriétés qui changent
+	leek['_cell'] = getCell(leekId);
+	leek['_cellIsDirty'] = false;
+	leek['_weapon'] = getWeapon(leekId);
 	return epyonLeek;
 }
 
 function eGetCell(eLeek){
-	return getCell(eLeek['id']);
+	if (eLeek['_cellIsDirty']) eLeek['cell'] = getCell(eLeek['id']);
+	return eLeek['_cell'];
 }
 
 function eGetLife(eLeek){
@@ -33,22 +44,26 @@ function eGetLife(eLeek){
 }
 
 function eGetWeapon(eLeek){
-	return getWeapon(eLeek['id']);
+	return leek['_weapon'];
 }
 
 function eSetWeapon(WEAPON_ID){
+	leek['_weapon'] = WEAPON_ID;
 	return setWeapon(WEAPON_ID);
 }
 
 function eMoveTowardCell(cell){
+	eLeek['_cellIsDirty'] = true;
 	return moveTowardCell(cell);
 }
 
 function eMoveTowardCellWithMax(cell, max){
+	eLeek['_cellIsDirty'] = true;
 	return moveTowardCell(cell, max);
 }
 
 function eMoveAwayFrom(eLeek, max){
+	eLeek['_cellIsDirty'] = true;
 	return moveAwayFrom(eLeek['id'], max);
 }
 

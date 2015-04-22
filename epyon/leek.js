@@ -28,9 +28,9 @@ function epyon_getLeek(leekId){
 }
 
 function epyon_updateLeek(epyonLeek){
-	leek['_cell'] = getCell(leekId);
-	leek['_cellIsDirty'] = false;
-	leek['_weapon'] = getWeapon(leekId);
+	epyonLeek['_cell'] = getCell(epyonLeek['id']);
+	epyonLeek['_cellIsDirty'] = false;
+	epyonLeek['_weapon'] = getWeapon(epyonLeek['id']);
 	return epyonLeek;
 }
 
@@ -44,28 +44,30 @@ function eGetLife(eLeek){
 }
 
 function eGetWeapon(eLeek){
-	return leek['_weapon'];
+	return eLeek['_weapon'];
 }
 
 function eSetWeapon(WEAPON_ID){
-	leek['_weapon'] = WEAPON_ID;
+	self['_weapon'] = WEAPON_ID;
 	return setWeapon(WEAPON_ID);
 }
 
 function eMoveTowardCell(cell){
-	eLeek['_cellIsDirty'] = true;
+	self['_cellIsDirty'] = true;
 	return moveTowardCell(cell);
 }
 
 function eMoveTowardCellWithMax(cell, max){
-	eLeek['_cellIsDirty'] = true;
+	self['_cellIsDirty'] = true;
 	return moveTowardCell(cell, max);
 }
 
 function eMoveAwayFrom(eLeek, max){
-	eLeek['_cellIsDirty'] = true;
+	self['_cellIsDirty'] = true;
 	return moveAwayFrom(eLeek['id'], max);
 }
 
-global self = epyon_getLeek(getLeek());
+global self;
 global target = null;
+
+self = epyon_getLeek(getLeek());

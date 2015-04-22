@@ -49,13 +49,14 @@ function epyon_computeAgression(epyonLeek){
 
 function epyon_act(){
 	//compute S
-	debug('own agression: '+self['agression']);
-	debug('target agression: '+target['agression']+' ('+target['name']+')');
 	var S = self['agression'] - target['agression'];
 	epyon_debug('S computed to '+S);
 	
+	
 	var totalMP = 3,
 		totalAP = 10;
+		
+	var cells = epyon_analyzeCellsWithin(eGetCell(self), totalMP);
 		
 	var allocatedMP = epyon_allocateAttackMP(S, totalMP);
 	var spentAP = epyon_prefight(S, totalAP, 0);

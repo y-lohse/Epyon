@@ -21,9 +21,13 @@ if (getTurn() === 1){
 	EPYON_CONFIG['select_fight'] = epyon_dummy_selector;
 	EPYON_CONFIG['select_postfight'] = epyon_dummy_selector;
 	
-	//socrer functions receive a leek as parameter and score him on any criteria the ysee fit, where 0 is shit and 1 is great. Return values are clamped between 0 and 1 anyway. Each scorer is weighted. If the weight (coef) is 0 for a scorer, the scorer is ignored.
+	//scorer functions receive a leek as parameter and score him on any criteria the ysee fit, where 0 is shit and 1 is great. Return values are clamped between 0 and 1 anyway. Each scorer is weighted. If the weight (coef) is 0 for a scorer, the scorer is ignored.
 	EPYON_CONFIG['A'] = [
 		'health': ['fn': epyon_aScorerHealth, 'coef': 1],
+	];
+	
+	EPYON_CONFIG['C'] = [
+		'border': ['fn': epyon_cScorerBorder, 'coef': 1],
 	];
 	
 	EPYON_CONFIG['suicidal'] = 0;//[0;1] with a higher suicidal value, the leek will stay agressive despite being low on health

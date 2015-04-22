@@ -103,7 +103,30 @@ global self;
 global target = null;
 
 self = epyon_getLeek(getLeek());
-//include('epyon.leek.ls');
+global MAP_WIDTH = 0;
+global MAP_HEIGHT = 0;
+
+if (getTurn() == 1){
+	var width = -1,
+		height = -1,
+		x = 0,
+		y = 0,
+		cell;
+	do{
+		cell = getCellFromXY(x++, 0);
+		width++;
+	}
+	while(cell);
+	
+	do{
+		cell = getCellFromXY(0, y++);
+		height++;
+	}
+	while(cell);
+	
+	MAP_WIDTH = width;
+	MAP_HEIGHT = height;
+}
 
 function epyon_moveTowardsTarget(maxMp){
 	//@TODO: se déplace vers l'adversaire mais essayer de rester a couvert
@@ -115,6 +138,78 @@ function epyon_moveToSafety(maxMp){
 	//@TODO:essayer de se mettre à l'abris plutot que fuir en ligne droite
 	eMoveAwayFrom(target, maxMp);
 }
+
+function epyon_analyzeCellsWithin(center, distance){
+	var eCells = [],
+		toGrade = getCellsWithin(center, distance);
+	
+	arrayIter(toGrade, function(cell){
+		//grade each cell in reach
+		var eCell = [
+			'id': cell,
+			'x': getCellX(cell),
+			'y': getCellY(cell),
+		];
+		
+		var cumulatedScore = 0,
+			totalCoef = 0;
+		
+		arrayIter(EPYON_CONFIG['C'], function(scorerName, scorer){
+			if (scorer['coef'] > 0){
+				var score = min(1, max(scorer['fn'](eCell), 0));
+				epyon_debug(eCell['x']+'/'+eCell['y']+' '+scorerName+' score '+score+' coef '+scorer['coef']);
+				cumulatedScore += score;
+				totalCoef += scorer['coef'];
+			}
+		});
+		
+		eCell['score'] = (totalCoef > 0) ? cumulatedScore / totalCoef : 1;
+		push(eCells, eCell);
+	});
+	
+	return eCells;
+}
+
+//returns all cells within a certain walking distance
+function getCellsWithin(center, distance){
+	var cells = [];
+	if (!center) return cells;
+	
+	var centerX = getCellX(center),
+		centerY = getCellY(center);
+		
+	var maxX = centerX + distance,
+		maxY = centerY + distance;
+		
+	//we're using getPathLength, but getCellDistance could be a good approximation
+	for (var x = centerX - distance; x < maxX; x++){
+		for (var y = centerY - distance; y < maxY; y++){
+			var cell = getCellFromXY(x, y);
+			if (cell && getPathLength(cell, center) <= distance) push(cells, cell);
+		}
+	}
+	
+	return cells;
+}
+
+
+
+//function map_findNearbyCover(fromCell, withWeapon, maxDistance){
+//	var toCheck = getCellsWithin(fromCell, maxDistance);
+//	
+//	var safes = [];
+//	for (var cell in toCheck){
+//		if (!canUseWeaponOnCell(withWeapon, fromCell)){
+//			push(safes, cell);//level 40
+//			mark(cell, COLOR_GREEN);
+//		}
+//		else{
+//			mark(cell, COLOR_RED);
+//		}
+//	}
+//	
+//	return safes;
+//}
 //Each scorer returns a value between 0 and 1, representing the level of aggression relative to a particular aspect.
 //0 is flee, .5 is normal and 1 is engage
 
@@ -139,6 +234,14 @@ function epyon_aScorerHealth(eLeek){
 //	
 //	return getAbsoluteShield(eLeek['id']) / maxAbsShield;
 //}
+function epyon_cScorerBorder(eCell){
+	var edge = 4;
+	
+	if (abs(eCell['x']) >= MAP_WIDTH - edge || 
+		abs(eCell['y']) >= MAP_HEIGHT - edge)
+		return 0;
+	else return 1;
+}
 global EPYON_PREFIGHT = 'prefight';
 global EPYON_FIGHT = 'fight';
 global EPYON_POSTFIGHT = 'postfight';
@@ -344,9 +447,13 @@ if (getTurn() === 1){
 	EPYON_CONFIG['select_fight'] = epyon_dummy_selector;
 	EPYON_CONFIG['select_postfight'] = epyon_dummy_selector;
 	
-	//socrer functions receive a leek as parameter and score him on any criteria the ysee fit, where 0 is shit and 1 is great. Return values are clamped between 0 and 1 anyway. Each scorer is weighted. If the weight (coef) is 0 for a scorer, the scorer is ignored.
+	//scorer functions receive a leek as parameter and score him on any criteria the ysee fit, where 0 is shit and 1 is great. Return values are clamped between 0 and 1 anyway. Each scorer is weighted. If the weight (coef) is 0 for a scorer, the scorer is ignored.
 	EPYON_CONFIG['A'] = [
 		'health': ['fn': epyon_aScorerHealth, 'coef': 1],
+	];
+	
+	EPYON_CONFIG['C'] = [
+		'border': ['fn': epyon_cScorerBorder, 'coef': 1],
 	];
 	
 	EPYON_CONFIG['suicidal'] = 0;//[0;1] with a higher suicidal value, the leek will stay agressive despite being low on health
@@ -405,13 +512,14 @@ function epyon_computeAgression(epyonLeek){
 
 function epyon_act(){
 	//compute S
-	debug('own agression: '+self['agression']);
-	debug('target agression: '+target['agression']+' ('+target['name']+')');
 	var S = self['agression'] - target['agression'];
 	epyon_debug('S computed to '+S);
 	
+	
 	var totalMP = 3,
 		totalAP = 10;
+		
+	var cells = epyon_analyzeCellsWithin(eGetCell(self), totalMP);
 		
 	var allocatedMP = epyon_allocateAttackMP(S, totalMP);
 	var spentAP = epyon_prefight(S, totalAP, 0);

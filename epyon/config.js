@@ -47,7 +47,7 @@ if (getTurn() === 1){
 	];
 	
 	//charcter traits
-	EPYON_CONFIG['evaluation'] = EPYON_EVAl_BRAVE;//this must be a function that receives a value between 0 and 1, and rreturns another value between 0 and 1. Built-ins are EPYON_EVAl_NORMAL, EPYON_EVAl_BRAVE, and EPYON_EVAl_RECKLESS. It influences how the AI will 
+	EPYON_CONFIG['evaluation'] = EPYON_EVAl_NORMAL;//this must be a function that receives a value between 0 and 1, and rreturns another value between 0 and 1. Built-ins are EPYON_EVAl_NORMAL, EPYON_EVAl_BRAVE, and EPYON_EVAl_RECKLESS. It influences how the AI will 
 	
 	EPYON_CONFIG['suicidal'] = 0;//[0;1] with a higher suicidal value, the leek will stay agressive despite being low on health
 	

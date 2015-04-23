@@ -16,7 +16,6 @@ function epyon_aquireTarget(){
 		if (actualHealth < lowHealth) {	
 			lowerHealth = actualHealth;
 			enemy = leek;
-			
 		}
 		
 	}

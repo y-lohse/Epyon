@@ -1,6 +1,14 @@
 global EPYON_LEEKS = [];
 global EPYON_TARGET_DISTANCE; 
 
+function epyon_getAliveEnemies() { 
+	var leeks = getAliveEnemies();
+	var l = count(leeks);
+	for (var i = 0; i < l; i++){
+		epyion_getLeek(leeks[i]);
+	}
+}
+
 function epyon_getLeek(leekId){
 	if (EPYON_LEEKS[leekId]){
 		return epyon_updateLeek(EPYON_LEEKS[leekId]);

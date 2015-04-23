@@ -1,5 +1,5 @@
 global useChipShim = useChip;
-global EPYON_VERSION = '1.2.2';
+global EPYON_VERSION = '1.3.0';
 
 function epyon_debug(message){
 	debug('epyon: '+message);
@@ -33,6 +33,9 @@ if (getTurn() == 1){
 global EPYON_LEEKS = [];
 global EPYON_TARGET_DISTANCE;
 
+global self;
+global target;
+
 function epyon_getLeek(leekId){
 	if (EPYON_LEEKS[leekId]){
 		return epyon_updateLeek(EPYON_LEEKS[leekId]);
@@ -45,7 +48,6 @@ function epyon_getLeek(leekId){
 	leek['id'] = leekId;
 	leek['name'] = getName(leekId);
 	leek['totalLife'] = getTotalLife(leekId);
-	leek['ally'] = isAlly(leekId);
 	
 	//dynamic props
 	leek['agression'] = 1;
@@ -65,6 +67,10 @@ function epyon_updateLeek(epyonLeek){
 	epyonLeek['_cellIsDirty'] = false;
 	epyonLeek['_weapon'] = getWeapon(epyonLeek['id']);
 	return epyonLeek;
+}
+
+function epyon_updateSelfRef(){
+	self = epyon_getLeek(getLeek());
 }
 
 function eGetCell(eLeek){
@@ -100,10 +106,7 @@ function eMoveAwayFrom(eLeek, max){
 	return moveAwayFrom(eLeek['id'], max);
 }
 
-global self;
-global target = null;
-
-self = epyon_getLeek(getLeek());
+epyon_updateSelfRef();
 //include('epyon.leek.ls');
 
 function epyon_moveTowardsTarget(maxMp){
@@ -355,8 +358,6 @@ if (getTurn() === 1){
 	EPYON_CONFIG['march'] = -0.1;//[-1;1] relative to the S score. With S higher or equal than the march value, the IA will keep going forward
 	EPYON_CONFIG['flee'] = -0.4;//[-1;1] relative to the S score. With S lower or equal than the flee value, the IA will back off
 }
-global EPYON_WATCHLIST = [];
-
 function epyon_aquireTarget(){
 	var enemy = epyon_getLeek(getNearestEnemy());
 	
@@ -364,7 +365,6 @@ function epyon_aquireTarget(){
 	
 	if (enemy != target){
 		target = enemy;
-//		EPYON_WATCHLIST = [target];
 		epyon_debug('target is now '+target['name']);
 	}
 	
@@ -372,20 +372,14 @@ function epyon_aquireTarget(){
 }
 
 function epyon_updateAgressions(){
-	epyon_debug('update own agression');
-	self['agression'] = epyon_computeAgression(self);
-	epyon_debug('A:'+self['agression']);
-	
-	epyon_debug('update agression for '+target['name']);
-	target['agression'] = epyon_computeAgression(target);
-	epyon_debug('A:'+target['agression']);
-	
-	var l = count(EPYON_WATCHLIST);
+	var l = count(EPYON_LEEKS);
 	for (var i = 0; i < l; i++){
-		epyon_debug('update agression for '+EPYON_WATCHLIST[i]['name']);
-		EPYON_WATCHLIST[i]['agression'] = epyon_computeAgression(EPYON_WATCHLIST[i]);
-		epyon_debug('A:'+EPYON_WATCHLIST[i]['agression']);
+		epyon_debug('update agression for '+EPYON_LEEKS[i]['name']);
+		EPYON_LEEKS[i]['agression'] = epyon_computeAgression(EPYON_LEEKS[i]);
+		epyon_debug('A:'+EPYON_LEEKS[i]['agression']);
 	}
+	
+	epyon_updateSelfRef();
 }
 
 function epyon_computeAgression(epyonLeek){

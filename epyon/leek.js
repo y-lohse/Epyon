@@ -1,6 +1,9 @@
 global EPYON_LEEKS = [];
 global EPYON_TARGET_DISTANCE;
 
+global self;
+global target;
+
 function epyon_getLeek(leekId){
 	if (EPYON_LEEKS[leekId]){
 		return epyon_updateLeek(EPYON_LEEKS[leekId]);
@@ -13,7 +16,6 @@ function epyon_getLeek(leekId){
 	leek['id'] = leekId;
 	leek['name'] = getName(leekId);
 	leek['totalLife'] = getTotalLife(leekId);
-	leek['ally'] = isAlly(leekId);
 	
 	//dynamic props
 	leek['agression'] = 1;
@@ -33,6 +35,10 @@ function epyon_updateLeek(epyonLeek){
 	epyonLeek['_cellIsDirty'] = false;
 	epyonLeek['_weapon'] = getWeapon(epyonLeek['id']);
 	return epyonLeek;
+}
+
+function epyon_updateSelfRef(){
+	self = epyon_getLeek(getLeek());
 }
 
 function eGetCell(eLeek){
@@ -68,7 +74,4 @@ function eMoveAwayFrom(eLeek, max){
 	return moveAwayFrom(eLeek['id'], max);
 }
 
-global self;
-global target = null;
-
-self = epyon_getLeek(getLeek());
+epyon_updateSelfRef();

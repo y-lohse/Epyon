@@ -22,23 +22,23 @@ function epyon_getLeek(leekId){
 	leek['agression'] = 1;
 	
 	//private props
-	leek['_cell'] = getCell(leekId);
-	leek['_cellIsDirty'] = false;
-	leek['_weapon'] = getWeapon(leekId);
-	
-	EPYON_LEEKS[leekId] = leek;
-	
-	return leek;
+	return epyon_updateLeek(leek);
 }
 
-function epyon_updateLeek(epyonLeek){
-	epyonLeek['_cell'] = getCell(epyonLeek['id']);
-	epyonLeek['_cellIsDirty'] = false;
-	epyonLeek['_weapon'] = getWeapon(epyonLeek['id']);
-	return epyonLeek;
+function epyon_updateLeek(eLeek){
+	eLeek['_cell'] = getCell(eLeek['id']);
+	eLeek['_cellIsDirty'] = false;
+	eLeek['_weapon'] = getWeapon(eLeek['id']);
+	eLeek['MP'] = getMP(eLeek['id']);
+	eLeek['AP'] = getTP(eLeek['id']);
+	eLeek['range'] = getWeaponMaxScope(eLeek['_weapon']) + eLeek['MP'];
+	
+	EPYON_LEEKS[eLeek['id']] = eLeek;
+	return eLeek;
 }
 
 function epyon_updateSelfRef(){
+	//THIS RETURNS A COPY, NOT A REFERENCE. You can't get a reference.
 	self = epyon_getLeek(getLeek());
 }
 

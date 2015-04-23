@@ -6,7 +6,7 @@ function epyon_aquireTarget(){
 	var enemiesInRange = [];
 	for (var leek in EPYON_LEEKS){
 		// @Yannick : Dois-je update avant ?
-		if (getPathLength(eGetCell(self),leek[_cell]) <= 11 && isAlive(leek['_id'])) enemiesInRange[leek['_id']] = leek; // Arbitraire (portée du magnum + 3 deplacements)
+		if (getPathLength(eGetCell(self),leek['_cell']) <= 11 && isAlive(leek['_id'])) enemiesInRange[leek['_id']] = leek; // Arbitraire (portée du magnum + 3 deplacements)
 	}
 	// On détermine le plus affaibli d'entre eux
 	var lowerHealth = 1;
@@ -19,7 +19,6 @@ function epyon_aquireTarget(){
 		}
 		
 	}
-	
 	// Si aucun n'est affaibli, on prend le plus proche
 	if(!enemy) enemy = epyon_getLeek(getNearestEnemy());
 	

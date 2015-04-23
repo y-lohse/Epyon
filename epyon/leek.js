@@ -5,7 +5,7 @@ function epyon_getAliveEnemies() {
 	var leeks = getAliveEnemies();
 	var l = count(leeks);
 	for (var i = 0; i < l; i++){
-		epyion_getLeek(leek[i]);
+		epyion_getLeek(leeks[i]);
 	}
 }
 

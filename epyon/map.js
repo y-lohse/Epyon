@@ -87,21 +87,23 @@ function getCellsWithin(center, distance){
 	return cells;
 }
 
-
-
-//function map_findNearbyCover(fromCell, withWeapon, maxDistance){
-//	var toCheck = getCellsWithin(fromCell, maxDistance);
-//	
-//	var safes = [];
-//	for (var cell in toCheck){
-//		if (!canUseWeaponOnCell(withWeapon, fromCell)){
-//			push(safes, cell);//level 40
-//			mark(cell, COLOR_GREEN);
-//		}
-//		else{
-//			mark(cell, COLOR_RED);
-//		}
-//	}
-//	
-//	return safes;
-//}
+function getAdjacentCells(center){
+	var x = getCellX(center),
+		y = getCellY(center);
+	
+	var cells = [],
+		cell;
+	
+	//careful, those are test & assignments at the same time. It is NOT meant to be '==' instead of '='
+	if (cell = getCellFromXY(x - 1, y - 1)) push(cells, cell);
+	if (cell = getCellFromXY(x, y - 1)) push(cells, cell);
+	if (cell = getCellFromXY(x + 1, y - 1)) push(cells, cell);
+	if (cell = getCellFromXY(x - 1, y)) push(cells, cell);
+	//NOPE NOT x,y
+	if (cell = getCellFromXY(x + 1, y)) push(cells, cell);
+	if (cell = getCellFromXY(x - 1, y + 1)) push(cells, cell);
+	if (cell = getCellFromXY(x, y + 1)) push(cells, cell);
+	if (cell = getCellFromXY(x + 1, y + 1)) push(cells, cell);
+	
+	return cells;
+}

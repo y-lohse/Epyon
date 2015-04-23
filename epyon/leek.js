@@ -1,5 +1,5 @@
 global EPYON_LEEKS = [];
-global EPYON_TARGET_DISTANCE; 
+global EPYON_TARGET_DISTANCE;
 
 function epyon_getLeek(leekId){
 	if (EPYON_LEEKS[leekId]){
@@ -13,6 +13,7 @@ function epyon_getLeek(leekId){
 	leek['id'] = leekId;
 	leek['name'] = getName(leekId);
 	leek['totalLife'] = getTotalLife(leekId);
+	leek['ally'] = isAlly(leekId);
 	
 	//dynamic props
 	leek['agression'] = 1;

@@ -16,6 +16,7 @@ function epyon_getLeek(leekId){
 	leek['id'] = leekId;
 	leek['name'] = getName(leekId);
 	leek['totalLife'] = getTotalLife(leekId);
+	leek['ally'] = isAlly(leekId);
 	
 	//dynamic props
 	leek['agression'] = 1;

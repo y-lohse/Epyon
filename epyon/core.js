@@ -45,8 +45,8 @@ function epyon_act(){
 	var S = self['agression'] - target['agression'];
 	epyon_debug('S computed to '+S);
 	
-	var totalMP = 3,
-		totalAP = 10;
+	var totalMP = getMP(),
+		totalAP = getTP();
 		
 	var allocatedMP = epyon_allocateAttackMP(S, totalMP);
 	var spentAP = epyon_prefight(S, totalAP, 0);

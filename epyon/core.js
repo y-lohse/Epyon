@@ -11,7 +11,7 @@ function epyon_aquireTarget(){
 	var actualHealth;
 	for(var leek in enemiesInRange) {
 		actualHealth = getLife(leek['id'])/leek['totalLife'];
-		if (actualHealth < lowHealth) {	
+		if (actualHealth < lowerHealth) {	
 			lowerHealth = actualHealth;
 			enemy = leek;
 		}

@@ -17,12 +17,12 @@ function epyon_getLeek(leekId){
 	leek['name'] = getName(leekId);
 	leek['totalLife'] = getTotalLife(leekId);
 	
-	if (getLevel() >= 14){
-		leek['ally'] = isAlly(leekId);
-	}
-	else{
+	if (EPYON_LEVEL < 14){
 		//below that level, there's no way to get an ally, so everything that is not us is an enemy
 		leek['ally'] = (getLeek() === leekId) ? true : false;
+	}
+	else{
+		leek['ally'] = isAlly(leekId);
 	}
 	
 	//dynamic props
@@ -35,10 +35,19 @@ function epyon_getLeek(leekId){
 function epyon_updateLeek(eLeek){
 	eLeek['_cell'] = getCell(eLeek['id']);
 	eLeek['_cellIsDirty'] = false;
-	eLeek['_weapon'] = getWeapon(eLeek['id']);
-	eLeek['MP'] = getMP(eLeek['id']);
-	eLeek['AP'] = getTP(eLeek['id']);
-	eLeek['range'] = getWeaponMaxScope(eLeek['_weapon']) + eLeek['MP'];
+	
+	if (EPYON_LEVEL < 10){
+		eLeek['_weapon'] = (eLeek['id'] === getLeek()) ? getWeapon() : WEAPON_PISTOL;
+		eLeek['MP'] = 3;
+		eLeek['AP'] = 10;
+		eLeek['range'] = 3 + (eLeek['_weapon'] === WEAPON_PISTOL) ? 7 : 0;
+	}
+	else{
+		eLeek['_weapon'] = getWeapon(eLeek['id']);
+		eLeek['MP'] = getMP(eLeek['id']);
+		eLeek['AP'] = getTP(eLeek['id']);
+		eLeek['range'] = getWeaponMaxScope(eLeek['_weapon']) + eLeek['MP'];
+	}
 	
 	EPYON_LEEKS[eLeek['id']] = eLeek;
 	return eLeek;
@@ -60,7 +69,10 @@ function epyon_updateSelfRef(){
 }
 
 function eGetCell(eLeek){
-	if (eLeek['_cellIsDirty']) eLeek['cell'] = getCell(eLeek['id']);
+	if (eLeek['_cellIsDirty']){
+		eLeek['_cell'] = getCell(eLeek['id']);
+		eLeek['_cellIsDirty'] = false;
+	}
 	return eLeek['_cell'];
 }
 

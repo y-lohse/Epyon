@@ -1,6 +1,6 @@
 //lvl 36+
 global useChipShim = useChip;
-global EPYON_VERSION = '1.3.0';
+global EPYON_VERSION = '2.0.0';
 global EPYON_LEVEL = getLevel();
 
 function epyon_debug(message){
@@ -104,7 +104,6 @@ function epyon_updateSelfRef(){
 
 function eGetCell(eLeek){
 	if (eLeek['_cellIsDirty']){
-		debug('cell is dirty');
 		eLeek['_cell'] = getCell(eLeek['id']);
 		eLeek['_cellIsDirty'] = false;
 	}
@@ -128,8 +127,6 @@ function eSetWeapon(WEAPON_ID){
 function eMoveTowardCell(cell){
 	EPYON_LEEKS[self['id']]['_cellIsDirty'] = true;
 	self['_cellIsDirty'] = true;
-	debug('cell marked dirty');
-	debug('moved toward '+cell);
 	return moveTowardCell(cell);
 }
 
@@ -219,8 +216,6 @@ function epyon_weaponBehaviorFactory(WEAPON_ID, name, damage){//damage is temp
 			minCell = getCellToUseWeapon(WEAPON_ID, target['id']);
 			var currentCell = eGetCell(self);
 
-			debug(minCell);
-			debug(currentCell);
 			distance = getPathLength(minCell, currentCell);
 		}
 
@@ -316,10 +311,12 @@ function epyon_healChipBehaviorFactory(CHIP_ID, name, maxHeal){
 if (getTurn() === 1){
 	
 	//PREFIGHT
+	EPYON_BEHAVIORS[EPYON_PREFIGHT][CHIP_ARMOR] = epyon_simpleSelfChipBehaviorFactory(CHIP_ARMOR, 'armor');
 	EPYON_BEHAVIORS[EPYON_PREFIGHT][CHIP_SHIELD] = epyon_simpleSelfChipBehaviorFactory(CHIP_SHIELD, 'shield');
 	EPYON_BEHAVIORS[EPYON_PREFIGHT][CHIP_HELMET] = epyon_simpleSelfChipBehaviorFactory(CHIP_HELMET, 'helmet');
 	EPYON_BEHAVIORS[EPYON_PREFIGHT][CHIP_WALL] = epyon_simpleSelfChipBehaviorFactory(CHIP_WALL, 'wall');
 	EPYON_BEHAVIORS[EPYON_PREFIGHT][CHIP_STEROID] = epyon_simpleSelfChipBehaviorFactory(CHIP_STEROID, 'steroid');
+	EPYON_BEHAVIORS[EPYON_PREFIGHT][CHIP_WARM_UP] = epyon_simpleSelfChipBehaviorFactory(CHIP_WARM_UP, 'warm');
 
 	EPYON_BEHAVIORS[EPYON_PREFIGHT][CHIP_BANDAGE] = epyon_healChipBehaviorFactory(CHIP_BANDAGE, 'bandage', 15);
 	EPYON_BEHAVIORS[EPYON_PREFIGHT][CHIP_CURE] = epyon_healChipBehaviorFactory(CHIP_CURE, 'cure', 70);

@@ -1,5 +1,5 @@
 global useChipShim = useChip;
-global EPYON_VERSION = '1.2.2';
+global EPYON_VERSION = '1.3.0';
 
 function epyon_debug(message){
 	debug('epyon: '+message);
@@ -31,7 +31,10 @@ if (getTurn() == 1){
 	epyon_startStats('init');
 }
 global EPYON_LEEKS = [];
-global EPYON_TARGET_DISTANCE; 
+global EPYON_TARGET_DISTANCE;
+
+global self;
+global target;
 
 function epyon_getLeek(leekId){
 	if (EPYON_LEEKS[leekId]){
@@ -45,25 +48,30 @@ function epyon_getLeek(leekId){
 	leek['id'] = leekId;
 	leek['name'] = getName(leekId);
 	leek['totalLife'] = getTotalLife(leekId);
+	leek['ally'] = isAlly(leekId);
 	
 	//dynamic props
 	leek['agression'] = 1;
 	
 	//private props
-	leek['_cell'] = getCell(leekId);
-	leek['_cellIsDirty'] = false;
-	leek['_weapon'] = getWeapon(leekId);
-	
-	EPYON_LEEKS[leekId] = leek;
-	
-	return leek;
+	return epyon_updateLeek(leek);
 }
 
-function epyon_updateLeek(epyonLeek){
-	epyonLeek['_cell'] = getCell(epyonLeek['id']);
-	epyonLeek['_cellIsDirty'] = false;
-	epyonLeek['_weapon'] = getWeapon(epyonLeek['id']);
-	return epyonLeek;
+function epyon_updateLeek(eLeek){
+	eLeek['_cell'] = getCell(eLeek['id']);
+	eLeek['_cellIsDirty'] = false;
+	eLeek['_weapon'] = getWeapon(eLeek['id']);
+	eLeek['MP'] = getMP(eLeek['id']);
+	eLeek['AP'] = getTP(eLeek['id']);
+	eLeek['range'] = getWeaponMaxScope(eLeek['_weapon']) + eLeek['MP'];
+	
+	EPYON_LEEKS[eLeek['id']] = eLeek;
+	return eLeek;
+}
+
+function epyon_updateSelfRef(){
+	//THIS RETURNS A COPY, NOT A REFERENCE. You can't get a reference.
+	self = epyon_getLeek(getLeek());
 }
 
 function eGetCell(eLeek){
@@ -80,29 +88,30 @@ function eGetWeapon(eLeek){
 }
 
 function eSetWeapon(WEAPON_ID){
+	EPYON_LEEKS[self['id']]['_weapon'] = WEAPON_ID;
 	self['_weapon'] = WEAPON_ID;
 	return setWeapon(WEAPON_ID);
 }
 
 function eMoveTowardCell(cell){
+	EPYON_LEEKS[self['id']]['_cellIsDirty'] = true;
 	self['_cellIsDirty'] = true;
 	return moveTowardCell(cell);
 }
 
 function eMoveTowardCellWithMax(cell, max){
+	EPYON_LEEKS[self['id']]['_cellIsDirty'] = true;
 	self['_cellIsDirty'] = true;
 	return moveTowardCell(cell, max);
 }
 
 function eMoveAwayFrom(eLeek, max){
+	EPYON_LEEKS[self['id']]['_cellIsDirty'] = true;
 	self['_cellIsDirty'] = true;
 	return moveAwayFrom(eLeek['id'], max);
 }
 
-global self;
-global target = null;
-
-self = epyon_getLeek(getLeek());
+epyon_updateSelfRef();
 global MAP_WIDTH = 0;
 global MAP_HEIGHT = 0;
 
@@ -192,24 +201,26 @@ function getCellsWithin(center, distance){
 	return cells;
 }
 
-
-
-//function map_findNearbyCover(fromCell, withWeapon, maxDistance){
-//	var toCheck = getCellsWithin(fromCell, maxDistance);
-//	
-//	var safes = [];
-//	for (var cell in toCheck){
-//		if (!canUseWeaponOnCell(withWeapon, fromCell)){
-//			push(safes, cell);//level 40
-//			mark(cell, COLOR_GREEN);
-//		}
-//		else{
-//			mark(cell, COLOR_RED);
-//		}
-//	}
-//	
-//	return safes;
-//}
+function getAdjacentCells(center){
+	var x = getCellX(center),
+		y = getCellY(center);
+	
+	var cells = [],
+		cell;
+	
+	//careful, those are test & assignments at the same time. It is NOT meant to be '==' instead of '='
+	if (cell = getCellFromXY(x - 1, y - 1)) push(cells, cell);
+	if (cell = getCellFromXY(x, y - 1)) push(cells, cell);
+	if (cell = getCellFromXY(x + 1, y - 1)) push(cells, cell);
+	if (cell = getCellFromXY(x - 1, y)) push(cells, cell);
+	//NOPE NOT x,y
+	if (cell = getCellFromXY(x + 1, y)) push(cells, cell);
+	if (cell = getCellFromXY(x - 1, y + 1)) push(cells, cell);
+	if (cell = getCellFromXY(x, y + 1)) push(cells, cell);
+	if (cell = getCellFromXY(x + 1, y + 1)) push(cells, cell);
+	
+	return cells;
+}
 //Each scorer returns a value between 0 and 1, representing the level of aggression relative to a particular aspect.
 //0 is flee, .5 is normal and 1 is engage
 
@@ -241,6 +252,20 @@ function epyon_cScorerBorder(eCell){
 		abs(eCell['y']) >= MAP_HEIGHT - edge)
 		return 0;
 	else return 1;
+}
+
+function epyon_cScorerObstacles(eCell){
+	var adjacent = getAdjacentCells(eCell['id']),
+		obstacleCount = 0;
+		
+	arrayIter(adjacent, function(cell){
+		if (isObstacle(cell)) obstacleCount++;
+	});
+	
+	//0 obstacle is shit, 1 is ideal, anything more than that tends towards 0
+	//http://fooplot.com/#W3sidHlwZSI6MCwiZXEiOiIxLSh4KjAuMSkrMC4xIiwiY29sb3IiOiIjMDAwMDAwIn0seyJ0eXBlIjoxMDAwLCJ3aW5kb3ciOlsiLTMuNyIsIjkuMjk5OTk5OTk5OTk5OTk5IiwiLTMuODgiLCI0LjEyIl19XQ--
+	if (obstacleCount === 0) return 0;
+	else return 1 - ( obstacleCount * 0.1) + 0.1;
 }
 global EPYON_PREFIGHT = 'prefight';
 global EPYON_FIGHT = 'fight';
@@ -453,7 +478,8 @@ if (getTurn() === 1){
 	];
 	
 	EPYON_CONFIG['C'] = [
-		'border': ['fn': epyon_cScorerBorder, 'coef': 1],
+		'border': ['fn': epyon_cScorerBorder, 'coef': 0.5],
+		'obstacles': ['fn': epyon_cScorerObstacles, 'coef': 1],
 	];
 	
 	EPYON_CONFIG['suicidal'] = 0;//[0;1] with a higher suicidal value, the leek will stay agressive despite being low on health
@@ -461,8 +487,6 @@ if (getTurn() === 1){
 	EPYON_CONFIG['march'] = -0.1;//[-1;1] relative to the S score. With S higher or equal than the march value, the IA will keep going forward
 	EPYON_CONFIG['flee'] = -0.4;//[-1;1] relative to the S score. With S lower or equal than the flee value, the IA will back off
 }
-global EPYON_WATCHLIST = [];
-
 function epyon_aquireTarget(){
 	var enemy = epyon_getLeek(getNearestEnemy());
 	
@@ -470,7 +494,6 @@ function epyon_aquireTarget(){
 	
 	if (enemy != target){
 		target = enemy;
-//		EPYON_WATCHLIST = [target];
 		epyon_debug('target is now '+target['name']);
 	}
 	
@@ -478,20 +501,14 @@ function epyon_aquireTarget(){
 }
 
 function epyon_updateAgressions(){
-	epyon_debug('update own agression');
-	self['agression'] = epyon_computeAgression(self);
-	epyon_debug('A:'+self['agression']);
-	
-	epyon_debug('update agression for '+target['name']);
-	target['agression'] = epyon_computeAgression(target);
-	epyon_debug('A:'+target['agression']);
-	
-	var l = count(EPYON_WATCHLIST);
+	var l = count(EPYON_LEEKS);
 	for (var i = 0; i < l; i++){
-		epyon_debug('update agression for '+EPYON_WATCHLIST[i]['name']);
-		EPYON_WATCHLIST[i]['agression'] = epyon_computeAgression(EPYON_WATCHLIST[i]);
-		epyon_debug('A:'+EPYON_WATCHLIST[i]['agression']);
+		epyon_debug('update agression for '+EPYON_LEEKS[i]['name']);
+		EPYON_LEEKS[i]['agression'] = epyon_computeAgression(EPYON_LEEKS[i]);
+		epyon_debug('A:'+EPYON_LEEKS[i]['agression']);
 	}
+	
+	epyon_updateSelfRef();
 }
 
 function epyon_computeAgression(epyonLeek){
@@ -515,9 +532,8 @@ function epyon_act(){
 	var S = self['agression'] - target['agression'];
 	epyon_debug('S computed to '+S);
 	
-	
-	var totalMP = 3,
-		totalAP = 10;
+	var totalMP = self['MP'],
+		totalAP = self['AP'];
 		
 	var cells = epyon_analyzeCellsWithin(eGetCell(self), totalMP);
 		

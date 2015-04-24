@@ -81,14 +81,6 @@ global EPYON_TARGET_DISTANCE;
 global self;
 global target;
 
-function epyon_loadAliveEnemies() { 
-	var leeks = getAliveEnemies();
-	var l = count(leeks);
-	for (var i = 0; i < l; i++){
-		epyion_getLeek(leeks[i]);
-	}
-}
-
 function epyon_getLeek(leekId){
 	if (EPYON_LEEKS[leekId]){
 		return epyon_updateLeek(EPYON_LEEKS[leekId]);
@@ -101,7 +93,14 @@ function epyon_getLeek(leekId){
 	leek['id'] = leekId;
 	leek['name'] = getName(leekId);
 	leek['totalLife'] = getTotalLife(leekId);
-	leek['ally'] = isAlly(leekId);
+	
+	if (getLevel() >= 14){
+		leek['ally'] = isAlly(leekId);
+	}
+	else{
+		//below that level, there's no way to get an ally, so everything that is not us is an enemy
+		leek['ally'] = (getLeek() === leekId) ? true : false;
+	}
 	
 	//dynamic props
 	leek['agression'] = 1;
@@ -120,6 +119,16 @@ function epyon_updateLeek(eLeek){
 	
 	EPYON_LEEKS[eLeek['id']] = eLeek;
 	return eLeek;
+}
+
+function epyon_loadAliveEnemies() {
+	if (getLevel() >= 16){
+		var leeks = getAliveEnemies();
+		var l = count(leeks);
+		for (var i = 0; i < l; i++){
+			epyon_getLeek(leeks[i]);
+		}
+	}
 }
 
 function epyon_updateSelfRef(){
@@ -430,7 +439,7 @@ function epyon_aquireTarget(){
 	var actualHealth;
 	for(var leek in enemiesInRange) {
 		actualHealth = getLife(leek['id'])/leek['totalLife'];
-		if (actualHealth < lowHealth) {	
+		if (actualHealth < lowerHealth) {	
 			lowerHealth = actualHealth;
 			enemy = leek;
 		}

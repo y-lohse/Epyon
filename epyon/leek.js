@@ -56,22 +56,26 @@ function eGetWeapon(eLeek){
 }
 
 function eSetWeapon(WEAPON_ID){
-	EPYON_LEEKS[self['id']] = self['_weapon'] = WEAPON_ID;
+	EPYON_LEEKS[self['id']]['_weapon'] = WEAPON_ID;
+	self['_weapon'] = WEAPON_ID;
 	return setWeapon(WEAPON_ID);
 }
 
 function eMoveTowardCell(cell){
-	EPYON_LEEKS[self['id']] = self['_cellIsDirty'] = true;
+	EPYON_LEEKS[self['id']]['_cellIsDirty'] = true;
+	self['_cellIsDirty'] = true;
 	return moveTowardCell(cell);
 }
 
 function eMoveTowardCellWithMax(cell, max){
-	EPYON_LEEKS[self['id']] = self['_cellIsDirty'] = true;
+	EPYON_LEEKS[self['id']]['_cellIsDirty'] = true;
+	self['_cellIsDirty'] = true;
 	return moveTowardCell(cell, max);
 }
 
 function eMoveAwayFrom(eLeek, max){
-	EPYON_LEEKS[self['id']] = self['_cellIsDirty'] = true;
+	EPYON_LEEKS[self['id']]['_cellIsDirty'] = true;
+	self['_cellIsDirty'] = true;
 	return moveAwayFrom(eLeek['id'], max);
 }
 

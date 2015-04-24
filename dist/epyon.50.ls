@@ -37,6 +37,14 @@ global EPYON_TARGET_DISTANCE;
 global self;
 global target;
 
+function epyon_loadAliveEnemies() { 
+	var leeks = getAliveEnemies();
+	var l = count(leeks);
+	for (var i = 0; i < l; i++){
+		epyion_getLeek(leeks[i]);
+	}
+}
+
 function epyon_getLeek(leekId){
 	if (EPYON_LEEKS[leekId]){
 		return epyon_updateLeek(EPYON_LEEKS[leekId]);
@@ -113,6 +121,7 @@ function eMoveAwayFrom(eLeek, max){
 }
 
 epyon_updateSelfRef();
+
 //include('epyon.leek.ls');
 
 function epyon_moveTowardsTarget(maxMp){
@@ -365,7 +374,26 @@ if (getTurn() === 1){
 	EPYON_CONFIG['flee'] = -0.4;//[-1;1] relative to the S score. With S lower or equal than the flee value, the IA will back off
 }
 function epyon_aquireTarget(){
-	var enemy = epyon_getLeek(getNearestEnemy());
+	var enemy = null;
+	// On recupere les ennemis, vivants, à porté
+	var enemiesInRange = [];
+	for (var leek in EPYON_LEEKS){
+		// @Yannick : Dois-je update avant ?
+		if (getPathLength(eGetCell(self),leek['_cell']) <= self['range'] && isAlive(leek['id']) && !leek['ally']) enemiesInRange[leek['id']] = leek; // Arbitraire (portée du magnum + 3 deplacements)
+	}
+	// On détermine le plus affaibli d'entre eux
+	var lowerHealth = 1;
+	var actualHealth;
+	for(var leek in enemiesInRange) {
+		actualHealth = getLife(leek['id'])/leek['totalLife'];
+		if (actualHealth < lowHealth) {	
+			lowerHealth = actualHealth;
+			enemy = leek;
+		}
+		
+	}
+	// Si aucun n'est affaibli, on prend le plus proche
+	if(!enemy) enemy = epyon_getLeek(getNearestEnemy());
 	
 	EPYON_TARGET_DISTANCE = getPathLength(eGetCell(self), eGetCell(enemy));
 	
@@ -538,6 +566,7 @@ function epyon_denyChallenge(){
 		}
 	}
 }
+
 if (getTurn() == 1){
 	var initStats = epyon_stopStats('init');
 	epyon_debug('init '+initStats['i']+' i & '+initStats['o']+' o');

@@ -1,6 +1,7 @@
 //lvl 36+
 global useChipShim = useChip;
 global EPYON_VERSION = '1.3.0';
+global EPYON_LEVEL = getLevel();
 
 function epyon_debug(message){
 	debug('epyon: '+message);
@@ -37,14 +38,6 @@ global EPYON_TARGET_DISTANCE;
 global self;
 global target;
 
-function epyon_loadAliveEnemies() { 
-	var leeks = getAliveEnemies();
-	var l = count(leeks);
-	for (var i = 0; i < l; i++){
-		epyion_getLeek(leeks[i]);
-	}
-}
-
 function epyon_getLeek(leekId){
 	if (EPYON_LEEKS[leekId]){
 		return epyon_updateLeek(EPYON_LEEKS[leekId]);
@@ -57,7 +50,14 @@ function epyon_getLeek(leekId){
 	leek['id'] = leekId;
 	leek['name'] = getName(leekId);
 	leek['totalLife'] = getTotalLife(leekId);
-	leek['ally'] = isAlly(leekId);
+	
+	if (EPYON_LEVEL < 14){
+		//below that level, there's no way to get an ally, so everything that is not us is an enemy
+		leek['ally'] = (getLeek() === leekId) ? true : false;
+	}
+	else{
+		leek['ally'] = isAlly(leekId);
+	}
 	
 	//dynamic props
 	leek['agression'] = 1;
@@ -69,13 +69,32 @@ function epyon_getLeek(leekId){
 function epyon_updateLeek(eLeek){
 	eLeek['_cell'] = getCell(eLeek['id']);
 	eLeek['_cellIsDirty'] = false;
-	eLeek['_weapon'] = getWeapon(eLeek['id']);
-	eLeek['MP'] = getMP(eLeek['id']);
-	eLeek['AP'] = getTP(eLeek['id']);
-	eLeek['range'] = getWeaponMaxScope(eLeek['_weapon']) + eLeek['MP'];
+	
+	if (EPYON_LEVEL < 10){
+		eLeek['_weapon'] = (eLeek['id'] === getLeek()) ? getWeapon() : WEAPON_PISTOL;
+		eLeek['MP'] = 3;
+		eLeek['AP'] = 10;
+		eLeek['range'] = 3 + (eLeek['_weapon'] === WEAPON_PISTOL) ? 7 : 0;
+	}
+	else{
+		eLeek['_weapon'] = getWeapon(eLeek['id']);
+		eLeek['MP'] = getMP(eLeek['id']);
+		eLeek['AP'] = getTP(eLeek['id']);
+		eLeek['range'] = getWeaponMaxScope(eLeek['_weapon']) + eLeek['MP'];
+	}
 	
 	EPYON_LEEKS[eLeek['id']] = eLeek;
 	return eLeek;
+}
+
+function epyon_loadAliveEnemies() {
+	if (getLevel() >= 16){
+		var leeks = getAliveEnemies();
+		var l = count(leeks);
+		for (var i = 0; i < l; i++){
+			epyon_getLeek(leeks[i]);
+		}
+	}
 }
 
 function epyon_updateSelfRef(){
@@ -84,7 +103,11 @@ function epyon_updateSelfRef(){
 }
 
 function eGetCell(eLeek){
-	if (eLeek['_cellIsDirty']) eLeek['cell'] = getCell(eLeek['id']);
+	if (eLeek['_cellIsDirty']){
+		debug('cell is dirty');
+		eLeek['_cell'] = getCell(eLeek['id']);
+		eLeek['_cellIsDirty'] = false;
+	}
 	return eLeek['_cell'];
 }
 
@@ -105,6 +128,8 @@ function eSetWeapon(WEAPON_ID){
 function eMoveTowardCell(cell){
 	EPYON_LEEKS[self['id']]['_cellIsDirty'] = true;
 	self['_cellIsDirty'] = true;
+	debug('cell marked dirty');
+	debug('moved toward '+cell);
 	return moveTowardCell(cell);
 }
 
@@ -189,11 +214,13 @@ function epyon_weaponBehaviorFactory(WEAPON_ID, name, damage){//damage is temp
 	var distance, minCell;
 	
 	return function(maxAP, maxMP){	
-		if (canUseWeapon(WEAPON_ID, target['id'])) distance = 0;
+		if (EPYON_LEVEL >= 29  && canUseWeapon(WEAPON_ID, target['id'])) distance = 0;
 		else{
 			minCell = getCellToUseWeapon(WEAPON_ID, target['id']);
 			var currentCell = eGetCell(self);
 
+			debug(minCell);
+			debug(currentCell);
 			distance = getPathLength(minCell, currentCell);
 		}
 
@@ -202,8 +229,10 @@ function epyon_weaponBehaviorFactory(WEAPON_ID, name, damage){//damage is temp
 		epyon_debug(name+' is a candidate');
 
 		var excute = function(){
-			//@TODO: verifier  si on e peut pas déja tirer
-			if (!canUseWeapon(WEAPON_ID, target['id'])) eMoveTowardCell(minCell);//, maxMP? 
+			//ne pas utiliser de OR, canUseWeapon plante e ndessous du level 29
+			if (EPYON_LEVEL < 29) eMoveTowardCell(minCell);
+			else if (!canUseWeapon(WEAPON_ID, target['id'])) eMoveTowardCell(minCell);
+			
 			if (eGetWeapon(self) != WEAPON_ID){
 				debugW('Epyon: 1 extra AP was spent on equiping '+name);
 				eSetWeapon(WEAPON_ID);
@@ -301,7 +330,7 @@ if (getTurn() === 1){
 		var cost = getChipCost(CHIP_SPARK);
 		var distance, minCell;
 		
-		if (canUseChip(CHIP_SPARK, target['id'])) distance = 0;
+		if (EPYON_LEVEL >= 29 && canUseChip(CHIP_SPARK, target['id'])) distance = 0;
 		else{
 			minCell = getCellToUseChip(CHIP_SPARK, target['id']);
 			var currentCell = eGetCell(self);
@@ -314,7 +343,8 @@ if (getTurn() === 1){
 		epyon_debug('spark is a candidate');
 
 		var excute = function(){
-			if (!canUseChip(CHIP_SPARK, target['id'])) eMoveTowardCell(minCell);
+			if (EPYON_LEVEL < 29) eMoveTowardCell(minCell);
+			else if (!canUseChip(CHIP_SPARK, target['id'])) eMoveTowardCell(minCell);
 			useChipShim(CHIP_SPARK, target['id']);
 		};
 
@@ -386,7 +416,7 @@ function epyon_aquireTarget(){
 	var actualHealth;
 	for(var leek in enemiesInRange) {
 		actualHealth = getLife(leek['id'])/leek['totalLife'];
-		if (actualHealth < lowHealth) {	
+		if (actualHealth < lowerHealth) {	
 			lowerHealth = actualHealth;
 			enemy = leek;
 		}

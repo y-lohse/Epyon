@@ -4,14 +4,6 @@ global EPYON_TARGET_DISTANCE;
 global self;
 global target;
 
-function epyon_loadAliveEnemies() { 
-	var leeks = getAliveEnemies();
-	var l = count(leeks);
-	for (var i = 0; i < l; i++){
-		epyon_getLeek(leeks[i]);
-	}
-}
-
 function epyon_getLeek(leekId){
 	if (EPYON_LEEKS[leekId]){
 		return epyon_updateLeek(EPYON_LEEKS[leekId]);
@@ -24,7 +16,14 @@ function epyon_getLeek(leekId){
 	leek['id'] = leekId;
 	leek['name'] = getName(leekId);
 	leek['totalLife'] = getTotalLife(leekId);
-	leek['ally'] = isAlly(leekId);
+	
+	if (EPYON_LEVEL < 14){
+		//below that level, there's no way to get an ally, so everything that is not us is an enemy
+		leek['ally'] = (getLeek() === leekId) ? true : false;
+	}
+	else{
+		leek['ally'] = isAlly(leekId);
+	}
 	
 	//dynamic props
 	leek['agression'] = 1;
@@ -36,13 +35,32 @@ function epyon_getLeek(leekId){
 function epyon_updateLeek(eLeek){
 	eLeek['_cell'] = getCell(eLeek['id']);
 	eLeek['_cellIsDirty'] = false;
-	eLeek['_weapon'] = getWeapon(eLeek['id']);
-	eLeek['MP'] = getMP(eLeek['id']);
-	eLeek['AP'] = getTP(eLeek['id']);
-	eLeek['range'] = getWeaponMaxScope(eLeek['_weapon']) + eLeek['MP'];
+	
+	if (EPYON_LEVEL < 10){
+		eLeek['_weapon'] = (eLeek['id'] === getLeek()) ? getWeapon() : WEAPON_PISTOL;
+		eLeek['MP'] = 3;
+		eLeek['AP'] = 10;
+		eLeek['range'] = 3 + (eLeek['_weapon'] === WEAPON_PISTOL) ? 7 : 0;
+	}
+	else{
+		eLeek['_weapon'] = getWeapon(eLeek['id']);
+		eLeek['MP'] = getMP(eLeek['id']);
+		eLeek['AP'] = getTP(eLeek['id']);
+		eLeek['range'] = getWeaponMaxScope(eLeek['_weapon']) + eLeek['MP'];
+	}
 	
 	EPYON_LEEKS[eLeek['id']] = eLeek;
 	return eLeek;
+}
+
+function epyon_loadAliveEnemies() {
+	if (getLevel() >= 16){
+		var leeks = getAliveEnemies();
+		var l = count(leeks);
+		for (var i = 0; i < l; i++){
+			epyon_getLeek(leeks[i]);
+		}
+	}
 }
 
 function epyon_updateSelfRef(){
@@ -51,7 +69,10 @@ function epyon_updateSelfRef(){
 }
 
 function eGetCell(eLeek){
-	if (eLeek['_cellIsDirty']) eLeek['cell'] = getCell(eLeek['id']);
+	if (eLeek['_cellIsDirty']){
+		eLeek['_cell'] = getCell(eLeek['id']);
+		eLeek['_cellIsDirty'] = false;
+	}
 	return eLeek['_cell'];
 }
 

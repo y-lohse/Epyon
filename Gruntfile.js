@@ -14,11 +14,15 @@ var epyonFiles = [	'./epyon/head.js',
 function loadPolyfills(level){
 	var polyfills = [];
 
+	if (level < 8) polyfills.push('./polyfill/isInlineWeapon.js');
+	if (level < 9) polyfills.push('./polyfill/getWeaponScopes.js');
 	if (level < 12) polyfills.push('./polyfill/getTurn.js');
 	if (level < 29) polyfills.push('./polyfill/canUseWeapon.js');
 
 	if (level < 36) polyfills.push('./polyfill/getCooldown.js');
 	else polyfills.push('./polyfill/useChipShim.js');
+	
+	if (level < 37) polyfills.push('./polyfill/getPathLength.js');
 	
 	return polyfills;
 }
@@ -42,7 +46,7 @@ grunt.loadNpmTasks('grunt-contrib-concat');
 grunt.registerTask('build', function(){
 	var concat = grunt.config.get('concat') || {};
 	
-	[1, 50].forEach(function(level){
+	[5, 50].forEach(function(level){
 		var pfs = loadPolyfills(level);
 	
 		concat['epyon'+level] = {

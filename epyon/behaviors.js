@@ -29,7 +29,7 @@ function epyon_weaponBehaviorFactory(WEAPON_ID, name, damage){//damage is temp
 	var distance, minCell;
 	
 	return function(maxAP, maxMP){	
-		if (canUseWeapon(WEAPON_ID, target['id'])) distance = 0;
+		if (EPYON_LEVEL >= 29  && canUseWeapon(WEAPON_ID, target['id'])) distance = 0;
 		else{
 			minCell = getCellToUseWeapon(WEAPON_ID, target['id']);
 			var currentCell = eGetCell(self);
@@ -42,8 +42,10 @@ function epyon_weaponBehaviorFactory(WEAPON_ID, name, damage){//damage is temp
 		epyon_debug(name+' is a candidate');
 
 		var excute = function(){
-			//@TODO: verifier  si on e peut pas déja tirer
-			if (!canUseWeapon(WEAPON_ID, target['id'])) eMoveTowardCell(minCell);//, maxMP? 
+			//ne pas utiliser de OR, canUseWeapon plante e ndessous du level 29
+			if (EPYON_LEVEL < 29) eMoveTowardCell(minCell);
+			else if (!canUseWeapon(WEAPON_ID, target['id'])) eMoveTowardCell(minCell);
+			
 			if (eGetWeapon(self) != WEAPON_ID){
 				debugW('Epyon: 1 extra AP was spent on equiping '+name);
 				eSetWeapon(WEAPON_ID);
@@ -143,7 +145,7 @@ if (getTurn() === 1){
 		var cost = getChipCost(CHIP_SPARK);
 		var distance, minCell;
 		
-		if (canUseChip(CHIP_SPARK, target['id'])) distance = 0;
+		if (EPYON_LEVEL >= 29 && canUseChip(CHIP_SPARK, target['id'])) distance = 0;
 		else{
 			minCell = getCellToUseChip(CHIP_SPARK, target['id']);
 			var currentCell = eGetCell(self);
@@ -156,7 +158,8 @@ if (getTurn() === 1){
 		epyon_debug('spark is a candidate');
 
 		var excute = function(){
-			if (!canUseChip(CHIP_SPARK, target['id'])) eMoveTowardCell(minCell);
+			if (EPYON_LEVEL < 29) eMoveTowardCell(minCell);
+			else if (!canUseChip(CHIP_SPARK, target['id'])) eMoveTowardCell(minCell);
 			useChipShim(CHIP_SPARK, target['id']);
 		};
 

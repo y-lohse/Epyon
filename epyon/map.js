@@ -52,7 +52,6 @@ function epyon_analyzeCellsWithin(center, distance){
 		arrayIter(EPYON_CONFIG['C'], function(scorerName, scorer){
 			if (scorer['coef'] > 0){
 				var score = min(1, max(scorer['fn'](eCell), 0));
-				epyon_debug(eCell['x']+'/'+eCell['y']+' '+scorerName+' score '+score+' coef '+scorer['coef']);
 				cumulatedScore += score;
 				totalCoef += scorer['coef'];
 			}
@@ -61,7 +60,7 @@ function epyon_analyzeCellsWithin(center, distance){
 		eCell['score'] = (totalCoef > 0) ? cumulatedScore / totalCoef : 1;
 		push(eCells, eCell);
 		
-		epyon_debug(eCell['x']+'/'+eCell['y']+' scored '+eCell['score']);
+		//epyon_debug(eCell['x']+'/'+eCell['y']+' scored '+eCell['score']);
 		var color = getColor(round(255 - (255 * eCell['score'])), round(255 * eCell['score']), 0);
 		mark(eCell['id'], color);
 	});

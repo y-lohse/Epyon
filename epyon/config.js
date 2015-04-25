@@ -29,6 +29,7 @@ if (getTurn() === 1){
 	EPYON_CONFIG['C'] = [
 		'border': ['fn': epyon_cScorerBorder, 'coef': 1],
 		'obstacles': ['fn': epyon_cScorerObstacles, 'coef': 2],
+		'los': ['fn': epyon_cScorerLoS, 'coef': 2],
 	];
 	
 	EPYON_CONFIG['suicidal'] = 0;//[0;1] with a higher suicidal value, the leek will stay agressive despite being low on health

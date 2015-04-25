@@ -20,3 +20,21 @@ function epyon_cScorerObstacles(eCell){
 	if (obstacleCount === 0) return 0;
 	else return 1 - ( obstacleCount * 0.1) + 0.1;
 }
+
+function epyon_cScorerLoS(eCell){
+	var inLoSCounter = 0;
+	
+	arrayIter(EPYON_LEEKS, function(eLeek){
+		if (eLeek['ally'] == false &&										//only enemies
+			getDistance(eCell['id'], eGetCell(eLeek)) < eLeek['range'] &&	//within range
+			lineOfSight(eCell['id'], eGetCell(eLeek)))						//with clean LoS
+		{
+			inLoSCounter++;
+		}
+	});
+	
+	var score = inLoSCounter / getAliveEnemiesCount(),
+		baseMultiplier = (inLoSCounter > 0) ? 1 : 0;
+		
+	return 1 - (0.7 * baseMultiplier + 0.3 * score);
+}

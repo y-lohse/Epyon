@@ -200,7 +200,6 @@ function epyon_analyzeCellsWithin(center, distance){
 		arrayIter(EPYON_CONFIG['C'], function(scorerName, scorer){
 			if (scorer['coef'] > 0){
 				var score = min(1, max(scorer['fn'](eCell), 0));
-				epyon_debug(eCell['x']+'/'+eCell['y']+' '+scorerName+' score '+score+' coef '+scorer['coef']);
 				cumulatedScore += score;
 				totalCoef += scorer['coef'];
 			}
@@ -209,7 +208,7 @@ function epyon_analyzeCellsWithin(center, distance){
 		eCell['score'] = (totalCoef > 0) ? cumulatedScore / totalCoef : 1;
 		push(eCells, eCell);
 		
-		epyon_debug(eCell['x']+'/'+eCell['y']+' scored '+eCell['score']);
+		//epyon_debug(eCell['x']+'/'+eCell['y']+' scored '+eCell['score']);
 		var color = getColor(round(255 - (255 * eCell['score'])), round(255 * eCell['score']), 0);
 		mark(eCell['id'], color);
 	});
@@ -304,6 +303,24 @@ function epyon_cScorerObstacles(eCell){
 	//http://fooplot.com/#W3sidHlwZSI6MCwiZXEiOiIxLSh4KjAuMSkrMC4xIiwiY29sb3IiOiIjMDAwMDAwIn0seyJ0eXBlIjoxMDAwLCJ3aW5kb3ciOlsiLTMuNyIsIjkuMjk5OTk5OTk5OTk5OTk5IiwiLTMuODgiLCI0LjEyIl19XQ--
 	if (obstacleCount === 0) return 0;
 	else return 1 - ( obstacleCount * 0.1) + 0.1;
+}
+
+function epyon_cScorerLoS(eCell){
+	var inLoSCounter = 0;
+	
+	arrayIter(EPYON_LEEKS, function(eLeek){
+		if (eLeek['ally'] == false &&										//only enemies
+			getDistance(eCell['id'], eGetCell(eLeek)) < eLeek['range'] &&	//within range
+			lineOfSight(eCell['id'], eGetCell(eLeek)))						//with clean LoS
+		{
+			inLoSCounter++;
+		}
+	});
+	
+	var score = inLoSCounter / getAliveEnemiesCount(),
+		baseMultiplier = (inLoSCounter > 0) ? 1 : 0;
+		
+	return 1 - (0.7 * baseMultiplier + 0.3 * score);
 }
 global EPYON_PREFIGHT = 'prefight';
 global EPYON_FIGHT = 'fight';
@@ -557,6 +574,7 @@ if (getTurn() === 1){
 	EPYON_CONFIG['C'] = [
 		'border': ['fn': epyon_cScorerBorder, 'coef': 1],
 		'obstacles': ['fn': epyon_cScorerObstacles, 'coef': 2],
+		'los': ['fn': epyon_cScorerLoS, 'coef': 2],
 	];
 	
 	EPYON_CONFIG['suicidal'] = 0;//[0;1] with a higher suicidal value, the leek will stay agressive despite being low on health

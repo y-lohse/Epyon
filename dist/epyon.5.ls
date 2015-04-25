@@ -112,8 +112,8 @@ function epyon_getLeek(leekId){
 	leek['id'] = leekId;
 	leek['name'] = getName(leekId);
 	leek['totalLife'] = getTotalLife(leekId);
-	//we can't use enemies agility until vl 5 anyway
-	leek['agility'] = (EPYON_LEVEL > 5) ? getAgility(leekId) : getAgility();
+	leek['agility'] = getAgility(leekId);
+	leek['force'] = getForce(leekId);
 	
 	if (EPYON_LEVEL < 14){
 		//below that level, there's no way to get an ally, so everything that is not us is an enemy
@@ -270,7 +270,11 @@ function epyon_listBehaviors(type, maxAP, maxMP){
 }
 
 //factories to create behavior with less code
-function epyon_weaponBehaviorFactory(WEAPON_ID, name, damage){//damage is temp
+function epyon_weaponBehaviorFactory(WEAPON_ID, name){
+	var effects = getWeaponEffects(WEAPON_ID);
+	//average of damage + stats modifiers
+	var damage = ((effects[0][1]+effects[0][2]) / 2) * (1 + self['force'] / 100);
+	
 	var cost = getWeaponCost(WEAPON_ID);
 	var distance, minCell;
 	
@@ -348,8 +352,7 @@ function epyon_simpleSelfChipBehaviorFactory(CHIP_ID, name){
 }
 
 function epyon_healChipBehaviorFactory(CHIP_ID, name){
-	//[2, 10, 15, 0, 3]
-	var effects = getChipEffects(CHIP_ID);//[[type, min, max, turns, target]]
+	var effects = getChipEffects(CHIP_ID);
 	var maxHeal = effects[0][2] * (1 + self['agility'] / 100);
 	var cost = getChipCost(CHIP_ID);
 	
@@ -391,6 +394,8 @@ if (getTurn() === 1){
 	
 	//FIGHT
 	EPYON_BEHAVIORS[EPYON_FIGHT][CHIP_SPARK] = function(maxAP, maxMP){
+		var effects = getChipEffects(CHIP_SPARK);
+		var damage = ((effects[0][1]+effects[0][2]) / 2) * (1 + self['force'] / 100);
 		var cost = getChipCost(CHIP_SPARK);
 		var distance, minCell;
 		
@@ -416,13 +421,13 @@ if (getTurn() === 1){
 			'name': 'spark',
 			'MP': distance,
 			'AP': cost,
-			'damage': 16,
+			'damage': damage,
 			'fn': excute
 		];
 	};
 	
-	EPYON_BEHAVIORS[EPYON_FIGHT][WEAPON_PISTOL] = epyon_weaponBehaviorFactory(WEAPON_PISTOL, 'pîstol', 20);
-	EPYON_BEHAVIORS[EPYON_FIGHT][WEAPON_MAGNUM] = epyon_weaponBehaviorFactory(WEAPON_MAGNUM, 'magnum', 40);
+	EPYON_BEHAVIORS[EPYON_FIGHT][WEAPON_PISTOL] = epyon_weaponBehaviorFactory(WEAPON_PISTOL, 'pîstol');
+	EPYON_BEHAVIORS[EPYON_FIGHT][WEAPON_MAGNUM] = epyon_weaponBehaviorFactory(WEAPON_MAGNUM, 'magnum');
 	
 	
 	//POSTFIGHT

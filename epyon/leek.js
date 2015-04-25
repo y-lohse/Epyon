@@ -16,8 +16,8 @@ function epyon_getLeek(leekId){
 	leek['id'] = leekId;
 	leek['name'] = getName(leekId);
 	leek['totalLife'] = getTotalLife(leekId);
-	//we can't use enemies agility until vl 5 anyway
-	leek['agility'] = (EPYON_LEVEL > 5) ? getAgility(leekId) : getAgility();
+	leek['agility'] = getAgility(leekId);
+	leek['force'] = getForce(leekId);
 	
 	if (EPYON_LEVEL < 14){
 		//below that level, there's no way to get an ally, so everything that is not us is an enemy

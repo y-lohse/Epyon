@@ -73,38 +73,25 @@ function epyon_act(){
 	var remainingMP = totalMP - allocatedMP;
 	var remainingAP = 0;//totalAP - spentAP - allocatedAP is always 0
 	
-	if (allocatedMP > 0){
-		epyon_debug('allocated MP: '+allocatedMP);
-		epyon_debug('allocated AP: '+allocatedAP);
+//	if (allocatedMP > 0){
+	epyon_debug('allocated MP: '+allocatedMP);
+	epyon_debug('allocated AP: '+allocatedAP);
 		
-		//try to find attacks for as long as the AP & MP last
-		var attacks = [];
-		var foundSuitableAttacks = false;
-		while(count(attacks = epyon_listBehaviors(EPYON_FIGHT, allocatedAP, allocatedMP)) > 0){
-			var selected = EPYON_CONFIG['select_fight'](attacks, allocatedAP, allocatedMP);
-			if (!selected) break;
-			epyon_debug('using fight move '+selected['name']+' for '+selected['AP']+'AP and '+selected['MP']+'MP');
-			allocatedAP -= selected['AP'];
-			allocatedMP -= selected['MP'];
-			selected['fn']();
-			foundSuitableAttacks = true;
-		};
+	//try to find attacks for as long as the AP & MP last
+	var attacks = [];
+	var foundSuitableAttacks = false;
+	while(count(attacks = epyon_listBehaviors(EPYON_FIGHT, allocatedAP, allocatedMP)) > 0){
+		var selected = EPYON_CONFIG['select_fight'](attacks, allocatedAP, allocatedMP);
+		if (!selected) break;
+		epyon_debug('using fight move '+selected['name']+' for '+selected['AP']+'AP and '+selected['MP']+'MP');
+		allocatedAP -= selected['AP'];
+		allocatedMP -= selected['MP'];
+		selected['fn']();
+		foundSuitableAttacks = true;
+	};
 		
-		if (foundSuitableAttacks){
-			//re ttaribut unsuded points
-			remainingAP += allocatedAP;
-			remainingMP += allocatedMP;
-		}
-		else{
-			//this behavior could posibly lead to flee too easily
-			epyon_debug('no suitable attacks found');
-			remainingAP += allocatedAP;//re-alocate all APs
-			remainingMP += allocatedMP;//and MPs
-		}
-	}
-	else{
-		remainingAP = allocatedAP;
-	}
+	remainingAP += allocatedAP;
+	remainingMP += allocatedMP;
 	
 	epyon_debug('remaining MP after attacks: '+remainingMP);
 	epyon_debug('remaining AP after attacks: '+remainingAP);

@@ -10,12 +10,8 @@ if (getTurn() == 1){
 	EPYON_CONFIG[EPYON_POSTFIGHT] = [EQUIP_PISTOL];
 }
 
-epyon_startStats('global');
-
-epyon_aquireTarget();
+epyon_denyChallenge();
+epyon_loadAliveEnemies();
 epyon_updateAgressions();
+epyon_aquireTarget();
 epyon_act();
-
-var globalStats = epyon_stopStats('global');
-epyon_debug('instructions: '+globalStats['i']+'/'+INSTRUCTIONS_LIMIT);
-epyon_debug('operations: '+globalStats['o']+'/'+OPERATIONS_LIMIT);

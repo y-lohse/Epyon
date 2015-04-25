@@ -54,7 +54,7 @@ function epyon_updateLeek(eLeek){
 }
 
 function epyon_loadAliveEnemies() {
-	if (getLevel() >= 16){
+	if (EPYON_LEVEL >= 16){
 		var leeks = getAliveEnemies();
 		var l = count(leeks);
 		for (var i = 0; i < l; i++){

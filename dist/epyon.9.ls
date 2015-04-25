@@ -317,6 +317,45 @@ function epyon_equipBehaviorFactory(WEAPON_ID, name){
 	};
 }
 
+function epyon_offensiveChipBehaviorFactory(CHIP_ID, name){
+	var effects = getChipEffects(CHIP_ID);
+	var damage = ((effects[0][1]+effects[0][2]) / 2) * (1 + self['force'] / 100);
+	var cost = getChipCost(CHIP_ID);
+	var distance, minCell;
+	
+	return function(maxAP, maxMP){
+		if (EPYON_LEVEL >= 29 && canUseChip(CHIP_ID, target['id'])) distance = 0;
+		else{
+			minCell = getCellToUseChip(CHIP_ID, target['id']);
+			var currentCell = eGetCell(self);
+
+			distance = getPathLength(minCell, currentCell);
+		}
+
+		if (getCooldown(CHIP_ID) > 0 || cost > maxAP || distance > maxMP){
+			debug(name+' not candidate');
+			debug(cost+' > '+maxAP+' or '+distance+' > '+maxMP);
+			return false;
+		}
+		
+		epyon_debug(name+' is a candidate');
+
+		var excute = function(){
+			if (EPYON_LEVEL < 29) eMoveTowardCell(minCell);
+			else if (!canUseChip(CHIP_ID, target['id'])) eMoveTowardCell(minCell);
+			useChipShim(CHIP_ID, target['id']);
+		};
+
+		return [
+			'name': name,
+			'MP': distance,
+			'AP': cost,
+			'damage': damage,
+			'fn': excute
+		];
+	};
+}
+
 function epyon_simpleSelfChipBehaviorFactory(CHIP_ID, name){
 	var cost = getChipCost(CHIP_ID);
 	
@@ -370,6 +409,7 @@ if (getTurn() === 1){
 	EPYON_BEHAVIORS[EPYON_PREFIGHT][CHIP_SHIELD] = epyon_simpleSelfChipBehaviorFactory(CHIP_SHIELD, 'shield');
 	EPYON_BEHAVIORS[EPYON_PREFIGHT][CHIP_HELMET] = epyon_simpleSelfChipBehaviorFactory(CHIP_HELMET, 'helmet');
 	EPYON_BEHAVIORS[EPYON_PREFIGHT][CHIP_WALL] = epyon_simpleSelfChipBehaviorFactory(CHIP_WALL, 'wall');
+	EPYON_BEHAVIORS[EPYON_PREFIGHT][CHIP_PROTEIN] = epyon_simpleSelfChipBehaviorFactory(CHIP_PROTEIN, 'protein');
 	EPYON_BEHAVIORS[EPYON_PREFIGHT][CHIP_STEROID] = epyon_simpleSelfChipBehaviorFactory(CHIP_STEROID, 'steroid');
 	EPYON_BEHAVIORS[EPYON_PREFIGHT][CHIP_WARM_UP] = epyon_simpleSelfChipBehaviorFactory(CHIP_WARM_UP, 'warm');
 
@@ -396,42 +436,11 @@ if (getTurn() === 1){
 	
 	
 	//FIGHT
-	EPYON_BEHAVIORS[EPYON_FIGHT][CHIP_SPARK] = function(maxAP, maxMP){
-		var effects = getChipEffects(CHIP_SPARK);
-		var damage = ((effects[0][1]+effects[0][2]) / 2) * (1 + self['force'] / 100);
-		var cost = getChipCost(CHIP_SPARK);
-		var distance, minCell;
-		
-		if (EPYON_LEVEL >= 29 && canUseChip(CHIP_SPARK, target['id'])) distance = 0;
-		else{
-			minCell = getCellToUseChip(CHIP_SPARK, target['id']);
-			var currentCell = eGetCell(self);
-
-			distance = getPathLength(minCell, currentCell);
-		}
-
-		if (cost > maxAP || distance > maxMP) return false;
-		
-		epyon_debug('spark is a candidate');
-
-		var excute = function(){
-			if (EPYON_LEVEL < 29) eMoveTowardCell(minCell);
-			else if (!canUseChip(CHIP_SPARK, target['id'])) eMoveTowardCell(minCell);
-			useChipShim(CHIP_SPARK, target['id']);
-		};
-
-		return [
-			'name': 'spark',
-			'MP': distance,
-			'AP': cost,
-			'damage': damage,
-			'fn': excute
-		];
-	};
+	EPYON_BEHAVIORS[EPYON_FIGHT][CHIP_SPARK] = epyon_offensiveChipBehaviorFactory(CHIP_SPARK, 'spark');
+	EPYON_BEHAVIORS[EPYON_FIGHT][CHIP_PEBBLE] = epyon_offensiveChipBehaviorFactory(CHIP_PEBBLE, 'pebble');
 	
 	EPYON_BEHAVIORS[EPYON_FIGHT][WEAPON_PISTOL] = epyon_weaponBehaviorFactory(WEAPON_PISTOL, 'pîstol');
 	EPYON_BEHAVIORS[EPYON_FIGHT][WEAPON_MAGNUM] = epyon_weaponBehaviorFactory(WEAPON_MAGNUM, 'magnum');
-	
 	
 	//POSTFIGHT
 	EPYON_BEHAVIORS[EPYON_POSTFIGHT][EQUIP_PISTOL] = epyon_equipBehaviorFactory(WEAPON_PISTOL, 'pistol');

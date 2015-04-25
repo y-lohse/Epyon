@@ -128,7 +128,6 @@ function epyon_healChipBehaviorFactory(CHIP_ID, name){
 }
 
 
-
 /*********************************
 *********** BEHAVIORS ************
 *********************************/
@@ -144,6 +143,24 @@ if (getTurn() === 1){
 
 	EPYON_BEHAVIORS[EPYON_PREFIGHT][CHIP_BANDAGE] = epyon_healChipBehaviorFactory(CHIP_BANDAGE, 'bandage');
 	EPYON_BEHAVIORS[EPYON_PREFIGHT][CHIP_CURE] = epyon_healChipBehaviorFactory(CHIP_CURE, 'cure');
+	
+	EPYON_BEHAVIORS[EPYON_PREFIGHT][CHIP_PUNY_BULB] = function(maxAP, maxHP){
+		var cost = getChipCost(CHIP_PUNY_BULB);
+	
+		if (getCooldown(CHIP_PUNY_BULB) > 0 || maxAP < cost) return false;
+
+		epyon_debug('puny bulb is a candidate');
+
+		var fn = function(){
+			summon(CHIP_PUNY_BULB, eGetCell(self)+1, epyon_bulb);
+		};
+
+		return [
+			'name': 'puny bulb',
+			'AP': cost,
+			'fn': fn
+		];
+	};
 	
 	
 	//FIGHT

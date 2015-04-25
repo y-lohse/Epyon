@@ -7,6 +7,7 @@ var epyonFiles = [	'./epyon/head.js',
 					'./epyon/behaviors.js',
 					'./epyon/config.js', 
 					'./epyon/core.js', 
+					'./epyon/bulb.js', 
 					'./epyon/footer.js'];
 
 // Project configuration.

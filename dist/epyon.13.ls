@@ -367,20 +367,40 @@ function epyon_cScorerLoS(eCell){
 function epyon_cScorerEnemyProximity(eCell){
 	var maxDistance = self['MP'];//self['range'] would be another candidate
 	var cumulatedDistance = 0,
-		enemyCount = 0;
+		enemiesInRange = 0;
 	
 	arrayIter(EPYON_LEEKS, function(eLeek){
-		if (eLeek['ally'] == false){
+		if (eLeek['ally'] === false){
 			var distance = getDistance(eCell['id'], eGetCell(eLeek));
 			if (distance < maxDistance){
 				cumulatedDistance += distance;
-				enemyCount++;
+				enemiesInRange++;
 			}
 		}
 	});
 	
-	if (enemyCount === 0) return 1;
-	else return 1 - (cumulatedDistance / (maxDistance * enemyCount));
+	if (enemiesInRange === 0) return 1;
+	else return cumulatedDistance / (maxDistance * enemiesInRange);
+}
+
+function epyon_cScorerAllyProximity(eCell){
+	var maxDistance = self['MP'];//self['range'] would be another candidate
+	var cumulatedDistance = 0,
+		alliesInRange = 0;
+	
+	arrayIter(EPYON_LEEKS, function(eLeek){
+		if (eLeek['ally'] === true){
+			var distance = getDistance(eCell['id'], eGetCell(eLeek));
+			if (distance < maxDistance){
+				cumulatedDistance += distance;
+				alliesInRange++;
+			}
+		}
+	});
+	
+	if (alliesInRange === 0 && getAlliesCount() > 0) return 0;
+	else if (alliesInRange > 0 && getAlliesCount() === 0) return 0.5;//no allies anyway
+	else return 1 - (cumulatedDistance / (maxDistance * alliesInRange));
 }
 global EPYON_PREFIGHT = 'prefight';
 global EPYON_FIGHT = 'fight';

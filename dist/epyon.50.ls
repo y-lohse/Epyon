@@ -432,11 +432,11 @@ function epyon_aquireTarget(){
 	return target;
 }
 
-function epyon_updateAgressions(){
-	arrayIter(EPYON_LEEKS, function(leekId, eLeek){
-		epyon_debug('update agression for '+EPYON_LEEKS[leekId]['name']);
+function epyon_updateAgressions(){	
+	var copy = EPYON_LEEKS;
+	arrayIter(copy, function(leekId, eLeek){
 		EPYON_LEEKS[leekId]['agression'] = epyon_computeAgression(eLeek);
-		epyon_debug('A:'+EPYON_LEEKS[leekId]['agression']);
+		epyon_debug('A for '+EPYON_LEEKS[leekId]['name']+' : '+EPYON_LEEKS[leekId]['agression']);
 	});
 	
 	epyon_updateSelfRef();
@@ -460,8 +460,8 @@ function epyon_computeAgression(epyonLeek){
 
 function epyon_act(){
 	//compute S
-	debug('own agression: '+self['agression']);
-	debug('target agression: '+target['agression']+' ('+target['name']+')');
+//	debug('own agression: '+self['agression']);
+//	debug('target agression: '+target['agression']+' ('+target['name']+')');
 	var S = self['agression'] - target['agression'];
 	epyon_debug('S computed to '+S);
 	

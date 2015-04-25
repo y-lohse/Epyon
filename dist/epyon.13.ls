@@ -41,7 +41,7 @@ function useChipShim(CHIP, leek){
 function getPathLength(cell1, cell2){
 	return getCellDistance(cell1, cell2);
 }
-global EPYON_VERSION = '2.0.1';
+global EPYON_VERSION = '2.1.0';
 global EPYON_LEVEL = getLevel();
 
 function epyon_debug(message){

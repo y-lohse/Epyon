@@ -15,7 +15,10 @@ function loadPolyfills(level){
 	var polyfills = [];
 
 	if (level < 8) polyfills.push('./polyfill/isInlineWeapon.js');
-	if (level < 9) polyfills.push('./polyfill/getWeaponScopes.js');
+	if (level < 9){
+		polyfills.push('./polyfill/getWeaponScopes.js');
+		polyfills.push('./polyfill/getEffects.js');
+	}
 	if (level < 12) polyfills.push('./polyfill/getTurn.js');
 	if (level < 29) polyfills.push('./polyfill/canUseWeapon.js');
 

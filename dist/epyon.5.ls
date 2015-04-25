@@ -150,7 +150,7 @@ function epyon_updateLeek(eLeek){
 }
 
 function epyon_loadAliveEnemies() {
-	if (getLevel() >= 16){
+	if (EPYON_LEVEL >= 16){
 		var leeks = getAliveEnemies();
 		var l = count(leeks);
 		for (var i = 0; i < l; i++){
@@ -495,12 +495,11 @@ function epyon_aquireTarget(){
 }
 
 function epyon_updateAgressions(){
-	var l = count(EPYON_LEEKS);
-	for (var i = 0; i < l; i++){
-		epyon_debug('update agression for '+EPYON_LEEKS[i]['name']);
-		EPYON_LEEKS[i]['agression'] = epyon_computeAgression(EPYON_LEEKS[i]);
-		epyon_debug('A:'+EPYON_LEEKS[i]['agression']);
-	}
+	arrayIter(EPYON_LEEKS, function(leekId, eLeek){
+		epyon_debug('update agression for '+EPYON_LEEKS[leekId]['name']);
+		EPYON_LEEKS[leekId]['agression'] = epyon_computeAgression(eLeek);
+		epyon_debug('A:'+EPYON_LEEKS[leekId]['agression']);
+	});
 	
 	epyon_updateSelfRef();
 }

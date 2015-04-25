@@ -38,3 +38,22 @@ function epyon_cScorerLoS(eCell){
 		
 	return 1 - (0.7 * baseMultiplier + 0.3 * score);
 }
+
+function epyon_cScorerEnemyProximity(eCell){
+	var maxDistance = self['MP'];//self['range'] would be another candidate
+	var cumulatedDistance = 0,
+		enemyCount = 0;
+	
+	arrayIter(EPYON_LEEKS, function(eLeek){
+		if (eLeek['ally'] == false){
+			var distance = getDistance(eCell['id'], eGetCell(eLeek));
+			if (distance < maxDistance){
+				cumulatedDistance += distance;
+				enemyCount++;
+			}
+		}
+	});
+	
+	if (enemyCount === 0) return 1;
+	else return 1 - (cumulatedDistance / (maxDistance * enemyCount));
+}

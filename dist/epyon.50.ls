@@ -50,6 +50,8 @@ function epyon_getLeek(leekId){
 	leek['id'] = leekId;
 	leek['name'] = getName(leekId);
 	leek['totalLife'] = getTotalLife(leekId);
+	//we can't use enemies agility until vl 5 anyway
+	leek['agility'] = (EPYON_LEVEL > 5) ? getAgility(leekId) : getAgility();
 	
 	if (EPYON_LEVEL < 14){
 		//below that level, there's no way to get an ally, so everything that is not us is an enemy
@@ -283,7 +285,10 @@ function epyon_simpleSelfChipBehaviorFactory(CHIP_ID, name){
 	};
 }
 
-function epyon_healChipBehaviorFactory(CHIP_ID, name, maxHeal){
+function epyon_healChipBehaviorFactory(CHIP_ID, name){
+	//[2, 10, 15, 0, 3]
+	var effects = getChipEffects(CHIP_ID);//[[type, min, max, turns, target]]
+	var maxHeal = effects[0][2] * (1 + self['agility'] / 100);
 	var cost = getChipCost(CHIP_ID);
 	
 	return function(maxAP, maxMP){
@@ -318,8 +323,8 @@ if (getTurn() === 1){
 	EPYON_BEHAVIORS[EPYON_PREFIGHT][CHIP_STEROID] = epyon_simpleSelfChipBehaviorFactory(CHIP_STEROID, 'steroid');
 	EPYON_BEHAVIORS[EPYON_PREFIGHT][CHIP_WARM_UP] = epyon_simpleSelfChipBehaviorFactory(CHIP_WARM_UP, 'warm');
 
-	EPYON_BEHAVIORS[EPYON_PREFIGHT][CHIP_BANDAGE] = epyon_healChipBehaviorFactory(CHIP_BANDAGE, 'bandage', 15);
-	EPYON_BEHAVIORS[EPYON_PREFIGHT][CHIP_CURE] = epyon_healChipBehaviorFactory(CHIP_CURE, 'cure', 70);
+	EPYON_BEHAVIORS[EPYON_PREFIGHT][CHIP_BANDAGE] = epyon_healChipBehaviorFactory(CHIP_BANDAGE, 'bandage');
+	EPYON_BEHAVIORS[EPYON_PREFIGHT][CHIP_CURE] = epyon_healChipBehaviorFactory(CHIP_CURE, 'cure');
 	
 	
 	//FIGHT
@@ -362,8 +367,8 @@ if (getTurn() === 1){
 	EPYON_BEHAVIORS[EPYON_POSTFIGHT][EQUIP_PISTOL] = epyon_equipBehaviorFactory(WEAPON_PISTOL, 'pistol');
 	EPYON_BEHAVIORS[EPYON_POSTFIGHT][EQUIP_MAGNUM] = epyon_equipBehaviorFactory(WEAPON_MAGNUM, 'magnum');
 
-	EPYON_BEHAVIORS[EPYON_POSTFIGHT][CHIP_BANDAGE] = epyon_healChipBehaviorFactory(CHIP_BANDAGE, 'bandage', 15);
-	EPYON_BEHAVIORS[EPYON_POSTFIGHT][CHIP_CURE] = epyon_healChipBehaviorFactory(CHIP_CURE, 'cure', 70);
+	EPYON_BEHAVIORS[EPYON_POSTFIGHT][CHIP_BANDAGE] = epyon_healChipBehaviorFactory(CHIP_BANDAGE, 'bandage');
+	EPYON_BEHAVIORS[EPYON_POSTFIGHT][CHIP_CURE] = epyon_healChipBehaviorFactory(CHIP_CURE, 'cure');
 	EPYON_BEHAVIORS[EPYON_POSTFIGHT][CHIP_SPARK] = EPYON_BEHAVIORS[EPYON_FIGHT][CHIP_SPARK];
 }
 

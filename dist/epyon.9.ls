@@ -256,6 +256,10 @@ function epyon_analyzeCellsWithin(center, distance){
 		
 		eCell['score'] = (totalCoef > 0) ? cumulatedScore / totalCoef : 1;
 		push(eCells, eCell);
+		
+		epyon_debug(eCell['x']+'/'+eCell['y']+' scored '+eCell['score']);
+		var color = getColor(round(255 - (255 * eCell['score'])), round(255 * eCell['score']), 0);
+		mark(eCell['id'], color);
 	});
 	
 	return eCells;
@@ -273,8 +277,8 @@ function getCellsWithin(center, distance){
 		maxY = centerY + distance;
 		
 	//we're using getPathLength, but getCellDistance could be a good approximation
-	for (var x = centerX - distance; x < maxX; x++){
-		for (var y = centerY - distance; y < maxY; y++){
+	for (var x = centerX - distance; x <= maxX; x++){
+		for (var y = centerY - distance; y <= maxY; y++){
 			var cell = getCellFromXY(x, y);
 			if (cell && getPathLength(cell, center) <= distance) push(cells, cell);
 		}
@@ -599,8 +603,8 @@ if (getTurn() === 1){
 	];
 	
 	EPYON_CONFIG['C'] = [
-		'border': ['fn': epyon_cScorerBorder, 'coef': 0.5],
-		'obstacles': ['fn': epyon_cScorerObstacles, 'coef': 1],
+		'border': ['fn': epyon_cScorerBorder, 'coef': 1],
+		'obstacles': ['fn': epyon_cScorerObstacles, 'coef': 2],
 	];
 	
 	EPYON_CONFIG['suicidal'] = 0;//[0;1] with a higher suicidal value, the leek will stay agressive despite being low on health
@@ -668,11 +672,6 @@ function epyon_computeAgression(epyonLeek){
 
 function epyon_act(){
 	//compute S
-<<<<<<< HEAD
-=======
-//	debug('own agression: '+self['agression']);
-//	debug('target agression: '+target['agression']+' ('+target['name']+')');
->>>>>>> origin/dev
 	var S = self['agression'] - target['agression'];
 	epyon_debug('S computed to '+S);
 	

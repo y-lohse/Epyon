@@ -1,5 +1,5 @@
+//lvl 36
 global PF_CHIP_COOLDOWNS = [];
-global PF_CHIP_COOLDOWNS_MIN_LVL = 36;
 	
 //only works for own chips
 function getCooldown(CHIP){

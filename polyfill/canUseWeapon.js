@@ -1,3 +1,4 @@
+//lvl29
 function canUseWeapon(weapon, leek){
 	//handles the polimorphic nature of the original function
 	if (!leek){

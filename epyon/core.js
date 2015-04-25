@@ -1,5 +1,24 @@
 function epyon_aquireTarget(){
-	var enemy = epyon_getLeek(getNearestEnemy());
+	var enemy = null;
+	// On recupere les ennemis, vivants, à porté
+	var enemiesInRange = [];
+	for (var leek in EPYON_LEEKS){
+		// @Yannick : Dois-je update avant ?
+		if (getPathLength(eGetCell(self),leek['_cell']) <= self['range'] && isAlive(leek['id']) && !leek['ally']) enemiesInRange[leek['id']] = leek; // Arbitraire (portée du magnum + 3 deplacements)
+	}
+	// On détermine le plus affaibli d'entre eux
+	var lowerHealth = 1;
+	var actualHealth;
+	for(var leek in enemiesInRange) {
+		actualHealth = getLife(leek['id'])/leek['totalLife'];
+		if (actualHealth < lowerHealth) {	
+			lowerHealth = actualHealth;
+			enemy = leek;
+		}
+		
+	}
+	// Si aucun n'est affaibli, on prend le plus proche
+	if(!enemy) enemy = epyon_getLeek(getNearestEnemy());
 	
 	EPYON_TARGET_DISTANCE = getPathLength(eGetCell(self), eGetCell(enemy));
 	
@@ -11,13 +30,12 @@ function epyon_aquireTarget(){
 	return target;
 }
 
-function epyon_updateAgressions(){
-	var l = count(EPYON_LEEKS);
-	for (var i = 0; i < l; i++){
-		epyon_debug('update agression for '+EPYON_LEEKS[i]['name']);
-		EPYON_LEEKS[i]['agression'] = epyon_computeAgression(EPYON_LEEKS[i]);
-		epyon_debug('A:'+EPYON_LEEKS[i]['agression']);
-	}
+function epyon_updateAgressions(){	
+	var copy = EPYON_LEEKS;
+	arrayIter(copy, function(leekId, eLeek){
+		EPYON_LEEKS[leekId]['agression'] = epyon_computeAgression(eLeek);
+		epyon_debug('A for '+EPYON_LEEKS[leekId]['name']+' : '+EPYON_LEEKS[leekId]['agression']);
+	});
 	
 	epyon_updateSelfRef();
 }
@@ -55,38 +73,25 @@ function epyon_act(){
 	var remainingMP = totalMP - allocatedMP;
 	var remainingAP = 0;//totalAP - spentAP - allocatedAP is always 0
 	
-	if (allocatedMP > 0){
-		epyon_debug('allocated MP: '+allocatedMP);
-		epyon_debug('allocated AP: '+allocatedAP);
+//	if (allocatedMP > 0){
+	epyon_debug('allocated MP: '+allocatedMP);
+	epyon_debug('allocated AP: '+allocatedAP);
 		
-		//try to find attacks for as long as the AP & MP last
-		var attacks = [];
-		var foundSuitableAttacks = false;
-		while(count(attacks = epyon_listBehaviors(EPYON_FIGHT, allocatedAP, allocatedMP)) > 0){
-			var selected = EPYON_CONFIG['select_fight'](attacks, allocatedAP, allocatedMP);
-			if (!selected) break;
-			epyon_debug('using fight move '+selected['name']+' for '+selected['AP']+'AP and '+selected['MP']+'MP');
-			allocatedAP -= selected['AP'];
-			allocatedMP -= selected['MP'];
-			selected['fn']();
-			foundSuitableAttacks = true;
-		};
+	//try to find attacks for as long as the AP & MP last
+	var attacks = [];
+	var foundSuitableAttacks = false;
+	while(count(attacks = epyon_listBehaviors(EPYON_FIGHT, allocatedAP, allocatedMP)) > 0){
+		var selected = EPYON_CONFIG['select_fight'](attacks, allocatedAP, allocatedMP);
+		if (!selected) break;
+		epyon_debug('using fight move '+selected['name']+' for '+selected['AP']+'AP and '+selected['MP']+'MP');
+		allocatedAP -= selected['AP'];
+		allocatedMP -= selected['MP'];
+		selected['fn']();
+		foundSuitableAttacks = true;
+	};
 		
-		if (foundSuitableAttacks){
-			//re ttaribut unsuded points
-			remainingAP += allocatedAP;
-			remainingMP += allocatedMP;
-		}
-		else{
-			//this behavior could posibly lead to flee too easily
-			epyon_debug('no suitable attacks found');
-			remainingAP += allocatedAP;//re-alocate all APs
-			remainingMP += allocatedMP;//and MPs
-		}
-	}
-	else{
-		remainingAP = allocatedAP;
-	}
+	remainingAP += allocatedAP;
+	remainingMP += allocatedMP;
 	
 	epyon_debug('remaining MP after attacks: '+remainingMP);
 	epyon_debug('remaining AP after attacks: '+remainingAP);

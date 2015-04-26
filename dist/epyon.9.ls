@@ -48,7 +48,7 @@ function useChipShim(CHIP, leek){
 function getPathLength(cell1, cell2){
 	return getCellDistance(cell1, cell2);
 }
-global EPYON_VERSION = '2.3.0';
+global EPYON_VERSION = '3.0.0';
 global EPYON_LEVEL = getLevel();
 
 function epyon_debug(message){
@@ -226,7 +226,10 @@ function epyon_moveTowardsTarget(maxMp){
 }
 
 function epyon_moveToSafety(maxMp){
-	//@TODO:essayer de se mettre à l'abris plutot que fuir en ligne droite
+	var cellsAround = epyon_analyzeCellsWithin(eGetCell(self), maxMp);
+	
+	debug('allocated mp: '+maxMp);
+	debug(cellsAround);
 	eMoveAwayFrom(target, maxMp);
 }
 
@@ -405,8 +408,8 @@ function epyon_cScorerAllyProximity(eCell){
 		}
 	});
 	
-	if (alliesInRange === 0 && getAlliesCount() > 0) return 0;
-	else if (alliesInRange > 0 && getAlliesCount() === 0) return 0.5;//no allies anyway
+	if (alliesInRange === 0 && getAlliesCount() > 0) return 0.5;
+	else if (alliesInRange > 0 && getAlliesCount() === 0) return 0.5;//no allies, no influence
 	else return 1 - (cumulatedDistance / (maxDistance * alliesInRange));
 }
 global EPYON_PREFIGHT = 'prefight';
@@ -737,8 +740,6 @@ function epyon_act(){
 	
 	var totalMP = self['MP'],
 		totalAP = self['AP'];
-		
-	var cells = epyon_analyzeCellsWithin(eGetCell(self), totalMP);
 		
 	var allocatedMP = epyon_allocateAttackMP(S, totalMP);
 	var spentAP = epyon_prefight(S, totalAP, 0);

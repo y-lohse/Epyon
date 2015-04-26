@@ -73,7 +73,7 @@ function epyon_cScorerAllyProximity(eCell){
 		}
 	});
 	
-	if (alliesInRange === 0 && getAlliesCount() > 0) return 0;
-	else if (alliesInRange > 0 && getAlliesCount() === 0) return 0.5;//no allies anyway
+	if (alliesInRange === 0 && getAlliesCount() > 0) return 0.5;
+	else if (alliesInRange > 0 && getAlliesCount() === 0) return 0.5;//no allies, no influence
 	else return 1 - (cumulatedDistance / (maxDistance * alliesInRange));
 }

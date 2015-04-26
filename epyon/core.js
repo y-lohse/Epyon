@@ -64,8 +64,6 @@ function epyon_act(){
 	var totalMP = self['MP'],
 		totalAP = self['AP'];
 		
-	var cells = epyon_analyzeCellsWithin(eGetCell(self), totalMP);
-		
 	var allocatedMP = epyon_allocateAttackMP(S, totalMP);
 	var spentAP = epyon_prefight(S, totalAP, 0);
 	var allocatedAP = totalAP - spentAP;

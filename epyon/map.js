@@ -30,7 +30,10 @@ function epyon_moveTowardsTarget(maxMp){
 }
 
 function epyon_moveToSafety(maxMp){
-	//@TODO:essayer de se mettre à l'abris plutot que fuir en ligne droite
+	var cellsAround = epyon_analyzeCellsWithin(eGetCell(self), maxMp);
+	
+	debug('allocated mp: '+maxMp);
+	debug(cellsAround);
 	eMoveAwayFrom(target, maxMp);
 }
 

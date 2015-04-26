@@ -155,7 +155,29 @@ function epyon_updateLeek(eLeek){
 		eLeek['_weapon'] = getWeapon(eLeek['id']);
 		eLeek['MP'] = getMP(eLeek['id']);
 		eLeek['AP'] = getTP(eLeek['id']);
-		eLeek['range'] = getWeaponMaxScope(eLeek['_weapon']) + eLeek['MP'];
+		if (EPYON_LEVEL < 57) eLeek['range'] = getWeaponMaxScope(eLeek['_weapon']) + eLeek['MP'];
+		else eLeek['range'] = 0;
+	}
+	
+	if (!eLeek['chips'] && EPYON_LEVEL >= 57){
+		eLeek['chips'] = getChips(eLeek['id']);
+		eLeek['weapons'] = getWeapons(eLeek['id']);
+
+		//update range
+		var attackChips = arrayFilter(eLeek['chips'], function(CHIP_ID){
+			return inArray([CHIP_SHOCK, CHIP_PEBBLE, CHIP_SPARK, CHIP_ICE, 
+							CHIP_ROCK, CHIP_FLASH, CHIP_FLAME, CHIP_STALACTITE,
+							CHIP_LIGHTNING, CHIP_ROCKFALL, CHIP_ICEBERG, 
+							CHIP_METEORITE, CHIP_DEVIL_STRIKE], CHIP_ID);
+		});
+
+		arrayIter(attackChips, function(CHIP_ID){
+			eLeek['range'] = max(eLeek['range'], eLeek['MP'] + getChipMaxScope(CHIP_ID));
+		});
+
+		arrayIter(eLeek['weapons'], function(WEAPON_ID){
+			eLeek['range'] = max(eLeek['range'], eLeek['MP'] + getWeaponMaxScope(WEAPON_ID));
+		});
 	}
 	
 	EPYON_LEEKS[eLeek['id']] = eLeek;

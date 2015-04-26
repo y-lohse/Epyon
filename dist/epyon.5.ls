@@ -71,7 +71,7 @@ function useChipShim(CHIP, leek){
 }
 //level 37
 function getPathLength(cell1, cell2){
-	return getCellDistance(cell1, cell2);
+	return (cell1 && cell2) ? getCellDistance(cell1, cell2) : null;
 }
 global EPYON_VERSION = '3.0.0';
 global EPYON_LEVEL = getLevel();
@@ -384,6 +384,8 @@ function epyon_cScorerBorder(eCell){
 }
 
 function epyon_cScorerObstacles(eCell){
+	if (EPYON_LEVEL < 21) return 0.5;
+	
 	var adjacent = getAdjacentCells(eCell['id']),
 		obstacleCount = 0;
 		
@@ -421,7 +423,7 @@ function epyon_cScorerEnemyProximity(eCell){
 		enemiesInRange = 0;
 	
 	arrayIter(EPYON_LEEKS, function(eLeek){
-		if (eLeek['ally'] === false){
+		if (eLeek['ally'] === false && isAlive(eLeek['id'])){
 			var distance = getDistance(eCell['id'], eGetCell(eLeek));
 			if (distance < maxDistance){
 				cumulatedDistance += distance;
@@ -440,7 +442,7 @@ function epyon_cScorerAllyProximity(eCell){
 		alliesInRange = 0;
 	
 	arrayIter(EPYON_LEEKS, function(eLeek){
-		if (eLeek['ally'] === true){
+		if (eLeek['ally'] === true && isAlive(eLeek['id'])){
 			var distance = getDistance(eCell['id'], eGetCell(eLeek));
 			if (distance < maxDistance){
 				cumulatedDistance += distance;

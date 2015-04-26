@@ -8,6 +8,8 @@ function epyon_cScorerBorder(eCell){
 }
 
 function epyon_cScorerObstacles(eCell){
+	if (EPYON_LEVEL < 21) return 0.5;
+	
 	var adjacent = getAdjacentCells(eCell['id']),
 		obstacleCount = 0;
 		
@@ -45,7 +47,7 @@ function epyon_cScorerEnemyProximity(eCell){
 		enemiesInRange = 0;
 	
 	arrayIter(EPYON_LEEKS, function(eLeek){
-		if (eLeek['ally'] === false){
+		if (eLeek['ally'] === false && isAlive(eLeek['id'])){
 			var distance = getDistance(eCell['id'], eGetCell(eLeek));
 			if (distance < maxDistance){
 				cumulatedDistance += distance;
@@ -64,7 +66,7 @@ function epyon_cScorerAllyProximity(eCell){
 		alliesInRange = 0;
 	
 	arrayIter(EPYON_LEEKS, function(eLeek){
-		if (eLeek['ally'] === true){
+		if (eLeek['ally'] === true && isAlive(eLeek['id'])){
 			var distance = getDistance(eCell['id'], eGetCell(eLeek));
 			if (distance < maxDistance){
 				cumulatedDistance += distance;

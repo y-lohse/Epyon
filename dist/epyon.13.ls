@@ -472,9 +472,12 @@ function epyon_weaponBehaviorFactory(WEAPON_ID, name){
 		epyon_debug(name+' is a candidate');
 
 		var excute = function(){
+			var mp = 0;
 			//ne pas utiliser de OR, canUseWeapon plante e ndessous du level 29
-			if (EPYON_LEVEL < 29) eMoveTowardCell(minCell);
-			else if (!canUseWeapon(WEAPON_ID, target['id'])) eMoveTowardCell(minCell);
+			if (EPYON_LEVEL < 29) mp = eMoveTowardCell(minCell);
+			else if (!canUseWeapon(WEAPON_ID, target['id'])) mp = eMoveTowardCell(minCell);
+			
+			if (mp > distance) debugW('Epyon: '+(mp-distance)+' extra MP was spent on moving');
 			
 			if (eGetWeapon(self) != WEAPON_ID){
 				debugW('Epyon: 1 extra AP was spent on equiping '+name);
@@ -526,17 +529,17 @@ function epyon_offensiveChipBehaviorFactory(CHIP_ID, name){
 			distance = getPathLength(minCell, currentCell);
 		}
 
-		if (getCooldown(CHIP_ID) > 0 || cost > maxAP || distance > maxMP){
-			debug(name+' not candidate');
-			debug(cost+' > '+maxAP+' or '+distance+' > '+maxMP);
-			return false;
-		}
+		if (getCooldown(CHIP_ID) > 0 || cost > maxAP || distance > maxMP) return false;
 		
 		epyon_debug(name+' is a candidate');
 
 		var excute = function(){
-			if (EPYON_LEVEL < 29) eMoveTowardCell(minCell);
-			else if (!canUseChip(CHIP_ID, target['id'])) eMoveTowardCell(minCell);
+			var mp = 0;
+			if (EPYON_LEVEL < 29) mp = eMoveTowardCell(minCell);
+			else if (!canUseChip(CHIP_ID, target['id'])) mp = eMoveTowardCell(minCell);
+			
+			if (mp > distance) debugW('Epyon: '+(mp-distance)+' extra MP was spent on moving');
+			
 			useChipShim(CHIP_ID, target['id']);
 		};
 

@@ -121,7 +121,7 @@ function getAdjacentCells(center){
 	if (cell = getCellFromXY(x, y - 1)) push(cells, cell);
 	if (cell = getCellFromXY(x + 1, y - 1)) push(cells, cell);
 	if (cell = getCellFromXY(x - 1, y)) push(cells, cell);
-	//NOPE NOT x,y
+	if (cell = getCellFromXY(x, y)) push(cells, cell);
 	if (cell = getCellFromXY(x + 1, y)) push(cells, cell);
 	if (cell = getCellFromXY(x - 1, y + 1)) push(cells, cell);
 	if (cell = getCellFromXY(x, y + 1)) push(cells, cell);

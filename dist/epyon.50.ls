@@ -1,6 +1,6 @@
 //lvl 36+
 global useChipShim = useChip;
-global EPYON_VERSION = '3.0';
+global EPYON_VERSION = '3.1';
 global EPYON_LEVEL = getLevel();
 
 function epyon_debug(message){
@@ -269,7 +269,7 @@ function getAdjacentCells(center){
 	if (cell = getCellFromXY(x, y - 1)) push(cells, cell);
 	if (cell = getCellFromXY(x + 1, y - 1)) push(cells, cell);
 	if (cell = getCellFromXY(x - 1, y)) push(cells, cell);
-	//NOPE NOT x,y
+	if (cell = getCellFromXY(x, y)) push(cells, cell);
 	if (cell = getCellFromXY(x + 1, y)) push(cells, cell);
 	if (cell = getCellFromXY(x - 1, y + 1)) push(cells, cell);
 	if (cell = getCellFromXY(x, y + 1)) push(cells, cell);

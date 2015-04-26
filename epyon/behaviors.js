@@ -272,7 +272,7 @@ if (getTurn() === 1){
 		epyon_debug('puny bulb is a candidate');
 
 		var fn = function(){
-			summon(CHIP_PUNY_BULB, eGetCell(self)+1, epyon_bulb);
+			summon(CHIP_PUNY_BULB, epyon_findCellToSummon(), epyon_bulb);
 		};
 
 		return [

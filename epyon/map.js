@@ -112,7 +112,7 @@ function getCellsWithin(center, distance){
 	return cells;
 }
 
-function getAdjacentCells(center){
+function epyon_getAdjacentCells(center){
 	var x = getCellX(center),
 		y = getCellY(center);
 	

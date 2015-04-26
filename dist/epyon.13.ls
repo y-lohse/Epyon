@@ -41,7 +41,7 @@ function useChipShim(CHIP, leek){
 function getPathLength(cell1, cell2){
 	return (cell1 && cell2) ? getCellDistance(cell1, cell2) : null;
 }
-global EPYON_VERSION = '3.3';
+global EPYON_VERSION = '3.4';
 global EPYON_LEVEL = getLevel();
 
 function epyon_debug(message){
@@ -323,7 +323,7 @@ function getCellsWithin(center, distance){
 	return cells;
 }
 
-function getAdjacentCells(center){
+function epyon_getAdjacentCells(center){
 	var x = getCellX(center),
 		y = getCellY(center);
 	
@@ -379,7 +379,7 @@ function epyon_cScorerBorder(eCell){
 function epyon_cScorerObstacles(eCell){
 	if (EPYON_LEVEL < 21) return null;
 	
-	var adjacent = getAdjacentCells(eCell['id']),
+	var adjacent = epyon_getAdjacentCells(eCell['id']),
 		obstacleCount = 0;
 		
 	arrayIter(adjacent, function(cell){
@@ -723,7 +723,7 @@ if (getTurn() === 1){
 		epyon_debug('puny bulb is a candidate');
 
 		var fn = function(){
-			summon(CHIP_PUNY_BULB, eGetCell(self)+1, epyon_bulb);
+			summon(CHIP_PUNY_BULB, epyon_findCellToSummon(), epyon_bulb);
 		};
 
 		return [
@@ -986,29 +986,29 @@ function epyon_denyChallenge(){
 function epyon_bulb(){
 	var configBackup = EPYON_CONFIG;
 	
-	EPYON_CONFIG[EPYON_PREFIGHT] = [CHIP_HELMET, CHIP_BANDAGE, CHIP_PROTEIN];
+	EPYON_CONFIG[EPYON_PREFIGHT] = [CHIP_HELMET, BANDAGE_OTHER, CHIP_PROTEIN];
 	EPYON_CONFIG[EPYON_FIGHT] = [CHIP_PEBBLE];
-	EPYON_CONFIG[EPYON_POSTFIGHT] = [];
+	EPYON_CONFIG[EPYON_POSTFIGHT] = [CHIP_BANDAGE];
+	
+	EPYON_CONFIG['engage'] = configBackup['engage'] + 2;//stay out of the fights
+	
+	var usedProteinThisTurn = false;
 	
 	EPYON_CONFIG['select_prefight'] = function(behaviors, allocatedAP, allocatedMP){
 		var byPreference = [];
 	
-		debug(behaviors);
 		arrayIter(behaviors, function(behavior){
 			var score = 0;
 			
-			if (behavior['name'] == 'helmet'){
-				if (EPYON_TARGET_DISTANCE < 14){
-					score = 2;
-				}
-			}
-			if (behavior['name'] == 'bandage'){
+			if (behavior['name'] == 'bandage other'){
 				score = 3;
 			}
-			if (behavior['name'] == 'protein'){
-				if (EPYON_TARGET_DISTANCE < 14){
-					score = 1;
-				}
+			else if (behavior['name'] == 'helmet' && !usedProteinThisTurn && EPYON_TARGET_DISTANCE < 14){
+				score = 1;
+			}
+			else if (behavior['name'] == 'protein' && allocatedAP >= 5 && EPYON_TARGET_DISTANCE < 8){
+				usedProteinThisTurn = true;
+				score = 2;
 			}
 
 			if (score > 0) byPreference[score] = behavior;
@@ -1021,13 +1021,28 @@ function epyon_bulb(){
 	EPYON_CONFIG['select_fight'] = function(attacks, allocatedAP, allocatedMP){
 		return attacks[0];
 	};
+	EPYON_CONFIG['select_postfight'] = function(behaviors, allocatedAP, allocatedMP){
+		return behaviors[0];
+	};
 	
 	epyon_loadAliveEnemies();
 	epyon_updateAgressions();
 	epyon_aquireTarget();
+	if (getTurn() < getBirthTurn()+2) self['MP'] = 0;
 	epyon_act();
 	
 	EPYON_CONFIG = configBackup;
+}
+
+function epyon_findCellToSummon(){
+	var adjacents = epyon_getAdjacentCells(eGetCell(self)),
+		l = count(adjacents);
+	
+	for (var i = 0; i < l; i++){
+		if (getCellContent(adjacents[i]) === CELL_EMPTY) return adjacents[i];
+	}
+	
+	return eGetCell(self) + 2;//and hope for the best
 }
 if (getTurn() == 1){
 	var initStats = epyon_stopStats('init');

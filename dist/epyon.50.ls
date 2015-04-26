@@ -174,27 +174,31 @@ if (getTurn() == 1){
 function epyon_moveTowardsTarget(mpCost){
 	//@TODO: se déplace vers l'adversaire mais essayer de rester a couvert
 	var cell = getCell(target['id']);
+	
+	var cellsAround = epyon_analyzeCellsWithin(eGetCell(self), mpCost);
+	//debug(cellsAround);
 	eMoveTowardCellWithMax(cell, mpCost);
 }
 
 function epyon_moveToSafety(mpCost){
 	var cellsAround = epyon_analyzeCellsWithin(eGetCell(self), mpCost);
 	
-	debug('allocated mp: '+mpCost);
-	debug(cellsAround);
+//	debug(cellsAround);
 	
-	var scoredCells = [];
-	
-	arrayIter(cellsAround, function(eCell){
-		var distance = getPathLength(eGetCell(self), eCell['id']);
-		
-		if (distance <= mpCost) scoredCells[mpCost - distance] = eCell;
-	});
-	
-	keySort(scoredCells, SORT_ASC);
-	debug(scoredCells);
-	
-	var cell = shift(scoredCells);
+//	var scoredCells = [];
+//	
+//	arrayIter(cellsAround, function(eCell){
+//		var distance = getPathLength(eGetCell(self), eCell['id']);
+//		debug(distance+' <= '+mpCost);
+//		
+//		if (distance <= mpCost) scoredCells[eCell['score']] = eCell;
+//	});
+//	
+//	keySort(scoredCells, SORT_DESC);
+//	debug(scoredCells);
+//	
+//	var cell = shift(scoredCells);
+	var cell = null;
 	
 	if (cell){
 		debug('moving to '+cell);
@@ -216,6 +220,7 @@ function epyon_analyzeCellsWithin(center, distance){
 			'id': cell,
 			'x': getCellX(cell),
 			'y': getCellY(cell),
+			'distance': getPathLength(center, cell)
 		];
 		
 		var cumulatedScore = 0,
@@ -237,6 +242,9 @@ function epyon_analyzeCellsWithin(center, distance){
 		mark(eCell['id'], color);
 	});
 	
+	debug('cells within '+distance);
+	debug(eCells);
+	
 	return eCells;
 }
 
@@ -254,8 +262,10 @@ function getCellsWithin(center, distance){
 	//we're using getPathLength, but getCellDistance could be a good approximation
 	for (var x = centerX - distance; x <= maxX; x++){
 		for (var y = centerY - distance; y <= maxY; y++){
-			var cell = getCellFromXY(x, y);
-			if (cell && getPathLength(cell, center) <= distance) push(cells, cell);
+			var cell = getCellFromXY(x, y),
+				dist = getPathLength(center, cell);
+				
+			if (cell && dist && dist <= distance) push(cells, cell);
 		}
 	}
 	

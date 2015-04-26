@@ -463,6 +463,7 @@ global EPYON_BEHAVIORS = [];
 //arbitrary numbers
 global EQUIP_PISTOL = 80484;
 global EQUIP_MAGNUM = 80485;
+global BANDAGE_OTHER = 80486;
 
 
 /*
@@ -613,7 +614,7 @@ function epyon_healChipBehaviorFactory(CHIP_ID, name){
 	return function(maxAP, maxMP){
 		if (self['totalLife']-eGetLife(self) < maxHeal || getCooldown(CHIP_ID) > 0 || maxAP < cost) return false;
 
-		epyon_debug(name+' preparation is a candidate');
+		epyon_debug(name+' is a candidate');
 
 		var fn = function(){
 			useChipShim(CHIP_ID, self['id']);
@@ -648,8 +649,42 @@ if (getTurn() === 1){
 	EPYON_BEHAVIORS[CHIP_BANDAGE] = epyon_healChipBehaviorFactory(CHIP_BANDAGE, 'bandage');
 	EPYON_BEHAVIORS[CHIP_CURE] = epyon_healChipBehaviorFactory(CHIP_CURE, 'cure');
 	
+	//heal others
+	EPYON_BEHAVIORS[BANDAGE_OTHER] = function(maxAP, maxMP){
+		var name = 'bandage other';
+		var effects = getChipEffects(CHIP_BANDAGE);
+		var maxHeal = effects[0][2] * (1 + self['agility'] / 100);
+		var cost = getChipCost(CHIP_BANDAGE);
+		var scope = getChipMaxScope(CHIP_BANDAGE);
+		
+		if (getCooldown(CHIP_BANDAGE) > 0 || maxAP < cost) return false;
+		
+		var allies = getAliveAllies();
+		var targets = [];
+		
+		arrayIter(allies, function(leekId){
+			var distance = getDistance(eGetCell(self), getCell(leekId));
+			
+			if (distance <= maxMP && getTotalLife(leekId)-getLife(leekId) < maxHeal) push(targets, leekId);
+		});
+		
+		if (count(targets) === 0) return false;
+
+		epyon_debug(name+' preparation is a candidate');
+
+		var fn = function(){
+			useChipShim(CHIP_ID, self['id']);
+		};
+
+		return [
+			'name': name,
+			'AP': cost,
+			'fn': fn
+		];
+	};
+	
 	//summon
-	EPYON_BEHAVIORS[CHIP_PUNY_BULB] = function(maxAP, maxHP){
+	EPYON_BEHAVIORS[CHIP_PUNY_BULB] = function(maxAP, maxMP){
 		var cost = getChipCost(CHIP_PUNY_BULB);
 	
 		if (getCooldown(CHIP_PUNY_BULB) > 0 || maxAP < cost) return false;

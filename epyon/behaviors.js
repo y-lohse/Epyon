@@ -1,10 +1,11 @@
 global EPYON_PREFIGHT = 'prefight';
 global EPYON_FIGHT = 'fight';
 global EPYON_POSTFIGHT = 'postfight';
-global EPYON_BEHAVIORS = [EPYON_PREFIGHT: [], EPYON_FIGHT: [], EPYON_POSTFIGHT: []];
+global EPYON_BEHAVIORS = [];
 
-global EQUIP_PISTOL = 80484;//arbitrary & hopefully temporary
-global EQUIP_MAGNUM = 80485;//arbitrary & hopefully temporary
+//arbitrary numbers
+global EQUIP_PISTOL = 80484;
+global EQUIP_MAGNUM = 80485;
 
 
 /*
@@ -13,7 +14,7 @@ global EQUIP_MAGNUM = 80485;//arbitrary & hopefully temporary
 function epyon_listBehaviors(type, maxAP, maxMP){
 	var behaviors = [];
 	
-	arrayIter(EPYON_BEHAVIORS[type], function(candidateName, candidateFn){
+	arrayIter(EPYON_BEHAVIORS, function(candidateName, candidateFn){
 		if (inArray(EPYON_CONFIG[type], candidateName)){
 			var result = candidateFn(maxAP, maxMP);
 			if (result) push(behaviors, result);
@@ -172,19 +173,23 @@ function epyon_healChipBehaviorFactory(CHIP_ID, name){
 *********************************/
 if (getTurn() === 1){
 	
-	//PREFIGHT
-	EPYON_BEHAVIORS[EPYON_PREFIGHT][CHIP_ARMOR] = epyon_simpleSelfChipBehaviorFactory(CHIP_ARMOR, 'armor');
-	EPYON_BEHAVIORS[EPYON_PREFIGHT][CHIP_SHIELD] = epyon_simpleSelfChipBehaviorFactory(CHIP_SHIELD, 'shield');
-	EPYON_BEHAVIORS[EPYON_PREFIGHT][CHIP_HELMET] = epyon_simpleSelfChipBehaviorFactory(CHIP_HELMET, 'helmet');
-	EPYON_BEHAVIORS[EPYON_PREFIGHT][CHIP_WALL] = epyon_simpleSelfChipBehaviorFactory(CHIP_WALL, 'wall');
-	EPYON_BEHAVIORS[EPYON_PREFIGHT][CHIP_PROTEIN] = epyon_simpleSelfChipBehaviorFactory(CHIP_PROTEIN, 'protein');
-	EPYON_BEHAVIORS[EPYON_PREFIGHT][CHIP_STEROID] = epyon_simpleSelfChipBehaviorFactory(CHIP_STEROID, 'steroid');
-	EPYON_BEHAVIORS[EPYON_PREFIGHT][CHIP_WARM_UP] = epyon_simpleSelfChipBehaviorFactory(CHIP_WARM_UP, 'warm');
-
-	EPYON_BEHAVIORS[EPYON_PREFIGHT][CHIP_BANDAGE] = epyon_healChipBehaviorFactory(CHIP_BANDAGE, 'bandage');
-	EPYON_BEHAVIORS[EPYON_PREFIGHT][CHIP_CURE] = epyon_healChipBehaviorFactory(CHIP_CURE, 'cure');
+	//shielding
+	EPYON_BEHAVIORS[CHIP_ARMOR] = epyon_simpleSelfChipBehaviorFactory(CHIP_ARMOR, 'armor');
+	EPYON_BEHAVIORS[CHIP_SHIELD] = epyon_simpleSelfChipBehaviorFactory(CHIP_SHIELD, 'shield');
+	EPYON_BEHAVIORS[CHIP_HELMET] = epyon_simpleSelfChipBehaviorFactory(CHIP_HELMET, 'helmet');
+	EPYON_BEHAVIORS[CHIP_WALL] = epyon_simpleSelfChipBehaviorFactory(CHIP_WALL, 'wall');
 	
-	EPYON_BEHAVIORS[EPYON_PREFIGHT][CHIP_PUNY_BULB] = function(maxAP, maxHP){
+	//power ups
+	EPYON_BEHAVIORS[CHIP_PROTEIN] = epyon_simpleSelfChipBehaviorFactory(CHIP_PROTEIN, 'protein');
+	EPYON_BEHAVIORS[CHIP_STEROID] = epyon_simpleSelfChipBehaviorFactory(CHIP_STEROID, 'steroid');
+	EPYON_BEHAVIORS[CHIP_WARM_UP] = epyon_simpleSelfChipBehaviorFactory(CHIP_WARM_UP, 'warm');
+
+	//heal
+	EPYON_BEHAVIORS[CHIP_BANDAGE] = epyon_healChipBehaviorFactory(CHIP_BANDAGE, 'bandage');
+	EPYON_BEHAVIORS[CHIP_CURE] = epyon_healChipBehaviorFactory(CHIP_CURE, 'cure');
+	
+	//summon
+	EPYON_BEHAVIORS[CHIP_PUNY_BULB] = function(maxAP, maxHP){
 		var cost = getChipCost(CHIP_PUNY_BULB);
 	
 		if (getCooldown(CHIP_PUNY_BULB) > 0 || maxAP < cost) return false;
@@ -202,20 +207,16 @@ if (getTurn() === 1){
 		];
 	};
 	
+	//offensive chips
+	EPYON_BEHAVIORS[CHIP_SPARK] = epyon_offensiveChipBehaviorFactory(CHIP_SPARK, 'spark');
+	EPYON_BEHAVIORS[CHIP_PEBBLE] = epyon_offensiveChipBehaviorFactory(CHIP_PEBBLE, 'pebble');
+	EPYON_BEHAVIORS[CHIP_STALACTITE] = epyon_offensiveChipBehaviorFactory(CHIP_STALACTITE, 'stalactite');
 	
-	//FIGHT
-	EPYON_BEHAVIORS[EPYON_FIGHT][CHIP_SPARK] = epyon_offensiveChipBehaviorFactory(CHIP_SPARK, 'spark');
-	EPYON_BEHAVIORS[EPYON_FIGHT][CHIP_PEBBLE] = epyon_offensiveChipBehaviorFactory(CHIP_PEBBLE, 'pebble');
-	EPYON_BEHAVIORS[EPYON_FIGHT][CHIP_STALACTITE] = epyon_offensiveChipBehaviorFactory(CHIP_STALACTITE, 'stalactite');
+	//weapons
+	EPYON_BEHAVIORS[WEAPON_PISTOL] = epyon_weaponBehaviorFactory(WEAPON_PISTOL, 'pîstol');
+	EPYON_BEHAVIORS[WEAPON_MAGNUM] = epyon_weaponBehaviorFactory(WEAPON_MAGNUM, 'magnum');
 	
-	EPYON_BEHAVIORS[EPYON_FIGHT][WEAPON_PISTOL] = epyon_weaponBehaviorFactory(WEAPON_PISTOL, 'pîstol');
-	EPYON_BEHAVIORS[EPYON_FIGHT][WEAPON_MAGNUM] = epyon_weaponBehaviorFactory(WEAPON_MAGNUM, 'magnum');
-	
-	//POSTFIGHT
-	EPYON_BEHAVIORS[EPYON_POSTFIGHT][EQUIP_PISTOL] = epyon_equipBehaviorFactory(WEAPON_PISTOL, 'pistol');
-	EPYON_BEHAVIORS[EPYON_POSTFIGHT][EQUIP_MAGNUM] = epyon_equipBehaviorFactory(WEAPON_MAGNUM, 'magnum');
-
-	EPYON_BEHAVIORS[EPYON_POSTFIGHT][CHIP_BANDAGE] = epyon_healChipBehaviorFactory(CHIP_BANDAGE, 'bandage');
-	EPYON_BEHAVIORS[EPYON_POSTFIGHT][CHIP_CURE] = epyon_healChipBehaviorFactory(CHIP_CURE, 'cure');
-	EPYON_BEHAVIORS[EPYON_POSTFIGHT][CHIP_SPARK] = EPYON_BEHAVIORS[EPYON_FIGHT][CHIP_SPARK];
+	//equip weapons
+	EPYON_BEHAVIORS[EQUIP_PISTOL] = epyon_equipBehaviorFactory(WEAPON_PISTOL, 'pistol');
+	EPYON_BEHAVIORS[EQUIP_MAGNUM] = epyon_equipBehaviorFactory(WEAPON_MAGNUM, 'magnum');
 }

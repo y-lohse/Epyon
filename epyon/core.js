@@ -101,7 +101,7 @@ function epyon_act(){
 	
 	if (remainingMP > 0 && S > EPYON_CONFIG['flee']){
 		var distanceToEnemy = getPathLength(eGetCell(self), eGetCell(target)),
-			dif = distanceToEnemy - EPYON_CONFIG['engage_distance'];
+			dif = distanceToEnemy - EPYON_CONFIG['engage'];
 		
 		epyon_debug('diff from ideal distance: '+dif);
 		

@@ -41,7 +41,7 @@ function useChipShim(CHIP, leek){
 function getPathLength(cell1, cell2){
 	return (cell1 && cell2) ? getCellDistance(cell1, cell2) : null;
 }
-global EPYON_VERSION = '3.4';
+global EPYON_VERSION = '3.5';
 global EPYON_LEVEL = getLevel();
 
 function epyon_debug(message){
@@ -786,7 +786,7 @@ if (getTurn() === 1){
 	
 	EPYON_CONFIG['suicidal'] = 0;//[0;1] with a higher suicidal value, the leek will stay agressive despite being low on health
 	
-	EPYON_CONFIG['engage_distance'] = 5;
+	EPYON_CONFIG['engage'] = 5;
 	EPYON_CONFIG['flee'] = -0.4;//[-1;1] relative to the S score. With S lower or equal than the flee value, the IA will back off
 }
 function epyon_aquireTarget(){
@@ -892,7 +892,7 @@ function epyon_act(){
 	
 	if (remainingMP > 0 && S > EPYON_CONFIG['flee']){
 		var distanceToEnemy = getPathLength(eGetCell(self), eGetCell(target)),
-			dif = distanceToEnemy - EPYON_CONFIG['engage_distance'];
+			dif = distanceToEnemy - EPYON_CONFIG['engage'];
 		
 		epyon_debug('diff from ideal distance: '+dif);
 		

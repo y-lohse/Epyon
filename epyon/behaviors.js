@@ -85,6 +85,7 @@ function epyon_equipBehaviorFactory(WEAPON_ID, name){
 		return [
 			'name': 'equip '+name,
 			'AP': 1,
+			'MP': 0,
 			'fn': fn
 		];
 	};
@@ -144,6 +145,7 @@ function epyon_simpleSelfChipBehaviorFactory(CHIP_ID, name){
 		return [
 			'name': name,
 			'AP': cost,
+			'MP': 0,
 			'fn': fn
 		];
 	};
@@ -166,6 +168,7 @@ function epyon_healChipBehaviorFactory(CHIP_ID, name){
 		return [
 			'name': name,
 			'AP': cost,
+			'MP': 0,
 			'fn': fn
 		];
 	};
@@ -194,34 +197,53 @@ if (getTurn() === 1){
 	
 	//heal others
 	EPYON_BEHAVIORS[BANDAGE_OTHER] = function(maxAP, maxMP){
-		var name = 'bandage other';
-		var effects = getChipEffects(CHIP_BANDAGE);
-		var maxHeal = effects[0][2] * (1 + self['agility'] / 100);
 		var cost = getChipCost(CHIP_BANDAGE);
-		var scope = getChipMaxScope(CHIP_BANDAGE);
 		
 		if (getCooldown(CHIP_BANDAGE) > 0 || maxAP < cost) return false;
 		
+		var name = 'bandage other';
+		var effects = getChipEffects(CHIP_BANDAGE);
+		var maxHeal = effects[0][2] * (1 + self['agility'] / 100);
+		var scope = getChipMaxScope(CHIP_BANDAGE);
+		
+		//find potential targets
 		var allies = getAliveAllies();
 		var targets = [];
 		
 		arrayIter(allies, function(leekId){
-			var distance = getDistance(eGetCell(self), getCell(leekId));
+			var mpToBeInReach = getPathLength(eGetCell(self), getCellToUseChip(CHIP_BANDAGE, leekId)),
+				toHeal = getTotalLife(leekId)-getLife(leekId);
 			
-			if (distance <= maxMP && getTotalLife(leekId)-getLife(leekId) < maxHeal) push(targets, leekId);
+			if (mpToBeInReach <= maxMP && toHeal > maxHeal) push(targets, [leekId, mpToBeInReach, toHeal]);
 		});
 		
 		if (count(targets) === 0) return false;
+		
+		//try to select the best one
+		var MPcost,
+			healTarget,
+			minToHeal = 0;
+			
+		arrayIter(targets, function(data){
+			if (minToHeal < data[2]){
+				minToHeal = data[2];
+				MPcost = data[1];
+				healTarget = data[0];
+			}
+		});
 
-		epyon_debug(name+' preparation is a candidate');
+		epyon_debug(name+' is a candidate');
 
 		var fn = function(){
-			useChipShim(CHIP_ID, self['id']);
+			debug('bandage used on '+getName(healTarget));
+			var result = useChipShim(CHIP_BANDAGE, healTarget);
+			debug(result);
 		};
 
 		return [
 			'name': name,
 			'AP': cost,
+			'MP': MPcost,
 			'fn': fn
 		];
 	};
@@ -241,6 +263,7 @@ if (getTurn() === 1){
 		return [
 			'name': 'puny bulb',
 			'AP': cost,
+			'MP': 0,
 			'fn': fn
 		];
 	};

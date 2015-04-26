@@ -244,18 +244,39 @@ if (getTurn() == 1){
 	MAP_HEIGHT = height;
 }
 
-function epyon_moveTowardsTarget(maxMp){
+function epyon_moveTowardsTarget(mpCost){
 	//@TODO: se déplace vers l'adversaire mais essayer de rester a couvert
 	var cell = getCell(target['id']);
-	eMoveTowardCellWithMax(cell, maxMp);
+	eMoveTowardCellWithMax(cell, mpCost);
 }
 
-function epyon_moveToSafety(maxMp){
-	var cellsAround = epyon_analyzeCellsWithin(eGetCell(self), maxMp);
+function epyon_moveToSafety(mpCost){
+	var cellsAround = epyon_analyzeCellsWithin(eGetCell(self), mpCost);
 	
-	debug('allocated mp: '+maxMp);
+	debug('allocated mp: '+mpCost);
 	debug(cellsAround);
-	eMoveAwayFrom(target, maxMp);
+	
+	var scoredCells = [];
+	
+	arrayIter(cellsAround, function(eCell){
+		var distance = getPathLength(eGetCell(self), eCell['id']);
+		
+		if (distance <= mpCost) scoredCells[mpCost - distance] = eCell;
+	});
+	
+	keySort(scoredCells, SORT_ASC);
+	debug(scoredCells);
+	
+	var cell = shift(scoredCells);
+	
+	if (cell){
+		debug('moving to '+cell);
+		eMoveTowardCellWithMax(cell['id'], mpCost);
+	}
+	else{
+		debug('no good cell found');
+		eMoveAwayFrom(target, mpCost);
+	}
 }
 
 function epyon_analyzeCellsWithin(center, distance){

@@ -213,40 +213,29 @@ if (getTurn() == 1){
 }
 
 function epyon_moveTowardsTarget(mpCost){
-	//@TODO: se déplace vers l'adversaire mais essayer de rester a couvert
 	var cell = getCell(target['id']);
-	
-	var cellsAround = epyon_analyzeCellsWithin(eGetCell(self), mpCost);
-	//debug(cellsAround);
 	eMoveTowardCellWithMax(cell, mpCost);
 }
 
 function epyon_moveToSafety(mpCost){
 	var cellsAround = epyon_analyzeCellsWithin(eGetCell(self), mpCost);
 	
-//	debug(cellsAround);
+	var scoredCells = [];
 	
-//	var scoredCells = [];
-//	
-//	arrayIter(cellsAround, function(eCell){
-//		var distance = getPathLength(eGetCell(self), eCell['id']);
-//		debug(distance+' <= '+mpCost);
-//		
-//		if (distance <= mpCost) scoredCells[eCell['score']] = eCell;
-//	});
-//	
-//	keySort(scoredCells, SORT_DESC);
-//	debug(scoredCells);
-//	
-//	var cell = shift(scoredCells);
-	var cell = null;
+	arrayIter(cellsAround, function(eCell){
+		scoredCells[round(eCell['score']*100)] = eCell;
+	});
+	
+	keySort(scoredCells, SORT_DESC);
+	
+	var cell = shift(scoredCells);
 	
 	if (cell){
-		debug('moving to '+cell);
+		epyon_debug('moving to '+cell);
 		eMoveTowardCellWithMax(cell['id'], mpCost);
 	}
 	else{
-		debug('no good cell found');
+		epyon_debug('no good cell found');
 		eMoveAwayFrom(target, mpCost);
 	}
 }
@@ -278,13 +267,9 @@ function epyon_analyzeCellsWithin(center, distance){
 		eCell['score'] = (totalCoef > 0) ? cumulatedScore / totalCoef : 1;
 		push(eCells, eCell);
 		
-		//epyon_debug(eCell['x']+'/'+eCell['y']+' scored '+eCell['score']);
 		var color = getColor(round(255 - (255 * eCell['score'])), round(255 * eCell['score']), 0);
 		mark(eCell['id'], color);
 	});
-	
-	debug('cells within '+distance);
-	debug(eCells);
 	
 	return eCells;
 }

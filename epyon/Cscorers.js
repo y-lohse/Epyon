@@ -8,7 +8,7 @@ function epyon_cScorerBorder(eCell){
 }
 
 function epyon_cScorerObstacles(eCell){
-	if (EPYON_LEVEL < 21) return 0.5;
+	if (EPYON_LEVEL < 21) return null;
 	
 	var adjacent = getAdjacentCells(eCell['id']),
 		obstacleCount = 0;
@@ -61,6 +61,8 @@ function epyon_cScorerEnemyProximity(eCell){
 }
 
 function epyon_cScorerAllyProximity(eCell){
+	if (getAlliesCount() === 0) return null;
+	
 	var maxDistance = self['MP'];//self['range'] would be another candidate
 	var cumulatedDistance = 0,
 		alliesInRange = 0;
@@ -75,7 +77,6 @@ function epyon_cScorerAllyProximity(eCell){
 		}
 	});
 	
-	if (alliesInRange === 0 && getAlliesCount() > 0) return 0.5;
-	else if (alliesInRange > 0 && getAlliesCount() === 0) return 0.5;//no allies, no influence
+	if (alliesInRange === 0) return null;
 	else return 1 - (cumulatedDistance / (maxDistance * alliesInRange));
 }

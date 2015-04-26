@@ -69,7 +69,10 @@ function epyon_analyzeCellsWithin(center, distance){
 		
 		arrayIter(EPYON_CONFIG['C'], function(scorerName, scorer){
 			if (scorer['coef'] > 0){
-				var score = min(1, max(scorer['fn'](eCell), 0));
+				var returnedScore = scorer['fn'](eCell);
+				if (returnedScore === null) return;
+				
+				var score = min(1, max(returnedScore, 0));
 				cumulatedScore += score;
 				totalCoef += scorer['coef'];
 			}

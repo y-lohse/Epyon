@@ -265,7 +265,10 @@ function epyon_analyzeCellsWithin(center, distance){
 		
 		arrayIter(EPYON_CONFIG['C'], function(scorerName, scorer){
 			if (scorer['coef'] > 0){
-				var score = min(1, max(scorer['fn'](eCell), 0));
+				var returnedScore = scorer['fn'](eCell);
+				if (returnedScore === null) return;
+				
+				var score = min(1, max(returnedScore, 0));
 				cumulatedScore += score;
 				totalCoef += scorer['coef'];
 			}
@@ -359,7 +362,7 @@ function epyon_cScorerBorder(eCell){
 }
 
 function epyon_cScorerObstacles(eCell){
-	if (EPYON_LEVEL < 21) return 0.5;
+	if (EPYON_LEVEL < 21) return null;
 	
 	var adjacent = getAdjacentCells(eCell['id']),
 		obstacleCount = 0;
@@ -412,6 +415,8 @@ function epyon_cScorerEnemyProximity(eCell){
 }
 
 function epyon_cScorerAllyProximity(eCell){
+	if (getAlliesCount() === 0) return null;
+	
 	var maxDistance = self['MP'];//self['range'] would be another candidate
 	var cumulatedDistance = 0,
 		alliesInRange = 0;
@@ -426,8 +431,7 @@ function epyon_cScorerAllyProximity(eCell){
 		}
 	});
 	
-	if (alliesInRange === 0 && getAlliesCount() > 0) return 0.5;
-	else if (alliesInRange > 0 && getAlliesCount() === 0) return 0.5;//no allies, no influence
+	if (alliesInRange === 0) return null;
 	else return 1 - (cumulatedDistance / (maxDistance * alliesInRange));
 }
 global EPYON_PREFIGHT = 'prefight';
@@ -818,7 +822,10 @@ function epyon_computeAgression(epyonLeek){
 	
 	arrayIter(EPYON_CONFIG['A'], function(scorerName, scorer){
 		if (scorer['coef'] > 0){
-			var score = min(1, max(scorer['fn'](epyonLeek), 0));
+			var returnedScore = scorer['fn'](epyonLeek);
+			if (returnedScore == null) return;
+			
+			var score = min(1, max(returnedScore, 0));
 			epyon_debug(scorerName+' score '+score+' coef '+scorer['coef']);
 			cumulatedA += score;
 			totalCoef += scorer['coef'];

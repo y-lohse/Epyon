@@ -46,7 +46,10 @@ function epyon_computeAgression(epyonLeek){
 	
 	arrayIter(EPYON_CONFIG['A'], function(scorerName, scorer){
 		if (scorer['coef'] > 0){
-			var score = min(1, max(scorer['fn'](epyonLeek), 0));
+			var returnedScore = scorer['fn'](epyonLeek);
+			if (returnedScore == null) return;
+			
+			var score = min(1, max(returnedScore, 0));
 			epyon_debug(scorerName+' score '+score+' coef '+scorer['coef']);
 			cumulatedA += score;
 			totalCoef += scorer['coef'];

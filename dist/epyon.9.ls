@@ -462,10 +462,10 @@ global EPYON_POSTFIGHT = 'postfight';
 global EPYON_BEHAVIORS = [];
 
 //arbitrary numbers
-global EQUIP_PISTOL = 80484;
-global EQUIP_MAGNUM = 80485;
-global BANDAGE_OTHER = 80486;
-global CURE_OTHER = 80487;
+global EQUIP_PISTOL 	= 80484;
+global EQUIP_MAGNUM 	= 80485;
+global BANDAGE_OTHER 	= 80486;
+global CURE_OTHER 		= 80487;
 
 
 /*

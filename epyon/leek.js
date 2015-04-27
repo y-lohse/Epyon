@@ -28,10 +28,36 @@ function epyon_getLeek(leekId){
 		leek['ally'] = isAlly(leekId);
 	}
 	
+	//try to get the inventory
+	if (EPYON_LEVEL >= 57){
+		eLeek['chips'] = getChips(eLeek['id']);
+		eLeek['weapons'] = getWeapons(eLeek['id']);
+	}
+	
+	//try to load the max shielding values
+	eLeek['maxAbsShield'] = 0;
+	
+	if (eLeek['chips']){
+		arrayIter(eLeek['chips'], function(CHIP_ID){
+			if (CHIP_ID == CHIP_HELMET) eLeek['maxAbsShield'] += 15;
+			else if (CHIP_ID == CHIP_SHIELD) eLeek['maxAbsShield'] += 20;
+			else if (CHIP_ID == CHIP_ARMOR) eLeek['maxAbsShield'] += 25;
+			else if (CHIP_ID == CHIP_CARAPACE) eLeek['maxAbsShield'] += 55;
+		});
+	}
+	else if (EPYON_LEVEL >= 13){
+		var level = getlevel(eLeek['id']);//level 13
+
+		if (level >= 11) eLeek['maxAbsShield'] += 15;//helmet
+		if (level >= 19) eLeek['maxAbsShield'] += 20;//shield
+		if (level >= 55) eLeek['maxAbsShield'] += 25;//armor
+		if (level >= 259) eLeek['maxAbsShield'] += 55;//carapace
+	}
+	
 	//dynamic props
 	leek['agression'] = 1;
 	
-	//private props
+	//dynamic props
 	return epyon_updateLeek(leek);
 }
 
@@ -53,11 +79,7 @@ function epyon_updateLeek(eLeek){
 		else eLeek['range'] = 0;
 	}
 	
-	if (!eLeek['chips'] && EPYON_LEVEL >= 57){
-		eLeek['chips'] = getChips(eLeek['id']);
-		eLeek['weapons'] = getWeapons(eLeek['id']);
-
-		//update range
+	if (EPYON_LEVEL >= 57){
 		var attackChips = arrayFilter(eLeek['chips'], function(CHIP_ID){
 			return inArray([CHIP_SHOCK, CHIP_PEBBLE, CHIP_SPARK, CHIP_ICE, 
 							CHIP_ROCK, CHIP_FLASH, CHIP_FLAME, CHIP_STALACTITE,

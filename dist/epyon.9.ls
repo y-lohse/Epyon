@@ -110,10 +110,36 @@ function epyon_getLeek(leekId){
 		leek['ally'] = isAlly(leekId);
 	}
 	
+	//try to get the inventory
+	if (EPYON_LEVEL >= 57){
+		eLeek['chips'] = getChips(eLeek['id']);
+		eLeek['weapons'] = getWeapons(eLeek['id']);
+	}
+	
+	//try to load the max shielding values
+	eLeek['maxAbsShield'] = 0;
+	
+	if (eLeek['chips']){
+		arrayIter(eLeek['chips'], function(CHIP_ID){
+			if (CHIP_ID == CHIP_HELMET) eLeek['maxAbsShield'] += 15;
+			else if (CHIP_ID == CHIP_SHIELD) eLeek['maxAbsShield'] += 20;
+			else if (CHIP_ID == CHIP_ARMOR) eLeek['maxAbsShield'] += 25;
+			else if (CHIP_ID == CHIP_CARAPACE) eLeek['maxAbsShield'] += 55;
+		});
+	}
+	else if (EPYON_LEVEL >= 13){
+		var level = getlevel(eLeek['id']);//level 13
+
+		if (level >= 11) eLeek['maxAbsShield'] += 15;//helmet
+		if (level >= 19) eLeek['maxAbsShield'] += 20;//shield
+		if (level >= 55) eLeek['maxAbsShield'] += 25;//armor
+		if (level >= 259) eLeek['maxAbsShield'] += 55;//carapace
+	}
+	
 	//dynamic props
 	leek['agression'] = 1;
 	
-	//private props
+	//dynamic props
 	return epyon_updateLeek(leek);
 }
 
@@ -135,11 +161,7 @@ function epyon_updateLeek(eLeek){
 		else eLeek['range'] = 0;
 	}
 	
-	if (!eLeek['chips'] && EPYON_LEVEL >= 57){
-		eLeek['chips'] = getChips(eLeek['id']);
-		eLeek['weapons'] = getWeapons(eLeek['id']);
-
-		//update range
+	if (EPYON_LEVEL >= 57){
 		var attackChips = arrayFilter(eLeek['chips'], function(CHIP_ID){
 			return inArray([CHIP_SHOCK, CHIP_PEBBLE, CHIP_SPARK, CHIP_ICE, 
 							CHIP_ROCK, CHIP_FLASH, CHIP_FLAME, CHIP_STALACTITE,
@@ -390,21 +412,17 @@ function epyon_aScorerHealth(eLeek){
 	return -1 * (t * (t-2)) + EPYON_CONFIG['suicidal'];
 }
 
-//requires lvl40
-//function epyon_aScorerAbsoluteShield(eLeek){
-//	var level = getlevel(eLeek['id']);
-//	var maxAbsShield = 1;
-//	
-//	//@TODO: utiliser getChips() pour lister les puces équipés
-//	if (level >= 11) maxAbsShield += 15;//helmet
-//	if (level >= 19) maxAbsShield += 20;//shield
-//	if (level >= 55) maxAbsShield += 25;//armor
-//	if (level >= 259) maxAbsShield += 55;//carapace
-//	
-//	maxAbsShield = max(maxAbsShield, 100);//chances that everything is used at once is rather low
-//	
-//	return getAbsoluteShield(eLeek['id']) / maxAbsShield;
-//}
+function epyon_aScorerAbsoluteShield(eLeek){
+	var absShield = getAbsoluteShield(eLeek['id']);
+	
+	return (absShield > 0) ? absShield / (eLeek['maxAbsShield'] || 1) : null;
+}
+
+function epyon_aScorerRelativeShield(eLeek){
+	var relShield = getRelativeShield(eLeek['id']);
+	
+	return (relShield > 0) ? relShield/100 : null;
+}
 function epyon_cScorerBorder(eCell){
 	var edge = 4;
 	
@@ -876,6 +894,8 @@ if (getTurn() === 1){
 	//scorer functions receive a leek as parameter and score him on any criteria the ysee fit, where 0 is shit and 1 is great. Return values are clamped between 0 and 1 anyway. Each scorer is weighted. If the weight (coef) is 0 for a scorer, the scorer is ignored.
 	EPYON_CONFIG['A'] = [
 		'health': ['fn': epyon_aScorerHealth, 'coef': 1],
+		'absShield': ['fn': epyon_aScorerAbsoluteShield, 'coef': (EPYON_LEVEL >= 38) ? 3 : 0],
+		'relShield': ['fn': epyon_aScorerRelativeShield, 'coef': (EPYON_LEVEL >= 38) ? 3 : 0],
 	];
 	
 	EPYON_CONFIG['C'] = [

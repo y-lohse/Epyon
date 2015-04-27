@@ -30,7 +30,7 @@ if (getTurn() === 1){
 		'border': ['fn': epyon_cScorerBorder, 'coef': 1],
 		'obstacles': ['fn': epyon_cScorerObstacles, 'coef': 2],
 		'los': ['fn': epyon_cScorerLoS, 'coef': 2],
-		'enemyprox': ['fn': epyon_cScorerEnemyProximity, 'coef': 2],
+		'enemyprox': ['fn': epyon_cScorerEnemyProximity, 'coef': 3],
 		'allyprox': ['fn': epyon_cScorerAllyProximity, 'coef': 1],
 	];
 	

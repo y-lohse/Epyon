@@ -63,20 +63,21 @@ function epyon_cScorerEnemyProximity(eCell){
 function epyon_cScorerAllyProximity(eCell){
 	if (getAlliesCount() === 0) return null;
 	
-	var maxDistance = self['MP'];//self['range'] would be another candidate
-	var cumulatedDistance = 0,
+	var maxDistance = self['range'];//MP would be "right", but range let's us explore more cells
+	var cumulatedScore = 0,
 		alliesInRange = 0;
 	
 	arrayIter(EPYON_LEEKS, function(eLeek){
 		if (eLeek['ally'] === true && isAlive(eLeek['id'])){
 			var distance = getDistance(eCell['id'], eGetCell(eLeek));
 			if (distance < maxDistance){
-				cumulatedDistance += distance;
+				//http://fooplot.com/#W3sidHlwZSI6MCwiZXEiOiJzaW4oKHgrMSkvMi41KSIsImNvbG9yIjoiIzAwMDAwMCJ9LHsidHlwZSI6MTAwMCwid2luZG93IjpbIi0xLjk4NDAwMDAwMDAwMDAwMDkiLCI4LjQxNTk5OTk5OTk5OTk5NyIsIi0zLjU2IiwiMi44Mzk5OTk5OTk5OTk5OTk0Il19XQ--
+				cumulatedScore += sin((distance+1)/2.5);
 				alliesInRange++;
 			}
 		}
 	});
 	
 	if (alliesInRange === 0) return null;
-	else return 1 - (cumulatedDistance / (maxDistance * alliesInRange));
+	else return cumulatedDistance / alliesInRange;
 }

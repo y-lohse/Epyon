@@ -527,6 +527,28 @@ function epyon_listBehaviors(type, maxAP, maxMP){
 	return behaviors;
 }
 
+function epyon_getHumanBehaviorName(BEHAVIOR_ID){
+	if (BEHAVIOR_ID === CHIP_ARMOR) return 'armor';
+	else if (BEHAVIOR_ID === CHIP_SHIELD) return 'shield';
+	else if (BEHAVIOR_ID === CHIP_HELMET) return 'helmet';
+	else if (BEHAVIOR_ID === CHIP_WALL) return 'wall';
+	else if (BEHAVIOR_ID === CHIP_PROTEIN) return 'protein';
+	else if (BEHAVIOR_ID === CHIP_STEROID) return 'steroid';
+	else if (BEHAVIOR_ID === CHIP_WARM_UP) return 'warm-up';
+	else if (BEHAVIOR_ID === CHIP_BANDAGE) return 'bandage';
+	else if (BEHAVIOR_ID === CHIP_CURE) return 'cure';
+	else if (BEHAVIOR_ID === CHIP_VACCINE) return 'vaccine';
+	else if (BEHAVIOR_ID === CHIP_PUNY_BULB) return 'puny bulb';
+	else if (BEHAVIOR_ID === CHIP_PEBBLE) return 'pebble';
+	else if (BEHAVIOR_ID === CHIP_SPARK) return 'spark';
+	else if (BEHAVIOR_ID === CHIP_STALACTITE) return 'stalactite';
+	else if (BEHAVIOR_ID === WEAPON_PISTOL) return 'pistol';
+	else if (BEHAVIOR_ID === WEAPON_MAGNUM) return 'magnum';
+	else if (BEHAVIOR_ID === EQUIP_PISTOL) return 'equip pistol';
+	else if (BEHAVIOR_ID === EQUIP_MAGNUM) return 'equip magnum';
+	else return 'Behavior#'+BEHAVIOR_ID;
+}
+
 //factories to create behavior with less code
 function epyon_weaponBehaviorFactory(WEAPON_ID){
 	var effects = getWeaponEffects(WEAPON_ID);
@@ -547,7 +569,7 @@ function epyon_weaponBehaviorFactory(WEAPON_ID){
 
 		if (cost > maxAP || distance > maxMP) return false;
 		
-		epyon_debug(WEAPON_ID+' weapon is a candidate');
+		epyon_debug(epyon_getHumanBehaviorName(WEAPON_ID)+' is a candidate');
 
 		var excute = function(){
 			var mp = 0;
@@ -558,7 +580,7 @@ function epyon_weaponBehaviorFactory(WEAPON_ID){
 			if (mp > distance) debugW('Epyon: '+(mp-distance)+' extra MP was spent on moving');
 			
 			if (eGetWeapon(self) != WEAPON_ID){
-				debugW('Epyon: 1 extra AP was spent on equiping '+WEAPON_ID);
+				debugW('Epyon: 1 extra AP was spent on equiping '+epyon_getHumanBehaviorName(WEAPON_ID));
 				eSetWeapon(WEAPON_ID);
 			}
 			useWeapon(target['id']);
@@ -578,7 +600,7 @@ function epyon_equipBehaviorFactory(WEAPON_ID, type){
 	return function(maxAP, maxMP){
 		if (eGetWeapon(self) == WEAPON_ID || maxAP < 1) return false;
 
-		epyon_debug(type+' equip is a candidate');
+		epyon_debug(epyon_getHumanBehaviorName(type)+' is a candidate');
 
 		var fn = function(){
 			if (eGetWeapon(self) != WEAPON_ID) eSetWeapon(WEAPON_ID);
@@ -610,7 +632,7 @@ function epyon_offensiveChipBehaviorFactory(CHIP_ID){
 
 		if (getCooldown(CHIP_ID) > 0 || cost > maxAP || distance > maxMP) return false;
 		
-		epyon_debug(CHIP_ID+' attack chip is a candidate');
+		epyon_debug(epyon_getHumanBehaviorName(CHIP_ID)+' is a candidate');
 
 		var excute = function(){
 			var mp = 0;
@@ -638,7 +660,7 @@ function epyon_simpleSelfChipBehaviorFactory(CHIP_ID){
 	return function(maxAP, maxMP){
 		if (getCooldown(CHIP_ID) > 0 || maxAP < cost) return false;
 
-		epyon_debug(CHIP_ID+' chip is a candidate');
+		epyon_debug(epyon_getHumanBehaviorName(CHIP_ID)+' is a candidate');
 
 		var fn = function(){
 			useChipShim(CHIP_ID, self['id']);
@@ -661,7 +683,7 @@ function epyon_healChipBehaviorFactory(CHIP_ID){
 	return function(maxAP, maxMP){
 		if (self['totalLife']-eGetLife(self) < maxHeal || getCooldown(CHIP_ID) > 0 || maxAP < cost) return false;
 
-		epyon_debug(CHIP_ID+' heal is a candidate');
+		epyon_debug(epyon_getHumanBehaviorName(CHIP_ID)+' is a candidate');
 
 		var fn = function(){
 			useChipShim(CHIP_ID, self['id']);
@@ -717,7 +739,7 @@ function epyon_healOtherChipBehaviorFactory(CHIP_ID, type){
 			}
 		});
 
-		epyon_debug(type+' heal other is a candidate');
+		epyon_debug(epyon_getHumanBehaviorName(type)+' is a candidate');
 
 		var fn = function(){
 			var mp = 0;
@@ -764,7 +786,7 @@ function epyon_simpleOtherChipBehaviorFactory(CHIP_ID, type){
 			debug(targets);
 		}
 
-		epyon_debug(type+' chip other is a candidate');
+		epyon_debug(epyon_getHumanBehaviorName(type)+' chip other is a candidate');
 		
 		//try to select the one that cost the least mp
 		var MPcost = maxMP + 1,
@@ -1002,7 +1024,7 @@ function epyon_act(){
 	while(count(attacks = epyon_listBehaviors(EPYON_FIGHT, allocatedAP, allocatedMP)) > 0){
 		var selected = EPYON_CONFIG['select_fight'](attacks, allocatedAP, allocatedMP);
 		if (!selected) break;
-		epyon_debug('using fight move '+selected['type']+' for '+selected['AP']+'AP and '+selected['MP']+'MP');
+		epyon_debug('using '+epyon_getHumanBehaviorName(selected['type'])+' for '+selected['AP']+'AP and '+selected['MP']+'MP');
 		allocatedAP -= selected['AP'];
 		allocatedMP -= selected['MP'];
 		selected['fn']();
@@ -1059,7 +1081,7 @@ function epyon_prefight(S, maxAP, maxMP){
 	while(count(behaviors = epyon_listBehaviors(EPYON_PREFIGHT, maxAP, maxMP)) > 0){
 		var selected = EPYON_CONFIG['select_prefight'](behaviors, maxAP, maxMP);
 		if (!selected) break;
-		epyon_debug('using prefight '+selected['type']+' for '+selected['AP']+'AP and '+selected['MP']+'MP');
+		epyon_debug('using '+epyon_getHumanBehaviorName(selected['type'])+' for '+selected['AP']+'AP and '+selected['MP']+'MP');
 		maxAP -= selected['AP'];
 		maxMP -= selected['MP'];
 		APcounter += selected['AP'];
@@ -1078,7 +1100,7 @@ function epyon_postfight(maxAP, maxMP){
 	while(count(behaviors = epyon_listBehaviors(EPYON_POSTFIGHT, maxAP, maxMP)) > 0){
 		var selected = EPYON_CONFIG['select_postfight'](behaviors, maxAP, maxMP);
 		if (!selected) break;
-		epyon_debug('using postfight '+selected['name']+' for '+selected['AP']+'AP');
+		epyon_debug('using '+epyon_getHumanBehaviorName(selected['name'])+' for '+selected['AP']+'AP');
 		maxAP -= selected['AP'];
 		selected['fn']();
 	};

@@ -89,7 +89,7 @@ function epyon_act(){
 	while(count(attacks = epyon_listBehaviors(EPYON_FIGHT, allocatedAP, allocatedMP)) > 0){
 		var selected = EPYON_CONFIG['select_fight'](attacks, allocatedAP, allocatedMP);
 		if (!selected) break;
-		epyon_debug('using fight move '+selected['type']+' for '+selected['AP']+'AP and '+selected['MP']+'MP');
+		epyon_debug('using '+epyon_getHumanBehaviorName(selected['type'])+' for '+selected['AP']+'AP and '+selected['MP']+'MP');
 		allocatedAP -= selected['AP'];
 		allocatedMP -= selected['MP'];
 		selected['fn']();
@@ -146,7 +146,7 @@ function epyon_prefight(S, maxAP, maxMP){
 	while(count(behaviors = epyon_listBehaviors(EPYON_PREFIGHT, maxAP, maxMP)) > 0){
 		var selected = EPYON_CONFIG['select_prefight'](behaviors, maxAP, maxMP);
 		if (!selected) break;
-		epyon_debug('using prefight '+selected['type']+' for '+selected['AP']+'AP and '+selected['MP']+'MP');
+		epyon_debug('using '+epyon_getHumanBehaviorName(selected['type'])+' for '+selected['AP']+'AP and '+selected['MP']+'MP');
 		maxAP -= selected['AP'];
 		maxMP -= selected['MP'];
 		APcounter += selected['AP'];
@@ -165,7 +165,7 @@ function epyon_postfight(maxAP, maxMP){
 	while(count(behaviors = epyon_listBehaviors(EPYON_POSTFIGHT, maxAP, maxMP)) > 0){
 		var selected = EPYON_CONFIG['select_postfight'](behaviors, maxAP, maxMP);
 		if (!selected) break;
-		epyon_debug('using postfight '+selected['name']+' for '+selected['AP']+'AP');
+		epyon_debug('using '+epyon_getHumanBehaviorName(selected['name'])+' for '+selected['AP']+'AP');
 		maxAP -= selected['AP'];
 		selected['fn']();
 	};

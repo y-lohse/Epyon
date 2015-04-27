@@ -1009,7 +1009,7 @@ function epyon_act(){
 	while(count(attacks = epyon_listBehaviors(EPYON_FIGHT, allocatedAP, allocatedMP)) > 0){
 		var selected = EPYON_CONFIG['select_fight'](attacks, allocatedAP, allocatedMP);
 		if (!selected) break;
-		epyon_debug('using fight move '+selected['name']+' for '+selected['AP']+'AP and '+selected['MP']+'MP');
+		epyon_debug('using fight move '+selected['type']+' for '+selected['AP']+'AP and '+selected['MP']+'MP');
 		allocatedAP -= selected['AP'];
 		allocatedMP -= selected['MP'];
 		selected['fn']();

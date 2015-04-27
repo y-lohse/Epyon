@@ -73,7 +73,7 @@ function epyon_analyzeCellsWithin(center, distance){
 				if (returnedScore === null) return;
 				
 				var score = min(1, max(returnedScore, 0));
-				cumulatedScore += score;
+				cumulatedScore += score * scorer['coef'];
 				totalCoef += scorer['coef'];
 			}
 		});

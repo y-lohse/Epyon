@@ -54,7 +54,7 @@ function epyon_computeAgression(epyonLeek){
 			
 			var score = min(1, max(returnedScore, 0));
 			epyon_debug(scorerName+' score '+score+' coef '+scorer['coef']);
-			cumulatedA += score;
+			cumulatedA += score * scorer['coef'];
 			totalCoef += scorer['coef'];
 		}
 	});

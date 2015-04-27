@@ -189,16 +189,15 @@ function epyon_healOtherChipBehaviorFactory(CHIP_ID, type){
 		if (getCooldown(CHIP_ID) > 0 || maxAP < cost) return false;
 
 		//find potential targets
-		var allies = getAliveAllies();
 		var targets = [];
 
-		arrayIter(allies, function(leekId){
-			var cell = getCellToUseChip(CHIP_ID, leekId),
+		arrayIter(eGetAliveAllies(), function(eLeek){
+			var cell = getCellToUseChip(CHIP_ID, eLeek['id']),
 				mpToBeInReach = getPathLength(eGetCell(self), cell),
-				toHeal = getTotalLife(leekId)-getLife(leekId);
+				toHeal = eLeek['totalLife'] - eGetLife(eLeek);
 
-			if (!isSummon(leekId) && mpToBeInReach <= maxMP && toHeal > maxHeal){
-				push(targets, ['id': leekId, 
+			if (!eLeek['summon'] && mpToBeInReach <= maxMP && toHeal > maxHeal){
+				push(targets, ['id': eLeek['id'], 
 								'MP': mpToBeInReach,
 								'cell': cell, 
 								'heal': toHeal]);
@@ -250,15 +249,14 @@ function epyon_simpleOtherChipBehaviorFactory(CHIP_ID, type){
 		if (getCooldown(CHIP_ID) > 0 || maxAP < cost) return false;
 		
 		//find potential targets
-		var allies = getAliveAllies();
 		var targets = [];
 
-		arrayIter(allies, function(leekId){
-			var cell = getCellToUseChip(CHIP_ID, leekId),
+		arrayIter(eGetAliveAllies(), function(eLeek){
+			var cell = getCellToUseChip(CHIP_ID, eLeek['id']),
 				mpToBeInReach = getPathLength(eGetCell(self), cell);
 
-			if (!isSummon(leekId) && mpToBeInReach <= maxMP){
-				push(targets, ['id': leekId, 
+			if (!eLeek['summon'] && mpToBeInReach <= maxMP){
+				push(targets, ['id': eLeek['id'], 
 								'MP': mpToBeInReach,
 								'cell': cell]);
 			}

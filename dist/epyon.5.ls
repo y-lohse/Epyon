@@ -478,13 +478,11 @@ function epyon_cScorerEnemyProximity(eCell){
 	var cumulatedDistance = 0,
 		enemiesInRange = 0;
 	
-	arrayIter(EPYON_LEEKS, function(eLeek){
-		if (eLeek['ally'] === false && isAlive(eLeek['id'])){
-			var distance = getDistance(eCell['id'], eGetCell(eLeek));
-			if (distance < maxDistance){
-				cumulatedDistance += distance;
-				enemiesInRange++;
-			}
+	arrayIter(eGetAliveEnemies(), function(eLeek){
+		var distance = getDistance(eCell['id'], eGetCell(eLeek));
+		if (distance < maxDistance){
+			cumulatedDistance += distance;
+			enemiesInRange++;
 		}
 	});
 	
@@ -493,20 +491,18 @@ function epyon_cScorerEnemyProximity(eCell){
 }
 
 function epyon_cScorerAllyProximity(eCell){
-	if (getAlliesCount() === 0) return null;
+	if (count(getAliveAllies()) === 0) return null;
 	
 	var maxDistance = self['range'];//MP would be "right", but range let's us explore more cells
 	var cumulatedScore = 0,
 		alliesInRange = 0;
 	
-	arrayIter(EPYON_LEEKS, function(eLeek){
-		if (eLeek['ally'] === true && isAlive(eLeek['id'])){
-			var distance = getDistance(eCell['id'], eGetCell(eLeek));
-			if (distance < maxDistance){
-				//http://fooplot.com/#W3sidHlwZSI6MCwiZXEiOiJzaW4oKHgrMSkvMi41KSIsImNvbG9yIjoiIzAwMDAwMCJ9LHsidHlwZSI6MTAwMCwid2luZG93IjpbIi0xLjk4NDAwMDAwMDAwMDAwMDkiLCI4LjQxNTk5OTk5OTk5OTk5NyIsIi0zLjU2IiwiMi44Mzk5OTk5OTk5OTk5OTk0Il19XQ--
-				cumulatedScore += sin((distance+1)/2.5);
-				alliesInRange++;
-			}
+	arrayIter(eGetAliveAllies(), function(eLeek){
+		var distance = getDistance(eCell['id'], eGetCell(eLeek));
+		if (distance < maxDistance){
+			//http://fooplot.com/#W3sidHlwZSI6MCwiZXEiOiJzaW4oKHgrMSkvMi41KSIsImNvbG9yIjoiIzAwMDAwMCJ9LHsidHlwZSI6MTAwMCwid2luZG93IjpbIi0xLjk4NDAwMDAwMDAwMDAwMDkiLCI4LjQxNTk5OTk5OTk5OTk5NyIsIi0zLjU2IiwiMi44Mzk5OTk5OTk5OTk5OTk0Il19XQ--
+			cumulatedScore += sin((distance+1)/2.5);
+			alliesInRange++;
 		}
 	});
 	
@@ -704,16 +700,15 @@ function epyon_healOtherChipBehaviorFactory(CHIP_ID, type){
 		if (getCooldown(CHIP_ID) > 0 || maxAP < cost) return false;
 
 		//find potential targets
-		var allies = getAliveAllies();
 		var targets = [];
 
-		arrayIter(allies, function(leekId){
-			var cell = getCellToUseChip(CHIP_ID, leekId),
+		arrayIter(eGetAliveAllies(), function(eLeek){
+			var cell = getCellToUseChip(CHIP_ID, eLeek['id']),
 				mpToBeInReach = getPathLength(eGetCell(self), cell),
-				toHeal = getTotalLife(leekId)-getLife(leekId);
+				toHeal = eLeek['totalLife'] - eGetLife(eLeek);
 
-			if (!isSummon(leekId) && mpToBeInReach <= maxMP && toHeal > maxHeal){
-				push(targets, ['id': leekId, 
+			if (!eLeek['summon'] && mpToBeInReach <= maxMP && toHeal > maxHeal){
+				push(targets, ['id': eLeek['id'], 
 								'MP': mpToBeInReach,
 								'cell': cell, 
 								'heal': toHeal]);
@@ -765,15 +760,14 @@ function epyon_simpleOtherChipBehaviorFactory(CHIP_ID, type){
 		if (getCooldown(CHIP_ID) > 0 || maxAP < cost) return false;
 		
 		//find potential targets
-		var allies = getAliveAllies();
 		var targets = [];
 
-		arrayIter(allies, function(leekId){
-			var cell = getCellToUseChip(CHIP_ID, leekId),
+		arrayIter(eGetAliveAllies(), function(eLeek){
+			var cell = getCellToUseChip(CHIP_ID, eLeek['id']),
 				mpToBeInReach = getPathLength(eGetCell(self), cell);
 
-			if (!isSummon(leekId) && mpToBeInReach <= maxMP){
-				push(targets, ['id': leekId, 
+			if (!eLeek['summon'] && mpToBeInReach <= maxMP){
+				push(targets, ['id': eLeek['id'], 
 								'MP': mpToBeInReach,
 								'cell': cell]);
 			}
@@ -926,8 +920,8 @@ function epyon_aquireTarget(){
 	var enemy = null;
 	// On recupere les ennemis, vivants, à porté
 	var enemiesInRange = [];
-	for (var leek in EPYON_LEEKS){
-		if (getPathLength(eGetCell(self),leek['_cell']) <= self['range'] && isAlive(leek['id']) && getType(leek['id']) === ENTITY_LEEK && !leek['ally']) enemiesInRange[leek['id']] = leek;
+	for (var leek in eGetAliveEnemies()){
+		if (getPathLength(eGetCell(self),eGetCell(leek)) <= self['range'] && !leek['summon']) enemiesInRange[leek['id']] = leek;
 	}
 	// On détermine le plus affaibli d'entre eux
 	var lowerHealth = 1;

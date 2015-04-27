@@ -2,8 +2,8 @@ function epyon_aquireTarget(){
 	var enemy = null;
 	// On recupere les ennemis, vivants, à porté
 	var enemiesInRange = [];
-	for (var leek in EPYON_LEEKS){
-		if (getPathLength(eGetCell(self),leek['_cell']) <= self['range'] && isAlive(leek['id']) && getType(leek['id']) === ENTITY_LEEK && !leek['ally']) enemiesInRange[leek['id']] = leek;
+	for (var leek in eGetAliveEnemies()){
+		if (getPathLength(eGetCell(self),eGetCell(leek)) <= self['range'] && !leek['summon']) enemiesInRange[leek['id']] = leek;
 	}
 	// On détermine le plus affaibli d'entre eux
 	var lowerHealth = 1;

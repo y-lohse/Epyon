@@ -46,13 +46,11 @@ function epyon_cScorerEnemyProximity(eCell){
 	var cumulatedDistance = 0,
 		enemiesInRange = 0;
 	
-	arrayIter(EPYON_LEEKS, function(eLeek){
-		if (eLeek['ally'] === false && isAlive(eLeek['id'])){
-			var distance = getDistance(eCell['id'], eGetCell(eLeek));
-			if (distance < maxDistance){
-				cumulatedDistance += distance;
-				enemiesInRange++;
-			}
+	arrayIter(eGetAliveEnemies(), function(eLeek){
+		var distance = getDistance(eCell['id'], eGetCell(eLeek));
+		if (distance < maxDistance){
+			cumulatedDistance += distance;
+			enemiesInRange++;
 		}
 	});
 	
@@ -61,20 +59,18 @@ function epyon_cScorerEnemyProximity(eCell){
 }
 
 function epyon_cScorerAllyProximity(eCell){
-	if (getAlliesCount() === 0) return null;
+	if (count(getAliveAllies()) === 0) return null;
 	
 	var maxDistance = self['range'];//MP would be "right", but range let's us explore more cells
 	var cumulatedScore = 0,
 		alliesInRange = 0;
 	
-	arrayIter(EPYON_LEEKS, function(eLeek){
-		if (eLeek['ally'] === true && isAlive(eLeek['id'])){
-			var distance = getDistance(eCell['id'], eGetCell(eLeek));
-			if (distance < maxDistance){
-				//http://fooplot.com/#W3sidHlwZSI6MCwiZXEiOiJzaW4oKHgrMSkvMi41KSIsImNvbG9yIjoiIzAwMDAwMCJ9LHsidHlwZSI6MTAwMCwid2luZG93IjpbIi0xLjk4NDAwMDAwMDAwMDAwMDkiLCI4LjQxNTk5OTk5OTk5OTk5NyIsIi0zLjU2IiwiMi44Mzk5OTk5OTk5OTk5OTk0Il19XQ--
-				cumulatedScore += sin((distance+1)/2.5);
-				alliesInRange++;
-			}
+	arrayIter(eGetAliveAllies(), function(eLeek){
+		var distance = getDistance(eCell['id'], eGetCell(eLeek));
+		if (distance < maxDistance){
+			//http://fooplot.com/#W3sidHlwZSI6MCwiZXEiOiJzaW4oKHgrMSkvMi41KSIsImNvbG9yIjoiIzAwMDAwMCJ9LHsidHlwZSI6MTAwMCwid2luZG93IjpbIi0xLjk4NDAwMDAwMDAwMDAwMDkiLCI4LjQxNTk5OTk5OTk5OTk5NyIsIi0zLjU2IiwiMi44Mzk5OTk5OTk5OTk5OTk0Il19XQ--
+			cumulatedScore += sin((distance+1)/2.5);
+			alliesInRange++;
 		}
 	});
 	

@@ -18,6 +18,7 @@ function epyon_getLeek(leekId){
 	leek['totalLife'] = getTotalLife(leekId);
 	leek['agility'] = getAgility(leekId);
 	leek['force'] = getForce(leekId);
+	leek['summon'] = isSummon(leekId);
 	
 	if (EPYON_LEVEL < 14){
 		//below that level, there's no way to get an ally, so everything that is not us is an enemy
@@ -87,6 +88,16 @@ function epyon_loadAliveEnemies() {
 	}
 }
 
+function epyon_loadAliveAllies() {
+	if (EPYON_LEVEL >= 14){
+		var leeks = getAliveAllies();
+		var l = count(leeks);
+		for (var i = 0; i < l; i++){
+			epyon_getLeek(leeks[i]);
+		}
+	}
+}
+
 function epyon_updateSelfRef(){
 	//THIS RETURNS A COPY, NOT A REFERENCE. You can't get a reference.
 	self = epyon_getLeek(getLeek());
@@ -130,6 +141,26 @@ function eMoveAwayFrom(eLeek, max){
 	EPYON_LEEKS[self['id']]['_cellIsDirty'] = true;
 	self['_cellIsDirty'] = true;
 	return moveAwayFrom(eLeek['id'], max);
+}
+
+function eGetAliveEnemies(){
+	var enemies = [];
+	
+	for (var eLeek in EPYON_LEEKS){
+		if (isAlive(eLeek['id']) && !eLeek['ally']) push(enemies, eLeek);
+	}
+	
+	return enemies;
+}
+
+function eGetAliveAllies(){
+	var allies = [];
+	
+	for (var eLeek in EPYON_LEEKS){
+		if (isAlive(eLeek['id']) && eLeek['ally']) push(allies, eLeek);
+	}
+	
+	return allies;
 }
 
 epyon_updateSelfRef();

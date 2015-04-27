@@ -3,8 +3,7 @@ function epyon_aquireTarget(){
 	// On recupere les ennemis, vivants, à porté
 	var enemiesInRange = [];
 	for (var leek in EPYON_LEEKS){
-		// @Yannick : Dois-je update avant ?
-		if (getPathLength(eGetCell(self),leek['_cell']) <= self['range'] && isAlive(leek['id']) && getType(leek['id']) === ENTITY_LEEK && !leek['ally']) enemiesInRange[leek['id']] = leek; // Arbitraire (portée du magnum + 3 deplacements)
+		if (getPathLength(eGetCell(self),leek['_cell']) <= self['range'] && isAlive(leek['id']) && getType(leek['id']) === ENTITY_LEEK && !leek['ally']) enemiesInRange[leek['id']] = leek;
 	}
 	// On détermine le plus affaibli d'entre eux
 	var lowerHealth = 1;

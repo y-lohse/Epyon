@@ -2,13 +2,11 @@ function epyon_bulb(){
 	epyon_startStats('bulb');
 	var configBackup = EPYON_CONFIG;
 	
-	EPYON_CONFIG[EPYON_PREFIGHT] = [CHIP_HELMET, BANDAGE_OTHER, CHIP_PROTEIN];
+	EPYON_CONFIG[EPYON_PREFIGHT] = [HELMET_OTHER, BANDAGE_OTHER, PROTEIN_OTHER];
 	EPYON_CONFIG[EPYON_FIGHT] = [CHIP_PEBBLE];
 	EPYON_CONFIG[EPYON_POSTFIGHT] = [CHIP_BANDAGE];
 	
 	EPYON_CONFIG['engage'] = configBackup['engage'] + 2;//stay out of the fights
-	
-	var usedProteinThisTurn = false;
 	
 	EPYON_CONFIG['select_prefight'] = function(behaviors, allocatedAP, allocatedMP){
 		var byPreference = [];
@@ -16,14 +14,13 @@ function epyon_bulb(){
 		arrayIter(behaviors, function(behavior){
 			var score = 0;
 			
-			if (behavior['name'] == 'bandage other'){
+			if (behavior['type'] == BANDAGE_OTHER){
 				score = 3;
 			}
-			else if (behavior['name'] == 'helmet' && !usedProteinThisTurn && EPYON_TARGET_DISTANCE < 14){
+			else if (behavior['type'] == HELMET_OTHER && EPYON_TARGET_DISTANCE < 14){
 				score = 1;
 			}
-			else if (behavior['name'] == 'protein' && allocatedAP >= 5 && EPYON_TARGET_DISTANCE < 8){
-				usedProteinThisTurn = true;
+			else if (behavior['type'] == PROTEIN_OTHER && EPYON_TARGET_DISTANCE < 8){
 				score = 2;
 			}
 
@@ -42,6 +39,7 @@ function epyon_bulb(){
 	};
 	
 	epyon_loadAliveEnemies();
+	epyon_loadAliveAllies();
 	epyon_updateAgressions();
 	epyon_aquireTarget();
 	if (getTurn() < getBirthTurn()+2) self['MP'] = 0;

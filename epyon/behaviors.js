@@ -13,6 +13,7 @@ global VACCINE_OTHER 	= stupidBaseId++;
 global PROTEIN_OTHER 	= stupidBaseId++;
 global STEROID_OTHER 	= stupidBaseId++;
 global WARM_UP_OTHER 	= stupidBaseId++;
+global HELMET_OTHER 	= stupidBaseId++;
 
 
 /*
@@ -46,7 +47,7 @@ function epyon_weaponBehaviorFactory(WEAPON_ID){
 			minCell = getCellToUseWeapon(WEAPON_ID, target['id']);
 			var currentCell = eGetCell(self);
 
-			distance = getPathLength(minCell, currentCell);
+			distance = getPathLength(currentCell, minCell);
 		}
 
 		if (cost > maxAP || distance > maxMP) return false;
@@ -109,7 +110,7 @@ function epyon_offensiveChipBehaviorFactory(CHIP_ID){
 			minCell = getCellToUseChip(CHIP_ID, target['id']);
 			var currentCell = eGetCell(self);
 
-			distance = getPathLength(minCell, currentCell);
+			distance = getPathLength(currentCell, minCell);
 		}
 
 		if (getCooldown(CHIP_ID) > 0 || cost > maxAP || distance > maxMP) return false;
@@ -206,15 +207,15 @@ function epyon_healOtherChipBehaviorFactory(CHIP_ID, type){
 
 		if (count(targets) === 0) return false;
 
-		//try to select the best one
+		//try to select the one taht needs most healing
 		var MPcost,
 			healTarget,
 			minCell,
-			minToHeal = 0;
+			maxToHeal = 0;
 
 		arrayIter(targets, function(data){
-			if (minToHeal < data['heal']){
-				minToHeal = data['heal'];
+			if (maxToHeal < data['heal']){
+				maxToHeal = data['heal'];
 				MPcost = data['MP'];
 				minCell = data['cell'];
 				healTarget = data['id'];
@@ -263,19 +264,24 @@ function epyon_simpleOtherChipBehaviorFactory(CHIP_ID, type){
 		});
 
 		if (count(targets) === 0) return false;
+		else{
+			debug('possible targets');
+			debug(targets);
+		}
 
 		epyon_debug(type+' chip other is a candidate');
 		
-		//try to select the best one
+		//try to select the one that cost the least mp
 		var MPcost = maxMP + 1,
 			chipTarget,
 			minCell;
 
 		arrayIter(targets, function(data){
-			if (MPcost < data['MP']){
+			if (data['MP'] < MPcost){
 				MPcost = data['MP'];
 				minCell = data['cell'];
 				chipTarget = data['id'];
+				debug('new  target '+chipTarget);
 			}
 		});
 
@@ -309,6 +315,9 @@ if (getTurn() === 1){
 	EPYON_BEHAVIORS[CHIP_SHIELD] = epyon_simpleSelfChipBehaviorFactory(CHIP_SHIELD);
 	EPYON_BEHAVIORS[CHIP_HELMET] = epyon_simpleSelfChipBehaviorFactory(CHIP_HELMET);
 	EPYON_BEHAVIORS[CHIP_WALL] = epyon_simpleSelfChipBehaviorFactory(CHIP_WALL);
+	
+	//shielding others
+	EPYON_BEHAVIORS[HELMET_OTHER] = epyon_simpleOtherChipBehaviorFactory(CHIP_HELMET, HELMET_OTHER);
 	
 	//power ups
 	EPYON_BEHAVIORS[CHIP_PROTEIN] = epyon_simpleSelfChipBehaviorFactory(CHIP_PROTEIN);

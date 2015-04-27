@@ -146,7 +146,7 @@ function epyon_prefight(S, maxAP, maxMP){
 	while(count(behaviors = epyon_listBehaviors(EPYON_PREFIGHT, maxAP, maxMP)) > 0){
 		var selected = EPYON_CONFIG['select_prefight'](behaviors, maxAP, maxMP);
 		if (!selected) break;
-		epyon_debug('using prefight '+selected['name']+' for '+selected['AP']+'AP and '+selected['MP']+'MP');
+		epyon_debug('using prefight '+selected['type']+' for '+selected['AP']+'AP and '+selected['MP']+'MP');
 		maxAP -= selected['AP'];
 		maxMP -= selected['MP'];
 		APcounter += selected['AP'];

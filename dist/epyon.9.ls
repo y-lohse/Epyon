@@ -515,6 +515,7 @@ global VACCINE_OTHER 	= stupidBaseId++;
 global PROTEIN_OTHER 	= stupidBaseId++;
 global STEROID_OTHER 	= stupidBaseId++;
 global WARM_UP_OTHER 	= stupidBaseId++;
+global HELMET_OTHER 	= stupidBaseId++;
 
 
 /*
@@ -548,7 +549,7 @@ function epyon_weaponBehaviorFactory(WEAPON_ID){
 			minCell = getCellToUseWeapon(WEAPON_ID, target['id']);
 			var currentCell = eGetCell(self);
 
-			distance = getPathLength(minCell, currentCell);
+			distance = getPathLength(currentCell, minCell);
 		}
 
 		if (cost > maxAP || distance > maxMP) return false;
@@ -611,7 +612,7 @@ function epyon_offensiveChipBehaviorFactory(CHIP_ID){
 			minCell = getCellToUseChip(CHIP_ID, target['id']);
 			var currentCell = eGetCell(self);
 
-			distance = getPathLength(minCell, currentCell);
+			distance = getPathLength(currentCell, minCell);
 		}
 
 		if (getCooldown(CHIP_ID) > 0 || cost > maxAP || distance > maxMP) return false;
@@ -708,15 +709,15 @@ function epyon_healOtherChipBehaviorFactory(CHIP_ID, type){
 
 		if (count(targets) === 0) return false;
 
-		//try to select the best one
+		//try to select the one taht needs most healing
 		var MPcost,
 			healTarget,
 			minCell,
-			minToHeal = 0;
+			maxToHeal = 0;
 
 		arrayIter(targets, function(data){
-			if (minToHeal < data['heal']){
-				minToHeal = data['heal'];
+			if (maxToHeal < data['heal']){
+				maxToHeal = data['heal'];
 				MPcost = data['MP'];
 				minCell = data['cell'];
 				healTarget = data['id'];
@@ -765,19 +766,24 @@ function epyon_simpleOtherChipBehaviorFactory(CHIP_ID, type){
 		});
 
 		if (count(targets) === 0) return false;
+		else{
+			debug('possible targets');
+			debug(targets);
+		}
 
 		epyon_debug(type+' chip other is a candidate');
 		
-		//try to select the best one
+		//try to select the one that cost the least mp
 		var MPcost = maxMP + 1,
 			chipTarget,
 			minCell;
 
 		arrayIter(targets, function(data){
-			if (MPcost < data['MP']){
+			if (data['MP'] < MPcost){
 				MPcost = data['MP'];
 				minCell = data['cell'];
 				chipTarget = data['id'];
+				debug('new  target '+chipTarget);
 			}
 		});
 
@@ -811,6 +817,9 @@ if (getTurn() === 1){
 	EPYON_BEHAVIORS[CHIP_SHIELD] = epyon_simpleSelfChipBehaviorFactory(CHIP_SHIELD);
 	EPYON_BEHAVIORS[CHIP_HELMET] = epyon_simpleSelfChipBehaviorFactory(CHIP_HELMET);
 	EPYON_BEHAVIORS[CHIP_WALL] = epyon_simpleSelfChipBehaviorFactory(CHIP_WALL);
+	
+	//shielding others
+	EPYON_BEHAVIORS[HELMET_OTHER] = epyon_simpleOtherChipBehaviorFactory(CHIP_HELMET, HELMET_OTHER);
 	
 	//power ups
 	EPYON_BEHAVIORS[CHIP_PROTEIN] = epyon_simpleSelfChipBehaviorFactory(CHIP_PROTEIN);
@@ -1057,7 +1066,7 @@ function epyon_prefight(S, maxAP, maxMP){
 	while(count(behaviors = epyon_listBehaviors(EPYON_PREFIGHT, maxAP, maxMP)) > 0){
 		var selected = EPYON_CONFIG['select_prefight'](behaviors, maxAP, maxMP);
 		if (!selected) break;
-		epyon_debug('using prefight '+selected['name']+' for '+selected['AP']+'AP and '+selected['MP']+'MP');
+		epyon_debug('using prefight '+selected['type']+' for '+selected['AP']+'AP and '+selected['MP']+'MP');
 		maxAP -= selected['AP'];
 		maxMP -= selected['MP'];
 		APcounter += selected['AP'];
@@ -1110,13 +1119,11 @@ function epyon_bulb(){
 	epyon_startStats('bulb');
 	var configBackup = EPYON_CONFIG;
 	
-	EPYON_CONFIG[EPYON_PREFIGHT] = [CHIP_HELMET, BANDAGE_OTHER, CHIP_PROTEIN];
+	EPYON_CONFIG[EPYON_PREFIGHT] = [HELMET_OTHER, BANDAGE_OTHER, PROTEIN_OTHER];
 	EPYON_CONFIG[EPYON_FIGHT] = [CHIP_PEBBLE];
 	EPYON_CONFIG[EPYON_POSTFIGHT] = [CHIP_BANDAGE];
 	
 	EPYON_CONFIG['engage'] = configBackup['engage'] + 2;//stay out of the fights
-	
-	var usedProteinThisTurn = false;
 	
 	EPYON_CONFIG['select_prefight'] = function(behaviors, allocatedAP, allocatedMP){
 		var byPreference = [];
@@ -1124,14 +1131,13 @@ function epyon_bulb(){
 		arrayIter(behaviors, function(behavior){
 			var score = 0;
 			
-			if (behavior['name'] == 'bandage other'){
+			if (behavior['type'] == BANDAGE_OTHER){
 				score = 3;
 			}
-			else if (behavior['name'] == 'helmet' && !usedProteinThisTurn && EPYON_TARGET_DISTANCE < 14){
+			else if (behavior['type'] == HELMET_OTHER && EPYON_TARGET_DISTANCE < 14){
 				score = 1;
 			}
-			else if (behavior['name'] == 'protein' && allocatedAP >= 5 && EPYON_TARGET_DISTANCE < 8){
-				usedProteinThisTurn = true;
+			else if (behavior['type'] == PROTEIN_OTHER && EPYON_TARGET_DISTANCE < 8){
 				score = 2;
 			}
 
@@ -1150,6 +1156,7 @@ function epyon_bulb(){
 	};
 	
 	epyon_loadAliveEnemies();
+	epyon_loadAliveAllies();
 	epyon_updateAgressions();
 	epyon_aquireTarget();
 	if (getTurn() < getBirthTurn()+2) self['MP'] = 0;

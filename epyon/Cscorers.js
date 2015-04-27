@@ -7,9 +7,7 @@ function epyon_cScorerBorder(eCell){
 	else return 1;
 }
 
-function epyon_cScorerObstacles(eCell){
-	if (EPYON_LEVEL < 21) return null;
-	
+function epyon_cScorerObstacles(eCell){	
 	var adjacent = epyon_getAdjacentCells(eCell['id']),
 		obstacleCount = 0;
 		

@@ -30,7 +30,7 @@ if (getTurn() === 1){
 	
 	EPYON_CONFIG['C'] = [
 		'border': ['fn': epyon_cScorerBorder, 'coef': 1],
-		'obstacles': ['fn': epyon_cScorerObstacles, 'coef': 2],
+		'obstacles': ['fn': epyon_cScorerObstacles, 'coef': (EPYON_LEVEL >= 21) ? 2 : 0],
 		'los': ['fn': epyon_cScorerLoS, 'coef': 2],
 		'enemyprox': ['fn': epyon_cScorerEnemyProximity, 'coef': 3],
 		'allyprox': ['fn': epyon_cScorerAllyProximity, 'coef': 1],

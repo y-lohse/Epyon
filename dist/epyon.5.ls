@@ -487,10 +487,15 @@ global EPYON_POSTFIGHT = 'postfight';
 global EPYON_BEHAVIORS = [];
 
 //arbitrary numbers
-global EQUIP_PISTOL 	= 80484;
-global EQUIP_MAGNUM 	= 80485;
-global BANDAGE_OTHER 	= 80486;
-global CURE_OTHER 		= 80487;
+var stupidBaseId = 80484;
+global EQUIP_PISTOL 	= stupidBaseId++;
+global EQUIP_MAGNUM 	= stupidBaseId++;
+global BANDAGE_OTHER 	= stupidBaseId++;
+global CURE_OTHER 		= stupidBaseId++;
+global VACCIN_OTHER 	= stupidBaseId++;
+global PROTEIN_OTHER 	= stupidBaseId++;
+global STEROID_OTHER 	= stupidBaseId++;
+global WARM_UP_OTHER 	= stupidBaseId++;
 
 
 /*
@@ -794,14 +799,21 @@ if (getTurn() === 1){
 	EPYON_BEHAVIORS[CHIP_PROTEIN] = epyon_simpleSelfChipBehaviorFactory(CHIP_PROTEIN, 'protein');
 	EPYON_BEHAVIORS[CHIP_STEROID] = epyon_simpleSelfChipBehaviorFactory(CHIP_STEROID, 'steroid');
 	EPYON_BEHAVIORS[CHIP_WARM_UP] = epyon_simpleSelfChipBehaviorFactory(CHIP_WARM_UP, 'warm');
+	
+	//power up other
+	EPYON_BEHAVIORS[PROTEIN_OTHER] = epyon_simpleOtherChipBehaviorFactory(CHIP_PROTEIN, 'protein other');
+	EPYON_BEHAVIORS[STEROID_OTHER] = epyon_simpleOtherChipBehaviorFactory(CHIP_STEROID, 'steroid other');
+	EPYON_BEHAVIORS[WARM_UP_OTHER] = epyon_simpleOtherChipBehaviorFactory(CHIP_WARM_UP, 'warm other');
 
 	//heal
 	EPYON_BEHAVIORS[CHIP_BANDAGE] = epyon_healChipBehaviorFactory(CHIP_BANDAGE, 'bandage');
 	EPYON_BEHAVIORS[CHIP_CURE] = epyon_healChipBehaviorFactory(CHIP_CURE, 'cure');
+	EPYON_BEHAVIORS[CHIP_VACCINE] = epyon_healChipBehaviorFactory(CHIP_VACCINE, 'vaccin');
 	
 	//heal others
 	EPYON_BEHAVIORS[BANDAGE_OTHER] = epyon_healOtherChipBehaviorFactory(CHIP_BANDAGE, 'bandage other');
 	EPYON_BEHAVIORS[CURE_OTHER] = epyon_healOtherChipBehaviorFactory(CHIP_CURE, 'cure other');
+	EPYON_BEHAVIORS[VACCINE_OTHER] = epyon_healOtherChipBehaviorFactory(CHIP_VACCINE, 'vaccin other');
 	
 	//summon
 	EPYON_BEHAVIORS[CHIP_PUNY_BULB] = function(maxAP, maxMP){

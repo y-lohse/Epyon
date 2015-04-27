@@ -901,6 +901,7 @@ function epyon_aquireTarget(){
 	// On détermine le plus affaibli d'entre eux
 	var lowerHealth = 1;
 	var actualHealth;
+	var leekInRange;
 	for(var leek in enemiesInRange) {
 		actualHealth = getLife(leek['id'])/leek['totalLife'];
 		if (actualHealth < lowerHealth) {	
@@ -908,9 +909,12 @@ function epyon_aquireTarget(){
 			enemy = leek;
 		}
 		
+		leekInRange = leek;
 	}
 	// Si aucun n'est affaibli, on prend le plus proche
 	if(!enemy) enemy = epyon_getLeek(getNearestEnemy());
+	
+	if (enemy['summon'] && leekInRange) enemy = leekInRange;
 	
 	EPYON_TARGET_DISTANCE = getPathLength(eGetCell(self), eGetCell(enemy));
 	

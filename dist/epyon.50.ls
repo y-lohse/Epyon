@@ -943,6 +943,7 @@ function epyon_denyChallenge(){
 }
 
 function epyon_bulb(){
+	epyon_startStats('bulb');
 	var configBackup = EPYON_CONFIG;
 	
 	EPYON_CONFIG[EPYON_PREFIGHT] = [CHIP_HELMET, BANDAGE_OTHER, CHIP_PROTEIN];
@@ -991,6 +992,9 @@ function epyon_bulb(){
 	epyon_act();
 	
 	EPYON_CONFIG = configBackup;
+	
+	var bulbStats = epyon_stopStats('bulb');
+	epyon_debug('bulb '+bulbStats['i']+' i & '+bulbStats['o']+' o');
 }
 
 function epyon_findCellToSummon(){

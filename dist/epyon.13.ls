@@ -85,28 +85,28 @@ function epyon_getLeek(leekId){
 	}
 	
 	debug('creating leek '+leekId);
-	var leek = [];
+	var eLeek = [];
 	
 	//static props
-	leek['id'] = leekId;
-	leek['name'] = getName(leekId);
-	leek['totalLife'] = getTotalLife(leekId);
-	leek['agility'] = getAgility(leekId);
-	leek['force'] = getForce(leekId);
-	leek['summon'] = isSummon(leekId);
+	eLeek['id'] = leekId;
+	eLeek['name'] = getName(leekId);
+	eLeek['totalLife'] = getTotalLife(leekId);
+	eLeek['agility'] = getAgility(leekId);
+	eLeek['force'] = getForce(leekId);
+	eLeek['summon'] = isSummon(leekId);
 	
 	if (EPYON_LEVEL < 14){
 		//below that level, there's no way to get an ally, so everything that is not us is an enemy
-		leek['ally'] = (getLeek() === leekId) ? true : false;
+		eLeek['ally'] = (getLeek() === leekId) ? true : false;
 	}
 	else{
-		leek['ally'] = isAlly(leekId);
+		eLeek['ally'] = isAlly(leekId);
 	}
 	
 	//try to get the inventory
 	if (EPYON_LEVEL >= 57){
-		eLeek['chips'] = getChips(eLeek['id']);
-		eLeek['weapons'] = getWeapons(eLeek['id']);
+		eLeek['chips'] = getChips(leekId);
+		eLeek['weapons'] = getWeapons(leekId);
 	}
 	
 	//try to load the max shielding values
@@ -121,7 +121,7 @@ function epyon_getLeek(leekId){
 		});
 	}
 	else if (EPYON_LEVEL >= 13){
-		var level = getlevel(eLeek['id']);//level 13
+		var level = getLevel(eLeek['id']);
 
 		if (level >= 11) eLeek['maxAbsShield'] += 15;//helmet
 		if (level >= 19) eLeek['maxAbsShield'] += 20;//shield
@@ -130,10 +130,10 @@ function epyon_getLeek(leekId){
 	}
 	
 	//dynamic props
-	leek['agression'] = 1;
+	eLeek['agression'] = 1;
 	
 	//dynamic props
-	return epyon_updateLeek(leek);
+	return epyon_updateLeek(eLeek);
 }
 
 function epyon_updateLeek(eLeek){
@@ -491,7 +491,7 @@ function epyon_cScorerAllyProximity(eCell){
 	});
 	
 	if (alliesInRange === 0) return null;
-	else return cumulatedDistance / alliesInRange;
+	else return cumulatedScore / alliesInRange;
 }
 global EPYON_PREFIGHT = 'prefight';
 global EPYON_FIGHT = 'fight';
@@ -504,7 +504,7 @@ global EQUIP_PISTOL 	= stupidBaseId++;
 global EQUIP_MAGNUM 	= stupidBaseId++;
 global BANDAGE_OTHER 	= stupidBaseId++;
 global CURE_OTHER 		= stupidBaseId++;
-global VACCIN_OTHER 	= stupidBaseId++;
+global VACCINE_OTHER 	= stupidBaseId++;
 global PROTEIN_OTHER 	= stupidBaseId++;
 global STEROID_OTHER 	= stupidBaseId++;
 global WARM_UP_OTHER 	= stupidBaseId++;

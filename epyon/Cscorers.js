@@ -73,5 +73,5 @@ function epyon_cScorerAllyProximity(eCell){
 	});
 	
 	if (alliesInRange === 0) return null;
-	else return cumulatedDistance / alliesInRange;
+	else return cumulatedScore / alliesInRange;
 }

@@ -28,6 +28,16 @@ function epyon_stopStats(name){
 	}
 }
 
+function bind(fn, args){
+	return function(){
+		var argLength = count(args);
+		if (argLength === 1) fn(args[0]);
+		else if (argLength === 2) fn(args[0], args[1]);
+		else if (argLength === 3) fn(args[0], args[1], args[2]);
+		else if (argLength === 4) fn(args[0], args[1], args[2], args[3]);
+	};
+}
+
 if (getTurn() == 1){
 	epyon_debug('v'+EPYON_VERSION);
 	epyon_startStats('init');
@@ -479,7 +489,10 @@ function epyon_listBehaviors(type, maxAP, maxMP){
 	arrayIter(EPYON_BEHAVIORS, function(candidateName, candidateFn){
 		if (inArray(EPYON_CONFIG[type], candidateName)){
 			var result = candidateFn(maxAP, maxMP);
-			if (result) push(behaviors, result);
+			var isArray = typeOf(result) == TYPE_ARRAY;
+			
+			if (isArray && result[0]) behaviors = arrayConcat(behaviors, result);
+			else if (isArray) push(behaviors, result);
 		}
 	});
 	
@@ -719,8 +732,18 @@ function epyon_healOtherChipBehaviorFactory(CHIP_ID, type){
 	};
 }
 
-function epyon_simpleOtherChipBehaviorFactory(CHIP_ID, type){
+function epyon_factoryBehaviorChip(CHIP_ID){
 	var cost = getChipCost(CHIP_ID);
+	
+	var fn = function(targetCell, targetLeek, theoreticalCost){
+		var mp = 0;
+		if (EPYON_LEVEL < 29) mp = eMoveTowardCell(targetCell);
+		else if (!canUseChip(CHIP_ID, targetLeek)) mp = eMoveTowardCell(targetCell);
+
+		if (mp > theoreticalCost) debugW('Epyon: '+(mp - theoreticalCost)+' extra MP was spent on moving');
+
+		useChipShim(CHIP_ID, targetLeek);
+	};
 	
 	return function(maxAP, maxMP){
 		if (getCooldown(CHIP_ID) > 0 || maxAP < cost) return false;
@@ -733,50 +756,35 @@ function epyon_simpleOtherChipBehaviorFactory(CHIP_ID, type){
 				mpToBeInReach = getPathLength(eGetCell(self), cell);
 
 			if (!eLeek['summon'] && mpToBeInReach <= maxMP){
-				push(targets, ['id': eLeek['id'], 
+				push(targets, ['leek': eLeek, 
 								'MP': mpToBeInReach,
 								'cell': cell]);
 			}
 		});
 
 		if (count(targets) === 0) return false;
-		else{
-			debug('possible targets');
-			debug(targets);
-		}
 
-		epyon_debug(epyon_getHumanBehaviorName(type)+' chip other is a candidate');
+		epyon_debug(epyon_getHumanBehaviorName(CHIP_ID)+' is a candidate');
+		debug(targets);
 		
 		//try to select the one that cost the least mp
 		var MPcost = maxMP + 1,
 			chipTarget,
 			minCell;
+			
+		var candidates = [];
 
 		arrayIter(targets, function(data){
-			if (data['MP'] < MPcost){
-				MPcost = data['MP'];
-				minCell = data['cell'];
-				chipTarget = data['id'];
-				debug('new  target '+chipTarget);
-			}
+			push(candidates, [
+				'type': CHIP_ID,
+				'AP': cost,
+				'MP': data['MP'],
+				'target': data['leek'],
+				'fn': bind(fn, [data['cell'], data['leek']['id'], data['MP']])
+			]);
 		});
 
-		var fn = function(){
-			var mp = 0;
-			if (EPYON_LEVEL < 29) mp = eMoveTowardCell(minCell);
-			else if (!canUseChip(CHIP_ID, chipTarget)) mp = eMoveTowardCell(minCell);
-			
-			if (mp > MPcost) debugW('Epyon: '+(mp-MPcost)+' extra MP was spent on moving');
-			
-			useChipShim(CHIP_ID, chipTarget);
-		};
-
-		return [
-			'type': type,
-			'AP': cost,
-			'MP': MPcost,
-			'fn': fn
-		];
+		return candidates;
 	};
 }
 
@@ -787,23 +795,15 @@ function epyon_simpleOtherChipBehaviorFactory(CHIP_ID, type){
 if (getTurn() === 1){
 	
 	//shielding
-	EPYON_BEHAVIORS[CHIP_ARMOR] = epyon_simpleSelfChipBehaviorFactory(CHIP_ARMOR);
-	EPYON_BEHAVIORS[CHIP_SHIELD] = epyon_simpleSelfChipBehaviorFactory(CHIP_SHIELD);
-	EPYON_BEHAVIORS[CHIP_HELMET] = epyon_simpleSelfChipBehaviorFactory(CHIP_HELMET);
-	EPYON_BEHAVIORS[CHIP_WALL] = epyon_simpleSelfChipBehaviorFactory(CHIP_WALL);
-	
-	//shielding others
-	EPYON_BEHAVIORS[HELMET_OTHER] = epyon_simpleOtherChipBehaviorFactory(CHIP_HELMET, HELMET_OTHER);
+	EPYON_BEHAVIORS[CHIP_ARMOR] = epyon_factoryBehaviorChip(CHIP_ARMOR);
+	EPYON_BEHAVIORS[CHIP_SHIELD] = epyon_factoryBehaviorChip(CHIP_SHIELD);
+	EPYON_BEHAVIORS[CHIP_HELMET] = epyon_factoryBehaviorChip(CHIP_HELMET);
+	EPYON_BEHAVIORS[CHIP_WALL] = epyon_factoryBehaviorChip(CHIP_WALL);
 	
 	//power ups
-	EPYON_BEHAVIORS[CHIP_PROTEIN] = epyon_simpleSelfChipBehaviorFactory(CHIP_PROTEIN);
-	EPYON_BEHAVIORS[CHIP_STEROID] = epyon_simpleSelfChipBehaviorFactory(CHIP_STEROID);
-	EPYON_BEHAVIORS[CHIP_WARM_UP] = epyon_simpleSelfChipBehaviorFactory(CHIP_WARM_UP);
-	
-	//power up other
-	EPYON_BEHAVIORS[PROTEIN_OTHER] = epyon_simpleOtherChipBehaviorFactory(CHIP_PROTEIN, PROTEIN_OTHER);
-	EPYON_BEHAVIORS[STEROID_OTHER] = epyon_simpleOtherChipBehaviorFactory(CHIP_STEROID, STEROID_OTHER);
-	EPYON_BEHAVIORS[WARM_UP_OTHER] = epyon_simpleOtherChipBehaviorFactory(CHIP_WARM_UP, WARM_UP_OTHER);
+	EPYON_BEHAVIORS[CHIP_PROTEIN] = epyon_factoryBehaviorChip(CHIP_PROTEIN);
+	EPYON_BEHAVIORS[CHIP_STEROID] = epyon_factoryBehaviorChip(CHIP_STEROID);
+	EPYON_BEHAVIORS[CHIP_WARM_UP] = epyon_factoryBehaviorChip(CHIP_WARM_UP);
 
 	//heal
 	EPYON_BEHAVIORS[CHIP_BANDAGE] = epyon_healChipBehaviorFactory(CHIP_BANDAGE);

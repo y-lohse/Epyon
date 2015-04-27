@@ -26,6 +26,16 @@ function epyon_stopStats(name){
 	}
 }
 
+function bind(fn, args){
+	return function(){
+		var argLength = count(args);
+		if (argLength === 1) fn(args[0]);
+		else if (argLength === 2) fn(args[0], args[1]);
+		else if (argLength === 3) fn(args[0], args[1], args[2]);
+		else if (argLength === 4) fn(args[0], args[1], args[2], args[3]);
+	};
+}
+
 if (getTurn() == 1){
 	epyon_debug('v'+EPYON_VERSION);
 	epyon_startStats('init');

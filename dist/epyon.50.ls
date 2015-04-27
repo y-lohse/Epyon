@@ -648,6 +648,63 @@ function epyon_healOtherChipBehaviorFactory(CHIP_ID, name){
 	};
 }
 
+function epyon_simpleOtherChipBehaviorFactory(CHIP_ID, name){
+	var cost = getChipCost(CHIP_ID);
+	
+	return function(maxAP, maxMP){
+		if (getCooldown(CHIP_ID) > 0 || maxAP < cost) return false;
+		
+		//find potential targets
+		var allies = getAliveAllies();
+		var targets = [];
+
+		arrayIter(allies, function(leekId){
+			var cell = getCellToUseChip(CHIP_ID, leekId),
+				mpToBeInReach = getPathLength(eGetCell(self), cell);
+
+			if (!isSummon(leekId) && mpToBeInReach <= maxMP){
+				push(targets, ['id': leekId, 
+								'MP': mpToBeInReach,
+								'cell': cell]);
+			}
+		});
+
+		if (count(targets) === 0) return false;
+
+		epyon_debug(name+' is a candidate');
+		
+		//try to select the best one
+		var MPcost = maxMP + 1,
+			chipTarget,
+			minCell;
+
+		arrayIter(targets, function(data){
+			if (MPcost < data['MP']){
+				MPcost = data['MP'];
+				minCell = data['cell'];
+				chipTarget = data['id'];
+			}
+		});
+
+		var fn = function(){
+			var mp = 0;
+			if (EPYON_LEVEL < 29) mp = eMoveTowardCell(minCell);
+			else if (!canUseChip(CHIP_ID, chipTarget)) mp = eMoveTowardCell(minCell);
+			
+			if (mp > MPcost) debugW('Epyon: '+(mp-MPcost)+' extra MP was spent on moving');
+			
+			useChipShim(CHIP_ID, chipTarget);
+		};
+
+		return [
+			'name': name,
+			'AP': cost,
+			'MP': MPcost,
+			'fn': fn
+		];
+	};
+}
+
 
 /*********************************
 *********** BEHAVIORS ************
@@ -754,7 +811,7 @@ function epyon_aquireTarget(){
 	var enemiesInRange = [];
 	for (var leek in EPYON_LEEKS){
 		// @Yannick : Dois-je update avant ?
-		if (getPathLength(eGetCell(self),leek['_cell']) <= self['range'] && isAlive(leek['id']) && !leek['ally']) enemiesInRange[leek['id']] = leek; // Arbitraire (portée du magnum + 3 deplacements)
+		if (getPathLength(eGetCell(self),leek['_cell']) <= self['range'] && isAlive(leek['id']) && getType(leek['id']) === ENTITY_LEEK && !leek['ally']) enemiesInRange[leek['id']] = leek; // Arbitraire (portée du magnum + 3 deplacements)
 	}
 	// On détermine le plus affaibli d'entre eux
 	var lowerHealth = 1;

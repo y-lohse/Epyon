@@ -104,9 +104,7 @@ function epyon_factoryBehaviorWeapon(WEAPON_ID){
 		if (EPYON_LEVEL >= 29  && canUseWeapon(WEAPON_ID, target['id'])) distance = 0;
 		else{
 			minCell = getCellToUseWeapon(WEAPON_ID, target['id']);
-			var currentCell = eGetCell(self);
-
-			distance = getPathLength(currentCell, minCell);
+			distance = getPathLength(eGetCell(self), minCell);
 		}
 
 		if (cost > maxAP || distance > maxMP) return [];
@@ -133,9 +131,7 @@ function epyon_factoryBehaviorAttackChip(CHIP_ID){
 		if (EPYON_LEVEL >= 29 && canUseChip(CHIP_ID, target['id'])) distance = 0;
 		else{
 			minCell = getCellToUseChip(CHIP_ID, target['id']);
-			var currentCell = eGetCell(self);
-
-			distance = getPathLength(currentCell, minCell);
+			distance = getPathLength(eGetCell(self), minCell);
 		}
 
 		if (getCooldown(CHIP_ID) > 0 || cost > maxAP || distance > maxMP) return [];
@@ -161,7 +157,8 @@ function epyon_factoryBehaviorHeal(CHIP_ID, type){
 		if (getCooldown(CHIP_ID) > 0 || maxAP < cost) return [];
 
 		//find potential targets
-		var targets = [];
+		epyon_debug(epyon_getHumanBehaviorName(type)+' is a candidate');
+		var candidates = [];
 
 		arrayIter(eGetAliveAllies(), function(eLeek){
 			var cell = getCellToUseChip(CHIP_ID, eLeek['id']),
@@ -169,33 +166,14 @@ function epyon_factoryBehaviorHeal(CHIP_ID, type){
 				toHeal = eLeek['totalLife'] - eGetLife(eLeek);
 
 			if (!eLeek['summon'] && mpToBeInReach <= maxMP && toHeal > maxHeal){
-				push(targets, ['leek': eLeek, 
-								'MP': mpToBeInReach,
-								'cell': cell, 
-								'heal': toHeal]);
-			}
-		});
-
-		if (count(targets) === 0) return [];
-		
-		epyon_debug(epyon_getHumanBehaviorName(type)+' is a candidate');
-		debug(targets);
-
-		//try to select the one that needs most healing
-		var MPcost,
-			healTarget,
-			minCell;
-
-		var candidates = [];
-		
-		arrayIter(targets, function(data){
-			push(candidates, [
+				push(candidates, [
 				'type': type,
-				'AP': cost,
-				'MP': data['MP'],
-				'target': data['leek'],
-				'fn': epyon_bind(epyon_genericExecuteFn, [CHIP_ID, data['leek']['id'], data['cell'], data['MP']])
-			]);
+					'AP': cost,
+					'MP': mpToBeInReach,
+					'target': eLeek,
+					'fn': epyon_bind(epyon_genericExecuteFn, [CHIP_ID, eLeek['id'], cell, mpToBeInReach])
+				]);
+			}
 		});
 
 		return candidates;
@@ -209,41 +187,25 @@ function epyon_factoryBehaviorChip(CHIP_ID){
 		if (getCooldown(CHIP_ID) > 0 || maxAP < cost) return [];
 		
 		//find potential targets
-		var targets = [];
+		epyon_debug(epyon_getHumanBehaviorName(CHIP_ID)+' is a candidate');
+		var candidates = [];
 
 		arrayIter(eGetAliveAllies(), function(eLeek){
 			var cell = getCellToUseChip(CHIP_ID, eLeek['id']),
 				mpToBeInReach = getPathLength(eGetCell(self), cell);
 
 			if (!eLeek['summon'] && mpToBeInReach <= maxMP){
-				push(targets, ['leek': eLeek, 
-								'MP': mpToBeInReach,
-								'cell': cell]);
+				debug('adding '+eLeek['name']+' as a candidate');
+				push(candidates, [
+					'type': CHIP_ID,
+					'AP': cost,
+					'MP': mpToBeInReach,
+					'target': eLeek,
+					'fn': epyon_bind(epyon_genericExecuteFn, [CHIP_ID, eLeek['id'], cell, mpToBeInReach])
+				]);
 			}
 		});
-
-		if (count(targets) === 0) return [];
-
-		epyon_debug(epyon_getHumanBehaviorName(CHIP_ID)+' is a candidate');
-		debug(targets);
 		
-		//try to select the one that cost the least mp
-		var MPcost = maxMP + 1,
-			chipTarget,
-			minCell;
-			
-		var candidates = [];
-
-		arrayIter(targets, function(data){
-			push(candidates, [
-				'type': CHIP_ID,
-				'AP': cost,
-				'MP': data['MP'],
-				'target': data['leek'],
-				'fn': epyon_bind(epyon_genericExecuteFn, [CHIP_ID, data['leek']['id'], data['cell'], data['MP']])
-			]);
-		});
-
 		return candidates;
 	};
 }

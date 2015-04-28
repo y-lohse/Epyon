@@ -8,7 +8,6 @@ var stupidBaseId = 80484;
 global EQUIP_PISTOL 	= stupidBaseId++;
 global EQUIP_MAGNUM 	= stupidBaseId++;
 
-
 /*
 * @param type EPYON_PREFIGHT || EPYON_FIGHT || EPYON_POSTFIGHT
 */
@@ -28,6 +27,7 @@ function epyon_listBehaviors(type, maxAP, maxMP){
 	return behaviors;
 }
 
+//helper functions
 function epyon_getHumanBehaviorName(BEHAVIOR_ID){
 	if (BEHAVIOR_ID === CHIP_ARMOR) return 'armor';
 	else if (BEHAVIOR_ID === CHIP_SHIELD) return 'shield';
@@ -48,6 +48,28 @@ function epyon_getHumanBehaviorName(BEHAVIOR_ID){
 	else if (BEHAVIOR_ID === EQUIP_PISTOL) return 'equip pistol';
 	else if (BEHAVIOR_ID === EQUIP_MAGNUM) return 'equip magnum';
 	else return 'Behavior#'+BEHAVIOR_ID;
+}
+
+function epyon_genericExecuteFn(TOOl_ID, targetId, cellId, theoreticalMpCost){
+	var actualMpCost = 0,
+		isAChip = (isChip(TOOl_ID)),
+		canUseFunction = (isAChip) ? canUseChip : canUseWeapon;
+	
+	//ne pas utiliser de OR, canUseWeapon plante e ndessous du level 29
+	if (EPYON_LEVEL < 29) actualMpCost = eMoveTowardCell(cellId);
+	else if (!canUseFunction(TOOl_ID, targetId)) actualMpCost = eMoveTowardCell(cellId);
+
+	if (actualMpCost > theoreticalMpCost) debugW('Epyon: '+(actualMpCost - theoreticalMpCost)+' extra MP was spent on moving');
+
+	if (!isAChip && eGetWeapon(self) != TOOl_ID){
+		debugW('Epyon: 1 extra AP was spent on equiping '+epyon_getHumanBehaviorName(TOOl_ID));
+		eSetWeapon(TOOl_ID);
+	}
+	
+	var result = (isAChip) ? useChipShim(TOOl_ID, targetId) : useWeapon(targetId);
+	
+	if (result != USE_FAILED && result != USE_SUCCESS) debugW('Epyon: usage failed - '+result);
+	return result;
 }
 
 //factories to create behavior with less code
@@ -78,21 +100,6 @@ function epyon_factoryBehaviorWeapon(WEAPON_ID){
 	var cost = getWeaponCost(WEAPON_ID);
 	var distance, minCell;
 	
-	var fn = function(targetCell, targetLeek, theoreticalCost){
-		var mp = 0;
-		//ne pas utiliser de OR, canUseWeapon plante e ndessous du level 29
-		if (EPYON_LEVEL < 29) mp = eMoveTowardCell(targetCell);
-		else if (!canUseWeapon(WEAPON_ID, targetLeek)) mp = eMoveTowardCell(targetCell);
-
-		if (mp > distance) debugW('Epyon: '+(mp-distance)+' extra MP was spent on moving');
-
-		if (eGetWeapon(self) != WEAPON_ID){
-			debugW('Epyon: 1 extra AP was spent on equiping '+epyon_getHumanBehaviorName(WEAPON_ID));
-			eSetWeapon(WEAPON_ID);
-		}
-		useWeapon(targetLeek);
-	};
-	
 	return function(maxAP, maxMP){	
 		if (EPYON_LEVEL >= 29  && canUseWeapon(WEAPON_ID, target['id'])) distance = 0;
 		else{
@@ -111,7 +118,7 @@ function epyon_factoryBehaviorWeapon(WEAPON_ID){
 			'MP': distance,
 			'AP': cost,
 			'damage': damage,
-			'fn': epyon_bind(fn, [minCell, target['id'], distance])
+			'fn': epyon_bind(epyon_genericExecuteFn, [WEAPON_ID, target['id'], minCell, distance])
 		];
 	};
 }
@@ -121,16 +128,6 @@ function epyon_factoryBehaviorAttackChip(CHIP_ID){
 	var damage = ((effects[0][1]+effects[0][2]) / 2) * (1 + self['force'] / 100);
 	var cost = getChipCost(CHIP_ID);
 	var distance, minCell;
-	
-	var fn = function(targetCell, targetLeek, theoreticalCost){
-		var mp = 0;
-		if (EPYON_LEVEL < 29) mp = eMoveTowardCell(targetCell);
-		else if (!canUseChip(CHIP_ID, targetLeek)) mp = eMoveTowardCell(targetCell);
-
-		if (mp > theoreticalCost) debugW('Epyon: '+(mp-theoreticalCost)+' extra MP was spent on moving');
-
-		useChipShim(CHIP_ID, targetLeek);
-	};
 	
 	return function(maxAP, maxMP){
 		if (EPYON_LEVEL >= 29 && canUseChip(CHIP_ID, target['id'])) distance = 0;
@@ -150,7 +147,7 @@ function epyon_factoryBehaviorAttackChip(CHIP_ID){
 			'MP': distance,
 			'AP': cost,
 			'damage': damage,
-			'fn': epyon_bind(fn, [minCell, target['id'], distance])
+			'fn': epyon_bind(epyon_genericExecuteFn, [CHIP_ID, target['id'], minCell, distance])
 		];
 	};
 }
@@ -159,16 +156,6 @@ function epyon_factoryBehaviorHeal(CHIP_ID, type){
 	var cost = getChipCost(CHIP_ID);
 	var effects = getChipEffects(CHIP_ID);
 	var maxHeal = effects[0][2] * (1 + self['agility'] / 100);
-	
-	var fn = function(targetCell, targetLeek, theoreticalCost){
-		var mp = 0;
-		if (EPYON_LEVEL < 29) mp = eMoveTowardCell(targetCell);
-		else if (!canUseChip(CHIP_ID, targetLeek)) mp = eMoveTowardCell(targetCell);
-
-		if (mp > theoreticalCost) debugW('Epyon: '+(mp-theoreticalCost)+' extra MP was spent on moving');
-
-		useChipShim(CHIP_ID, targetLeek);
-	};
 	
 	return function(maxAP, maxMP){	
 		if (getCooldown(CHIP_ID) > 0 || maxAP < cost) return [];
@@ -207,7 +194,7 @@ function epyon_factoryBehaviorHeal(CHIP_ID, type){
 				'AP': cost,
 				'MP': data['MP'],
 				'target': data['leek'],
-				'fn': epyon_bind(fn, [data['cell'], data['leek']['id'], data['MP']])
+				'fn': epyon_bind(epyon_genericExecuteFn, [CHIP_ID, data['leek']['id'], data['cell'], data['MP']])
 			]);
 		});
 
@@ -217,16 +204,6 @@ function epyon_factoryBehaviorHeal(CHIP_ID, type){
 
 function epyon_factoryBehaviorChip(CHIP_ID){
 	var cost = getChipCost(CHIP_ID);
-	
-	var fn = function(targetCell, targetLeek, theoreticalCost){
-		var mp = 0;
-		if (EPYON_LEVEL < 29) mp = eMoveTowardCell(targetCell);
-		else if (!canUseChip(CHIP_ID, targetLeek)) mp = eMoveTowardCell(targetCell);
-
-		if (mp > theoreticalCost) debugW('Epyon: '+(mp - theoreticalCost)+' extra MP was spent on moving');
-
-		useChipShim(CHIP_ID, targetLeek);
-	};
 	
 	return function(maxAP, maxMP){
 		if (getCooldown(CHIP_ID) > 0 || maxAP < cost) return [];
@@ -263,7 +240,7 @@ function epyon_factoryBehaviorChip(CHIP_ID){
 				'AP': cost,
 				'MP': data['MP'],
 				'target': data['leek'],
-				'fn': epyon_bind(fn, [data['cell'], data['leek']['id'], data['MP']])
+				'fn': epyon_bind(epyon_genericExecuteFn, [CHIP_ID, data['leek']['id'], data['cell'], data['MP']])
 			]);
 		});
 

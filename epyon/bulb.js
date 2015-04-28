@@ -2,9 +2,9 @@ function epyon_bulb(){
 	epyon_startStats('bulb');
 	var configBackup = EPYON_CONFIG;
 	
-	EPYON_CONFIG[EPYON_PREFIGHT] = [HELMET_OTHER, BANDAGE_OTHER, PROTEIN_OTHER];
+	EPYON_CONFIG[EPYON_PREFIGHT] = [CHIP_HELMET, CHIP_BANDAGE, CHIP_PROTEIN];
 	EPYON_CONFIG[EPYON_FIGHT] = [CHIP_PEBBLE];
-	EPYON_CONFIG[EPYON_POSTFIGHT] = [CHIP_BANDAGE];
+	EPYON_CONFIG[EPYON_POSTFIGHT] = [];
 	
 	EPYON_CONFIG['engage'] = configBackup['engage'] + 2;//stay out of the fights
 	
@@ -14,14 +14,14 @@ function epyon_bulb(){
 		arrayIter(behaviors, function(behavior){
 			var score = 0;
 			
-			if (behavior['type'] == BANDAGE_OTHER){
-				score = 3;
-			}
-			else if (behavior['type'] == HELMET_OTHER && EPYON_TARGET_DISTANCE < 14){
+			if (behavior['type'] == CHIP_BANDAGE){
 				score = 1;
 			}
-			else if (behavior['type'] == PROTEIN_OTHER && EPYON_TARGET_DISTANCE < 8){
+			else if (behavior['type'] == CHIP_HELMET && EPYON_TARGET_DISTANCE < 14){
 				score = 2;
+			}
+			else if (behavior['type'] == CHIP_PROTEIN && EPYON_TARGET_DISTANCE < 12){
+				score = 3;
 			}
 
 			if (score > 0) byPreference[score] = behavior;

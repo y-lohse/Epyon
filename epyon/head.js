@@ -26,7 +26,7 @@ function epyon_stopStats(name){
 	}
 }
 
-function bind(fn, args){
+function epyon_bind(fn, args){
 	return function(){
 		var argLength = count(args);
 		if (argLength === 1) fn(args[0]);

@@ -24,7 +24,7 @@ if (getTurn() == 1){
 }
 
 function epyon_getDefaultDestination(){
-	return egetCell(target);
+	return eGetCell(target);
 }
 
 function epyon_moveTowardsDestination(mpCost){
@@ -74,7 +74,7 @@ function epyon_moveToSafety(mpCost){
 	}
 	else{
 		epyon_debug('no good cell found');
-		eMoveAwayFrom(egetCell(target), mpCost);
+		eMoveAwayFrom(eGetCell(target), mpCost);
 	}
 }
 

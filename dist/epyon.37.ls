@@ -1,6 +1,6 @@
 //lvl 36+
 global useChipShim = useChip;
-global EPYON_VERSION = '4.0';
+global EPYON_VERSION = '5.0a';
 global EPYON_LEVEL = getLevel();
 
 function epyon_debug(message){
@@ -28,7 +28,7 @@ function epyon_stopStats(name){
 	}
 }
 
-function bind(fn, args){
+function epyon_bind(fn, args){
 	return function(){
 		var argLength = count(args);
 		if (argLength === 1) fn(args[0]);
@@ -256,9 +256,36 @@ if (getTurn() == 1){
 	MAP_HEIGHT = height;
 }
 
-function epyon_moveTowardsTarget(mpCost){
-	var cell = getCell(target['id']);
-	eMoveTowardCellWithMax(cell, mpCost);
+function epyon_getDefaultDestination(){
+	return eGetCell(target);
+}
+
+function epyon_moveTowardsDestination(mpCost){
+	debug('updating destination');
+	EPYON_CONFIG['_destination'] = EPYON_CONFIG['destination']();
+	EPYON_CONFIG['_destination_distance'] = getPathLength(eGetCell(self), EPYON_CONFIG['_destination_distance']);
+	debug('desination distance: '+EPYON_CONFIG['_destination_distance']);
+	
+	var cellsAround = epyon_analyzeCellsWithin(eGetCell(self), mpCost);
+	
+	var scoredCells = [];
+	
+	arrayIter(cellsAround, function(eCell){
+		scoredCells[round(eCell['score']*100)] = eCell;
+	});
+	
+	keySort(scoredCells, SORT_DESC);
+	
+	var cell = shift(scoredCells);
+	
+	if (cell){
+		epyon_debug('moving to '+cell);
+		eMoveTowardCellWithMax(cell, mpCost);
+	}
+	else{
+		epyon_debug('no good cell found');
+		eMoveTowardCellWithMax(EPYON_CONFIG['_destination'], mpCost);
+	}
 }
 
 function epyon_moveToSafety(mpCost){
@@ -280,7 +307,7 @@ function epyon_moveToSafety(mpCost){
 	}
 	else{
 		epyon_debug('no good cell found');
-		eMoveAwayFrom(target, mpCost);
+		eMoveAwayFrom(eGetCell(target), mpCost);
 	}
 }
 
@@ -385,6 +412,20 @@ function epyon_aScorerRelativeShield(eLeek){
 	
 	return (relShield > 0) ? relShield/100 : null;
 }
+function epyon_cScorerDestination(eCell){
+	var distance = getPathLength(eCell['id'], EPYON_CONFIG['_destination']) - EPYON_CONFIG['pack'];
+	return distance / EPYON_CONFIG['_destination_distance'];
+}
+
+function epyon_cScorerEngage(eCell){
+	var engageCell = eGetCell(target);
+	var distance = getPathLength(eCell['id'], engageCell);
+	var dif = abs(distance - EPYON_CONFIG['engage']);
+	
+	if (dif > EPYON_CONFIG['engage']) return null;
+	else return dif / EPYON_CONFIG['engage'];
+}
+
 function epyon_cScorerBorder(eCell){
 	var edge = 4;
 	
@@ -471,14 +512,6 @@ global EPYON_BEHAVIORS = [];
 var stupidBaseId = 80484;
 global EQUIP_PISTOL 	= stupidBaseId++;
 global EQUIP_MAGNUM 	= stupidBaseId++;
-global BANDAGE_OTHER 	= stupidBaseId++;
-global CURE_OTHER 		= stupidBaseId++;
-global VACCINE_OTHER 	= stupidBaseId++;
-global PROTEIN_OTHER 	= stupidBaseId++;
-global STEROID_OTHER 	= stupidBaseId++;
-global WARM_UP_OTHER 	= stupidBaseId++;
-global HELMET_OTHER 	= stupidBaseId++;
-
 
 /*
 * @param type EPYON_PREFIGHT || EPYON_FIGHT || EPYON_POSTFIGHT
@@ -488,17 +521,18 @@ function epyon_listBehaviors(type, maxAP, maxMP){
 	
 	arrayIter(EPYON_BEHAVIORS, function(candidateName, candidateFn){
 		if (inArray(EPYON_CONFIG[type], candidateName)){
-			var result = candidateFn(maxAP, maxMP);
-			var isArray = typeOf(result) == TYPE_ARRAY;
+			var result = candidateFn(maxAP, maxMP),
+				hasCandidates = (count(result) > 0);
 			
-			if (isArray && result[0]) behaviors = arrayConcat(behaviors, result);
-			else if (isArray) push(behaviors, result);
+			if (hasCandidates && result[0]) behaviors = arrayConcat(behaviors, result);
+			else if (hasCandidates) push(behaviors, result);
 		}
 	});
 	
 	return behaviors;
 }
 
+//helper functions
 function epyon_getHumanBehaviorName(BEHAVIOR_ID){
 	if (BEHAVIOR_ID === CHIP_ARMOR) return 'armor';
 	else if (BEHAVIOR_ID === CHIP_SHIELD) return 'shield';
@@ -521,8 +555,49 @@ function epyon_getHumanBehaviorName(BEHAVIOR_ID){
 	else return 'Behavior#'+BEHAVIOR_ID;
 }
 
+function epyon_genericExecuteFn(TOOl_ID, targetId, cellId, theoreticalMpCost){
+	var actualMpCost = 0,
+		isAChip = (isChip(TOOl_ID)),
+		canUseFunction = (isAChip) ? canUseChip : canUseWeapon;
+	
+	//ne pas utiliser de OR, canUseWeapon plante e ndessous du level 29
+	if (EPYON_LEVEL < 29) actualMpCost = eMoveTowardCell(cellId);
+	else if (!canUseFunction(TOOl_ID, targetId)) actualMpCost = eMoveTowardCell(cellId);
+
+	if (actualMpCost > theoreticalMpCost) debugW('Epyon: '+(actualMpCost - theoreticalMpCost)+' extra MP was spent on moving');
+
+	if (!isAChip && eGetWeapon(self) != TOOl_ID){
+		debugW('Epyon: 1 extra AP was spent on equiping '+epyon_getHumanBehaviorName(TOOl_ID));
+		eSetWeapon(TOOl_ID);
+	}
+	
+	var result = (isAChip) ? useChipShim(TOOl_ID, targetId) : useWeapon(targetId);
+	
+	if (result != USE_FAILED && result != USE_SUCCESS) debugW('Epyon: usage failed - '+result);
+	return result;
+}
+
 //factories to create behavior with less code
-function epyon_weaponBehaviorFactory(WEAPON_ID){
+function epyon_factoryBehaviorEquip(WEAPON_ID, type){
+	var fn = function(){
+		if (eGetWeapon(self) != WEAPON_ID) eSetWeapon(WEAPON_ID);
+	};
+		
+	return function(maxAP, maxMP){
+		if (eGetWeapon(self) == WEAPON_ID || maxAP < 1) return [];
+
+		epyon_debug(epyon_getHumanBehaviorName(type)+' is a candidate');
+
+		return [
+			'type': type,
+			'AP': 1,
+			'MP': 0,
+			'fn': fn
+		];
+	};
+}
+
+function epyon_factoryBehaviorWeapon(WEAPON_ID){
 	var effects = getWeaponEffects(WEAPON_ID);
 	//average of damage + stats modifiers
 	var damage = ((effects[0][1]+effects[0][2]) / 2) * (1 + self['force'] / 100);
@@ -534,60 +609,24 @@ function epyon_weaponBehaviorFactory(WEAPON_ID){
 		if (EPYON_LEVEL >= 29  && canUseWeapon(WEAPON_ID, target['id'])) distance = 0;
 		else{
 			minCell = getCellToUseWeapon(WEAPON_ID, target['id']);
-			var currentCell = eGetCell(self);
-
-			distance = getPathLength(currentCell, minCell);
+			distance = getPathLength(eGetCell(self), minCell);
 		}
 
-		if (cost > maxAP || distance > maxMP) return false;
+		if (cost > maxAP || distance > maxMP) return [];
 		
 		epyon_debug(epyon_getHumanBehaviorName(WEAPON_ID)+' is a candidate');
-
-		var excute = function(){
-			var mp = 0;
-			//ne pas utiliser de OR, canUseWeapon plante e ndessous du level 29
-			if (EPYON_LEVEL < 29) mp = eMoveTowardCell(minCell);
-			else if (!canUseWeapon(WEAPON_ID, target['id'])) mp = eMoveTowardCell(minCell);
-			
-			if (mp > distance) debugW('Epyon: '+(mp-distance)+' extra MP was spent on moving');
-			
-			if (eGetWeapon(self) != WEAPON_ID){
-				debugW('Epyon: 1 extra AP was spent on equiping '+epyon_getHumanBehaviorName(WEAPON_ID));
-				eSetWeapon(WEAPON_ID);
-			}
-			useWeapon(target['id']);
-		};
 
 		return [
 			'type': WEAPON_ID,
 			'MP': distance,
 			'AP': cost,
 			'damage': damage,
-			'fn': excute
+			'fn': epyon_bind(epyon_genericExecuteFn, [WEAPON_ID, target['id'], minCell, distance])
 		];
 	};
 }
 
-function epyon_equipBehaviorFactory(WEAPON_ID, type){
-	return function(maxAP, maxMP){
-		if (eGetWeapon(self) == WEAPON_ID || maxAP < 1) return false;
-
-		epyon_debug(epyon_getHumanBehaviorName(type)+' is a candidate');
-
-		var fn = function(){
-			if (eGetWeapon(self) != WEAPON_ID) eSetWeapon(WEAPON_ID);
-		};
-
-		return [
-			'type': type,
-			'AP': 1,
-			'MP': 0,
-			'fn': fn
-		];
-	};
-}
-
-function epyon_offensiveChipBehaviorFactory(CHIP_ID){
+function epyon_factoryBehaviorAttackChip(CHIP_ID){
 	var effects = getChipEffects(CHIP_ID);
 	var damage = ((effects[0][1]+effects[0][2]) / 2) * (1 + self['force'] / 100);
 	var cost = getChipCost(CHIP_ID);
@@ -597,89 +636,34 @@ function epyon_offensiveChipBehaviorFactory(CHIP_ID){
 		if (EPYON_LEVEL >= 29 && canUseChip(CHIP_ID, target['id'])) distance = 0;
 		else{
 			minCell = getCellToUseChip(CHIP_ID, target['id']);
-			var currentCell = eGetCell(self);
-
-			distance = getPathLength(currentCell, minCell);
+			distance = getPathLength(eGetCell(self), minCell);
 		}
 
-		if (getCooldown(CHIP_ID) > 0 || cost > maxAP || distance > maxMP) return false;
+		if (getCooldown(CHIP_ID) > 0 || cost > maxAP || distance > maxMP) return [];
 		
 		epyon_debug(epyon_getHumanBehaviorName(CHIP_ID)+' is a candidate');
-
-		var excute = function(){
-			var mp = 0;
-			if (EPYON_LEVEL < 29) mp = eMoveTowardCell(minCell);
-			else if (!canUseChip(CHIP_ID, target['id'])) mp = eMoveTowardCell(minCell);
-			
-			if (mp > distance) debugW('Epyon: '+(mp-distance)+' extra MP was spent on moving');
-			
-			useChipShim(CHIP_ID, target['id']);
-		};
 
 		return [
 			'type': CHIP_ID,
 			'MP': distance,
 			'AP': cost,
 			'damage': damage,
-			'fn': excute
+			'fn': epyon_bind(epyon_genericExecuteFn, [CHIP_ID, target['id'], minCell, distance])
 		];
 	};
 }
 
-function epyon_simpleSelfChipBehaviorFactory(CHIP_ID){
-	var cost = getChipCost(CHIP_ID);
-	
-	return function(maxAP, maxMP){
-		if (getCooldown(CHIP_ID) > 0 || maxAP < cost) return false;
-
-		epyon_debug(epyon_getHumanBehaviorName(CHIP_ID)+' is a candidate');
-
-		var fn = function(){
-			useChipShim(CHIP_ID, self['id']);
-		};
-
-		return [
-			'type': CHIP_ID,
-			'AP': cost,
-			'MP': 0,
-			'fn': fn
-		];
-	};
-}
-
-function epyon_healChipBehaviorFactory(CHIP_ID){
-	var effects = getChipEffects(CHIP_ID);
-	var maxHeal = effects[0][2] * (1 + self['agility'] / 100);
-	var cost = getChipCost(CHIP_ID);
-	
-	return function(maxAP, maxMP){
-		if (self['totalLife']-eGetLife(self) < maxHeal || getCooldown(CHIP_ID) > 0 || maxAP < cost) return false;
-
-		epyon_debug(epyon_getHumanBehaviorName(CHIP_ID)+' is a candidate');
-
-		var fn = function(){
-			useChipShim(CHIP_ID, self['id']);
-		};
-
-		return [
-			'type': CHIP_ID,
-			'AP': cost,
-			'MP': 0,
-			'fn': fn
-		];
-	};
-}
-
-function epyon_healOtherChipBehaviorFactory(CHIP_ID, type){
+function epyon_factoryBehaviorHeal(CHIP_ID){
 	var cost = getChipCost(CHIP_ID);
 	var effects = getChipEffects(CHIP_ID);
 	var maxHeal = effects[0][2] * (1 + self['agility'] / 100);
 	
 	return function(maxAP, maxMP){	
-		if (getCooldown(CHIP_ID) > 0 || maxAP < cost) return false;
+		if (getCooldown(CHIP_ID) > 0 || maxAP < cost) return [];
 
 		//find potential targets
-		var targets = [];
+		epyon_debug(epyon_getHumanBehaviorName(CHIP_ID)+' is a candidate');
+		var candidates = [];
 
 		arrayIter(eGetAliveAllies(), function(eLeek){
 			var cell = getCellToUseChip(CHIP_ID, eLeek['id']),
@@ -687,104 +671,68 @@ function epyon_healOtherChipBehaviorFactory(CHIP_ID, type){
 				toHeal = eLeek['totalLife'] - eGetLife(eLeek);
 
 			if (!eLeek['summon'] && mpToBeInReach <= maxMP && toHeal > maxHeal){
-				push(targets, ['id': eLeek['id'], 
-								'MP': mpToBeInReach,
-								'cell': cell, 
-								'heal': toHeal]);
+				push(candidates, [
+					'type': CHIP_ID,
+					'AP': cost,
+					'MP': mpToBeInReach,
+					'target': eLeek,
+					'fn': epyon_bind(epyon_genericExecuteFn, [CHIP_ID, eLeek['id'], cell, mpToBeInReach])
+				]);
 			}
 		});
 
-		if (count(targets) === 0) return false;
-
-		//try to select the one taht needs most healing
-		var MPcost,
-			healTarget,
-			minCell,
-			maxToHeal = 0;
-
-		arrayIter(targets, function(data){
-			if (maxToHeal < data['heal']){
-				maxToHeal = data['heal'];
-				MPcost = data['MP'];
-				minCell = data['cell'];
-				healTarget = data['id'];
-			}
-		});
-
-		epyon_debug(epyon_getHumanBehaviorName(type)+' is a candidate');
-
-		var fn = function(){
-			var mp = 0;
-			if (EPYON_LEVEL < 29) mp = eMoveTowardCell(minCell);
-			else if (!canUseChip(CHIP_ID, healTarget)) mp = eMoveTowardCell(minCell);
-			
-			if (mp > MPcost) debugW('Epyon: '+(mp-MPcost)+' extra MP was spent on moving');
-			
-			useChipShim(CHIP_ID, healTarget);
-		};
-
-		return [
-			'type': type,
-			'AP': cost,
-			'MP': MPcost,
-			'fn': fn
-		];
+		return candidates;
 	};
 }
 
 function epyon_factoryBehaviorChip(CHIP_ID){
 	var cost = getChipCost(CHIP_ID);
 	
-	var fn = function(targetCell, targetLeek, theoreticalCost){
-		var mp = 0;
-		if (EPYON_LEVEL < 29) mp = eMoveTowardCell(targetCell);
-		else if (!canUseChip(CHIP_ID, targetLeek)) mp = eMoveTowardCell(targetCell);
-
-		if (mp > theoreticalCost) debugW('Epyon: '+(mp - theoreticalCost)+' extra MP was spent on moving');
-
-		useChipShim(CHIP_ID, targetLeek);
-	};
-	
 	return function(maxAP, maxMP){
-		if (getCooldown(CHIP_ID) > 0 || maxAP < cost) return false;
+		if (getCooldown(CHIP_ID) > 0 || maxAP < cost) return [];
 		
 		//find potential targets
-		var targets = [];
+		epyon_debug(epyon_getHumanBehaviorName(CHIP_ID)+' is a candidate');
+		var candidates = [];
 
 		arrayIter(eGetAliveAllies(), function(eLeek){
 			var cell = getCellToUseChip(CHIP_ID, eLeek['id']),
 				mpToBeInReach = getPathLength(eGetCell(self), cell);
 
 			if (!eLeek['summon'] && mpToBeInReach <= maxMP){
-				push(targets, ['leek': eLeek, 
-								'MP': mpToBeInReach,
-								'cell': cell]);
+				debug('adding '+eLeek['name']+' as a candidate');
+				push(candidates, [
+					'type': CHIP_ID,
+					'AP': cost,
+					'MP': mpToBeInReach,
+					'target': eLeek,
+					'fn': epyon_bind(epyon_genericExecuteFn, [CHIP_ID, eLeek['id'], cell, mpToBeInReach])
+				]);
 			}
 		});
+		
+		return candidates;
+	};
+}
 
-		if (count(targets) === 0) return false;
+function epyon_factoryBehaviorSummon(CHIP_ID){
+	var cost = getChipCost(CHIP_ID);
+	
+	var fn = function(){
+		summon(CHIP_ID, epyon_findCellToSummon(), epyon_bulb);
+	};
+	
+	return function(maxAP, maxMP){
+		if (getCooldown(CHIP_ID) > 0 || maxAP < cost) return false;
 
 		epyon_debug(epyon_getHumanBehaviorName(CHIP_ID)+' is a candidate');
-		debug(targets);
-		
-		//try to select the one that cost the least mp
-		var MPcost = maxMP + 1,
-			chipTarget,
-			minCell;
-			
-		var candidates = [];
 
-		arrayIter(targets, function(data){
-			push(candidates, [
-				'type': CHIP_ID,
-				'AP': cost,
-				'MP': data['MP'],
-				'target': data['leek'],
-				'fn': bind(fn, [data['cell'], data['leek']['id'], data['MP']])
-			]);
-		});
-
-		return candidates;
+		return [
+			'type': CHIP_PUNY_BULB,
+			'AP': cost,
+			'MP': 0,
+			'fn': fn
+		];
 	};
 }
 
@@ -793,7 +741,6 @@ function epyon_factoryBehaviorChip(CHIP_ID){
 *********** BEHAVIORS ************
 *********************************/
 if (getTurn() === 1){
-	
 	//shielding
 	EPYON_BEHAVIORS[CHIP_ARMOR] = epyon_factoryBehaviorChip(CHIP_ARMOR);
 	EPYON_BEHAVIORS[CHIP_SHIELD] = epyon_factoryBehaviorChip(CHIP_SHIELD);
@@ -806,47 +753,25 @@ if (getTurn() === 1){
 	EPYON_BEHAVIORS[CHIP_WARM_UP] = epyon_factoryBehaviorChip(CHIP_WARM_UP);
 
 	//heal
-	EPYON_BEHAVIORS[CHIP_BANDAGE] = epyon_healChipBehaviorFactory(CHIP_BANDAGE);
-	EPYON_BEHAVIORS[CHIP_CURE] = epyon_healChipBehaviorFactory(CHIP_CURE);
-	EPYON_BEHAVIORS[CHIP_VACCINE] = epyon_healChipBehaviorFactory(CHIP_VACCINE);
-	
-	//heal others
-	EPYON_BEHAVIORS[BANDAGE_OTHER] = epyon_healOtherChipBehaviorFactory(CHIP_BANDAGE, BANDAGE_OTHER);
-	EPYON_BEHAVIORS[CURE_OTHER] = epyon_healOtherChipBehaviorFactory(CHIP_CURE, CURE_OTHER);
-	EPYON_BEHAVIORS[VACCINE_OTHER] = epyon_healOtherChipBehaviorFactory(CHIP_VACCINE, VACCINE_OTHER);
+	EPYON_BEHAVIORS[CHIP_BANDAGE] = epyon_factoryBehaviorHeal(CHIP_BANDAGE);
+	EPYON_BEHAVIORS[CHIP_CURE] = epyon_factoryBehaviorHeal(CHIP_CURE);
+	EPYON_BEHAVIORS[CHIP_VACCINE] = epyon_factoryBehaviorHeal(CHIP_VACCINE);
 	
 	//summon
-	EPYON_BEHAVIORS[CHIP_PUNY_BULB] = function(maxAP, maxMP){
-		var cost = getChipCost(CHIP_PUNY_BULB);
-	
-		if (getCooldown(CHIP_PUNY_BULB) > 0 || maxAP < cost) return false;
-
-		epyon_debug('puny bulb is a candidate');
-
-		var fn = function(){
-			summon(CHIP_PUNY_BULB, epyon_findCellToSummon(), epyon_bulb);
-		};
-
-		return [
-			'type': CHIP_PUNY_BULB,
-			'AP': cost,
-			'MP': 0,
-			'fn': fn
-		];
-	};
+	EPYON_BEHAVIORS[CHIP_PUNY_BULB] = epyon_factoryBehaviorSummon(CHIP_PUNY_BULB);
 	
 	//offensive chips
-	EPYON_BEHAVIORS[CHIP_SPARK] = epyon_offensiveChipBehaviorFactory(CHIP_SPARK);
-	EPYON_BEHAVIORS[CHIP_PEBBLE] = epyon_offensiveChipBehaviorFactory(CHIP_PEBBLE);
-	EPYON_BEHAVIORS[CHIP_STALACTITE] = epyon_offensiveChipBehaviorFactory(CHIP_STALACTITE);
+	EPYON_BEHAVIORS[CHIP_SPARK] = epyon_factoryBehaviorAttackChip(CHIP_SPARK);
+	EPYON_BEHAVIORS[CHIP_PEBBLE] = epyon_factoryBehaviorAttackChip(CHIP_PEBBLE);
+	EPYON_BEHAVIORS[CHIP_STALACTITE] = epyon_factoryBehaviorAttackChip(CHIP_STALACTITE);
 	
 	//weapons
-	EPYON_BEHAVIORS[WEAPON_PISTOL] = epyon_weaponBehaviorFactory(WEAPON_PISTOL);
-	EPYON_BEHAVIORS[WEAPON_MAGNUM] = epyon_weaponBehaviorFactory(WEAPON_MAGNUM);
+	EPYON_BEHAVIORS[WEAPON_PISTOL] = epyon_factoryBehaviorWeapon(WEAPON_PISTOL);
+	EPYON_BEHAVIORS[WEAPON_MAGNUM] = epyon_factoryBehaviorWeapon(WEAPON_MAGNUM);
 	
 	//equip weapons
-	EPYON_BEHAVIORS[EQUIP_PISTOL] = epyon_equipBehaviorFactory(WEAPON_PISTOL, EQUIP_PISTOL);
-	EPYON_BEHAVIORS[EQUIP_MAGNUM] = epyon_equipBehaviorFactory(WEAPON_MAGNUM, EQUIP_MAGNUM);
+	EPYON_BEHAVIORS[EQUIP_PISTOL] = epyon_factoryBehaviorEquip(WEAPON_PISTOL, EQUIP_PISTOL);
+	EPYON_BEHAVIORS[EQUIP_MAGNUM] = epyon_factoryBehaviorEquip(WEAPON_MAGNUM, EQUIP_MAGNUM);
 }
 
 global EPYON_CONFIG = [];
@@ -872,6 +797,12 @@ if (getTurn() === 1){
 	EPYON_CONFIG['select_fight'] = epyon_dummy_selector;
 	EPYON_CONFIG['select_postfight'] = epyon_dummy_selector;
 	
+	EPYON_CONFIG['destination'] = epyon_getDefaultDestination;
+	
+	//rpivate, DO NOT OVERRIDE
+	EPYON_CONFIG['_destination'] = 1;
+	EPYON_CONFIG['_destination_distance'] = 0;
+	
 	//scorer functions receive a leek as parameter and score him on any criteria the ysee fit, where 0 is shit and 1 is great. Return values are clamped between 0 and 1 anyway. Each scorer is weighted. If the weight (coef) is 0 for a scorer, the scorer is ignored.
 	EPYON_CONFIG['A'] = [
 		'health': ['fn': epyon_aScorerHealth, 'coef': 1],
@@ -880,6 +811,8 @@ if (getTurn() === 1){
 	];
 	
 	EPYON_CONFIG['C'] = [
+		'destination': ['fn': epyon_cScorerDestination, 'coef': 5],
+		'engage': ['fn': epyon_cScorerEngage, 'coef': 5],
 		'border': ['fn': epyon_cScorerBorder, 'coef': 1],
 		'obstacles': ['fn': epyon_cScorerObstacles, 'coef': (EPYON_LEVEL >= 21) ? 2 : 0],
 		'los': ['fn': epyon_cScorerLoS, 'coef': 2],
@@ -890,8 +823,41 @@ if (getTurn() === 1){
 	EPYON_CONFIG['suicidal'] = 0;//[0;1] with a higher suicidal value, the leek will stay agressive despite being low on health
 	
 	EPYON_CONFIG['engage'] = 5;
+	EPYON_CONFIG['pack'] = 2;
 	EPYON_CONFIG['flee'] = -0.4;//[-1;1] relative to the S score. With S lower or equal than the flee value, the IA will back off
 }
+function epyon_updateAgressions(){
+	epyon_loadAliveEnemies();
+	epyon_loadAliveAllies();
+	
+	var copy = EPYON_LEEKS;
+	arrayIter(copy, function(leekId, eLeek){
+		EPYON_LEEKS[leekId]['agression'] = epyon_computeAgression(eLeek);
+		epyon_debug('A for '+EPYON_LEEKS[leekId]['name']+' : '+EPYON_LEEKS[leekId]['agression']);
+	});
+	
+	epyon_updateSelfRef();
+}
+
+function epyon_computeAgression(epyonLeek){
+	var cumulatedA = 0,
+		totalCoef = 0;
+	
+	arrayIter(EPYON_CONFIG['A'], function(scorerName, scorer){
+		if (scorer['coef'] > 0){
+			var returnedScore = scorer['fn'](epyonLeek);
+			if (returnedScore == null) return;
+			
+			var score = min(1, max(returnedScore, 0));
+			epyon_debug(scorerName+' score '+score+' coef '+scorer['coef']);
+			cumulatedA += score * scorer['coef'];
+			totalCoef += scorer['coef'];
+		}
+	});
+	
+	return (totalCoef > 0) ? cumulatedA / totalCoef : 1;
+}	
+
 function epyon_aquireTarget(){
 	var enemy = null;
 	// On recupere les ennemis, vivants, à porté
@@ -925,35 +891,6 @@ function epyon_aquireTarget(){
 	}
 	
 	return target;
-}
-
-function epyon_updateAgressions(){	
-	var copy = EPYON_LEEKS;
-	arrayIter(copy, function(leekId, eLeek){
-		EPYON_LEEKS[leekId]['agression'] = epyon_computeAgression(eLeek);
-		epyon_debug('A for '+EPYON_LEEKS[leekId]['name']+' : '+EPYON_LEEKS[leekId]['agression']);
-	});
-	
-	epyon_updateSelfRef();
-}
-
-function epyon_computeAgression(epyonLeek){
-	var cumulatedA = 0,
-		totalCoef = 0;
-	
-	arrayIter(EPYON_CONFIG['A'], function(scorerName, scorer){
-		if (scorer['coef'] > 0){
-			var returnedScore = scorer['fn'](epyonLeek);
-			if (returnedScore == null) return;
-			
-			var score = min(1, max(returnedScore, 0));
-			epyon_debug(scorerName+' score '+score+' coef '+scorer['coef']);
-			cumulatedA += score * scorer['coef'];
-			totalCoef += scorer['coef'];
-		}
-	});
-	
-	return (totalCoef > 0) ? cumulatedA / totalCoef : 1;
 }
 
 function epyon_act(){
@@ -997,22 +934,8 @@ function epyon_act(){
 	epyon_debug('remaining AP after attacks: '+remainingAP);
 	
 	if (remainingMP > 0 && S > EPYON_CONFIG['flee']){
-		var distanceToEnemy = getPathLength(eGetCell(self), eGetCell(target)),
-			dif = distanceToEnemy - EPYON_CONFIG['engage'];
-		
-		epyon_debug('diff from ideal distance: '+dif);
-		
-		if (dif > 0){
-			epyon_debug('moving closer');
-			epyon_moveTowardsTarget(min(remainingMP, dif));
-		}
-		else if (dif < 0){
-			epyon_debug('backing off');
-			epyon_moveToSafety(min(remainingMP, abs(dif)));
-		}
-		else{
-			epyon_debug('staying in position');
-		}
+		epyon_debug('move towards destination');
+		epyon_moveTowardsDestination(remainingMP);
 	}
 	else if (S <= EPYON_CONFIG['flee']){
 		epyon_debug('fleeing');
@@ -1093,9 +1016,9 @@ function epyon_bulb(){
 	epyon_startStats('bulb');
 	var configBackup = EPYON_CONFIG;
 	
-	EPYON_CONFIG[EPYON_PREFIGHT] = [HELMET_OTHER, BANDAGE_OTHER, PROTEIN_OTHER];
+	EPYON_CONFIG[EPYON_PREFIGHT] = [CHIP_HELMET, CHIP_BANDAGE, CHIP_PROTEIN];
 	EPYON_CONFIG[EPYON_FIGHT] = [CHIP_PEBBLE];
-	EPYON_CONFIG[EPYON_POSTFIGHT] = [CHIP_BANDAGE];
+	EPYON_CONFIG[EPYON_POSTFIGHT] = [];
 	
 	EPYON_CONFIG['engage'] = configBackup['engage'] + 2;//stay out of the fights
 	
@@ -1105,14 +1028,14 @@ function epyon_bulb(){
 		arrayIter(behaviors, function(behavior){
 			var score = 0;
 			
-			if (behavior['type'] == BANDAGE_OTHER){
-				score = 3;
-			}
-			else if (behavior['type'] == HELMET_OTHER && EPYON_TARGET_DISTANCE < 14){
+			if (behavior['type'] == CHIP_BANDAGE){
 				score = 1;
 			}
-			else if (behavior['type'] == PROTEIN_OTHER && EPYON_TARGET_DISTANCE < 8){
+			else if (behavior['type'] == CHIP_HELMET && EPYON_TARGET_DISTANCE < 14){
 				score = 2;
+			}
+			else if (behavior['type'] == CHIP_PROTEIN && EPYON_TARGET_DISTANCE < 12){
+				score = 3;
 			}
 
 			if (score > 0) byPreference[score] = behavior;

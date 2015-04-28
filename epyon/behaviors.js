@@ -148,7 +148,7 @@ function epyon_factoryBehaviorAttackChip(CHIP_ID){
 	};
 }
 
-function epyon_factoryBehaviorHeal(CHIP_ID, type){
+function epyon_factoryBehaviorHeal(CHIP_ID){
 	var cost = getChipCost(CHIP_ID);
 	var effects = getChipEffects(CHIP_ID);
 	var maxHeal = effects[0][2] * (1 + self['agility'] / 100);
@@ -157,7 +157,7 @@ function epyon_factoryBehaviorHeal(CHIP_ID, type){
 		if (getCooldown(CHIP_ID) > 0 || maxAP < cost) return [];
 
 		//find potential targets
-		epyon_debug(epyon_getHumanBehaviorName(type)+' is a candidate');
+		epyon_debug(epyon_getHumanBehaviorName(CHIP_ID)+' is a candidate');
 		var candidates = [];
 
 		arrayIter(eGetAliveAllies(), function(eLeek){
@@ -167,7 +167,7 @@ function epyon_factoryBehaviorHeal(CHIP_ID, type){
 
 			if (!eLeek['summon'] && mpToBeInReach <= maxMP && toHeal > maxHeal){
 				push(candidates, [
-				'type': type,
+					'type': CHIP_ID,
 					'AP': cost,
 					'MP': mpToBeInReach,
 					'target': eLeek,

@@ -1,3 +1,35 @@
+function epyon_updateAgressions(){
+	epyon_loadAliveEnemies();
+	epyon_loadAliveAllies();
+	
+	var copy = EPYON_LEEKS;
+	arrayIter(copy, function(leekId, eLeek){
+		EPYON_LEEKS[leekId]['agression'] = epyon_computeAgression(eLeek);
+		epyon_debug('A for '+EPYON_LEEKS[leekId]['name']+' : '+EPYON_LEEKS[leekId]['agression']);
+	});
+	
+	epyon_updateSelfRef();
+}
+
+function epyon_computeAgression(epyonLeek){
+	var cumulatedA = 0,
+		totalCoef = 0;
+	
+	arrayIter(EPYON_CONFIG['A'], function(scorerName, scorer){
+		if (scorer['coef'] > 0){
+			var returnedScore = scorer['fn'](epyonLeek);
+			if (returnedScore == null) return;
+			
+			var score = min(1, max(returnedScore, 0));
+			epyon_debug(scorerName+' score '+score+' coef '+scorer['coef']);
+			cumulatedA += score * scorer['coef'];
+			totalCoef += scorer['coef'];
+		}
+	});
+	
+	return (totalCoef > 0) ? cumulatedA / totalCoef : 1;
+}	
+
 function epyon_aquireTarget(){
 	var enemy = null;
 	// On recupere les ennemis, vivants, à porté
@@ -31,35 +63,6 @@ function epyon_aquireTarget(){
 	}
 	
 	return target;
-}
-
-function epyon_updateAgressions(){	
-	var copy = EPYON_LEEKS;
-	arrayIter(copy, function(leekId, eLeek){
-		EPYON_LEEKS[leekId]['agression'] = epyon_computeAgression(eLeek);
-		epyon_debug('A for '+EPYON_LEEKS[leekId]['name']+' : '+EPYON_LEEKS[leekId]['agression']);
-	});
-	
-	epyon_updateSelfRef();
-}
-
-function epyon_computeAgression(epyonLeek){
-	var cumulatedA = 0,
-		totalCoef = 0;
-	
-	arrayIter(EPYON_CONFIG['A'], function(scorerName, scorer){
-		if (scorer['coef'] > 0){
-			var returnedScore = scorer['fn'](epyonLeek);
-			if (returnedScore == null) return;
-			
-			var score = min(1, max(returnedScore, 0));
-			epyon_debug(scorerName+' score '+score+' coef '+scorer['coef']);
-			cumulatedA += score * scorer['coef'];
-			totalCoef += scorer['coef'];
-		}
-	});
-	
-	return (totalCoef > 0) ? cumulatedA / totalCoef : 1;
 }
 
 function epyon_act(){

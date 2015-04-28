@@ -1,3 +1,17 @@
+function epyon_cScorerDestination(eCell){
+	var distance = getPathLength(eCell['id'], EPYON_CONFIG['_destination']) - EPYON_CONFIG['pack'];
+	return distance / EPYON_CONFIG['_destination_distance'];
+}
+
+function epyon_cScorerEngage(eCell){
+	var engageCell = eGetCell(target);
+	var distance = getPathLength(eCell['id'], engageCell);
+	var dif = abs(distance - EPYON_CONFIG['engage']);
+	
+	if (dif > EPYON_CONFIG['engage']) return null;
+	else return dif / EPYON_CONFIG['engage'];
+}
+
 function epyon_cScorerBorder(eCell){
 	var edge = 4;
 	

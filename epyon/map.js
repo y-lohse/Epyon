@@ -23,9 +23,36 @@ if (getTurn() == 1){
 	MAP_HEIGHT = height;
 }
 
-function epyon_moveTowardsTarget(mpCost){
-	var cell = getCell(target['id']);
-	eMoveTowardCellWithMax(cell, mpCost);
+function epyon_getDefaultDestination(){
+	return egetCell(target);
+}
+
+function epyon_moveTowardsDestination(mpCost){
+	debug('updating destination');
+	EPYON_CONFIG['_destination'] = EPYON_CONFIG['destination']();
+	EPYON_CONFIG['_destination_distance'] = getPathLength(eGetCell(self), EPYON_CONFIG['_destination_distance']);
+	debug('desination distance: '+EPYON_CONFIG['_destination_distance']);
+	
+	var cellsAround = epyon_analyzeCellsWithin(eGetCell(self), mpCost);
+	
+	var scoredCells = [];
+	
+	arrayIter(cellsAround, function(eCell){
+		scoredCells[round(eCell['score']*100)] = eCell;
+	});
+	
+	keySort(scoredCells, SORT_DESC);
+	
+	var cell = shift(scoredCells);
+	
+	if (cell){
+		epyon_debug('moving to '+cell);
+		eMoveTowardCellWithMax(cell, mpCost);
+	}
+	else{
+		epyon_debug('no good cell found');
+		eMoveTowardCellWithMax(EPYON_CONFIG['_destination'], mpCost);
+	}
 }
 
 function epyon_moveToSafety(mpCost){
@@ -47,7 +74,7 @@ function epyon_moveToSafety(mpCost){
 	}
 	else{
 		epyon_debug('no good cell found');
-		eMoveAwayFrom(target, mpCost);
+		eMoveAwayFrom(egetCell(target), mpCost);
 	}
 }
 

@@ -106,22 +106,8 @@ function epyon_act(){
 	epyon_debug('remaining AP after attacks: '+remainingAP);
 	
 	if (remainingMP > 0 && S > EPYON_CONFIG['flee']){
-		var distanceToEnemy = getPathLength(eGetCell(self), eGetCell(target)),
-			dif = distanceToEnemy - EPYON_CONFIG['engage'];
-		
-		epyon_debug('diff from ideal distance: '+dif);
-		
-		if (dif > 0){
-			epyon_debug('moving closer');
-			epyon_moveTowardsTarget(min(remainingMP, dif));
-		}
-		else if (dif < 0){
-			epyon_debug('backing off');
-			epyon_moveToSafety(min(remainingMP, abs(dif)));
-		}
-		else{
-			epyon_debug('staying in position');
-		}
+		epyon_debug('move towards destination');
+		epyon_moveTowardsDestination(remainingMP);
 	}
 	else if (S <= EPYON_CONFIG['flee']){
 		epyon_debug('fleeing');

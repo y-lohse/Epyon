@@ -31,7 +31,11 @@ function epyon_moveTowardsDestination(mpCost){
 	debug('updating destination');
 	EPYON_CONFIG['_destination'] = EPYON_CONFIG['destination']();
 	EPYON_CONFIG['_destination_distance'] = getPathLength(eGetCell(self), EPYON_CONFIG['_destination_distance']);
-	debug('desination distance: '+EPYON_CONFIG['_destination_distance']);
+	if (!EPYON_CONFIG['_destination_distance']) EPYON_CONFIG['_destination_distance'] = getCellDistance(eGetCell(self), EPYON_CONFIG['_destination']);
+	
+	debug('Destination is '+getCellX(EPYON_CONFIG['_destination'])+'/'+getCellY(EPYON_CONFIG['_destination']));
+	debug('desination distance from '+getCellX(eGetCell(self))+'/'+getCellY(eGetCell(self))+': '+EPYON_CONFIG['_destination_distance']);
+	mark(EPYON_CONFIG['_destination'], COLOR_BLUE);
 	
 	var cellsAround = epyon_analyzeCellsWithin(eGetCell(self), mpCost);
 	
@@ -47,7 +51,7 @@ function epyon_moveTowardsDestination(mpCost){
 	
 	if (cell){
 		epyon_debug('moving to '+cell);
-		eMoveTowardCellWithMax(cell, mpCost);
+		eMoveTowardCellWithMax(cell['id'], mpCost);
 	}
 	else{
 		epyon_debug('no good cell found');
@@ -100,6 +104,8 @@ function epyon_analyzeCellsWithin(center, distance){
 				if (returnedScore === null) return;
 				
 				var score = min(1, max(returnedScore, 0));
+				debug(scorerName+' for '+eCell['x']+'/'+eCell['y']+' scored '+score);
+				
 				cumulatedScore += score * scorer['coef'];
 				totalCoef += scorer['coef'];
 			}

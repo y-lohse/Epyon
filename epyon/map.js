@@ -40,8 +40,15 @@ function epyon_moveTowardsDestination(mpCost){
 	debug('Destination is '+getCellX(EPYON_MAP['_destination'])+'/'+getCellY(EPYON_MAP['_destination']));
 	mark(EPYON_MAP['_destination'], COLOR_BLUE);
 	
-	//@TODO: load ignored cells
+	EPYON_CONFIG['C']['destination']['coef'] = 5;
+	EPYON_CONFIG['C']['engage']['coef'] = 4;
+	EPYON_CONFIG['C']['border']['coef'] = 1;
+	EPYON_CONFIG['C']['obstacles']['coef'] = 1;
+	EPYON_CONFIG['C']['los']['coef'] = 3;
+	EPYON_CONFIG['C']['enemyprox']['coef'] = 2;
+	EPYON_CONFIG['C']['allyprox']['coef'] = 1;
 	
+	//@TODO: load ignored cells
 	var cellsAround = epyon_analyzeCellsWithin(eGetCell(self), mpCost);
 	
 	var scoredCells = [];
@@ -65,6 +72,14 @@ function epyon_moveTowardsDestination(mpCost){
 }
 
 function epyon_moveToSafety(mpCost){
+	EPYON_CONFIG['C']['destination']['coef'] = 0;
+	EPYON_CONFIG['C']['engage']['coef'] = 0;
+	EPYON_CONFIG['C']['border']['coef'] = 1;
+	EPYON_CONFIG['C']['obstacles']['coef'] = 1;
+	EPYON_CONFIG['C']['los']['coef'] = 4;
+	EPYON_CONFIG['C']['enemyprox']['coef'] = 3;
+	EPYON_CONFIG['C']['allyprox']['coef'] = 2;
+	
 	var cellsAround = epyon_analyzeCellsWithin(eGetCell(self), mpCost);
 	
 	var scoredCells = [];

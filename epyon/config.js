@@ -23,10 +23,6 @@ if (getTurn() === 1){
 	
 	EPYON_CONFIG['destination'] = epyon_getDefaultDestination;
 	
-	//rpivate, DO NOT OVERRIDE
-	EPYON_CONFIG['_destination'] = 1;
-	EPYON_CONFIG['_destination_distance'] = 0;
-	
 	//scorer functions receive a leek as parameter and score him on any criteria the ysee fit, where 0 is shit and 1 is great. Return values are clamped between 0 and 1 anyway. Each scorer is weighted. If the weight (coef) is 0 for a scorer, the scorer is ignored.
 	EPYON_CONFIG['A'] = [
 		'health': ['fn': epyon_aScorerHealth, 'coef': 1],
@@ -35,11 +31,11 @@ if (getTurn() === 1){
 	];
 	
 	EPYON_CONFIG['C'] = [
-		'destination': ['fn': epyon_cScorerDestination, 'coef': 8],
-		'engage': ['fn': epyon_cScorerEngage, 'coef': 6],
+		'destination': ['fn': epyon_cScorerDestination, 'coef': 5],
+		'engage': ['fn': epyon_cScorerEngage, 'coef': 4],
 		'border': ['fn': epyon_cScorerBorder, 'coef': 1],
 		'obstacles': ['fn': epyon_cScorerObstacles, 'coef': (EPYON_LEVEL >= 21) ? 1 : 0],
-		'los': ['fn': epyon_cScorerLoS, 'coef': 2],
+		'los': ['fn': epyon_cScorerLoS, 'coef': 3],
 		'enemyprox': ['fn': epyon_cScorerEnemyProximity, 'coef': 2],
 		'allyprox': ['fn': epyon_cScorerAllyProximity, 'coef': 1],
 	];

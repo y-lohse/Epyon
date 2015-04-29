@@ -1,13 +1,45 @@
+function epyon_prepareDestinationScoring(cells){
+	EPYON_MAP['longest_destination'] = 1;
+	EPYON_MAP['shortest_destination'] = MAP_WIDTH*2;
+	
+	arrayIter(cells, function(cell){
+		var distance = getPathLength(cell, EPYON_MAP['_destination']);
+		if (distance){
+			distance -= EPYON_CONFIG['pack'];
+			if (distance > EPYON_MAP['longest_destination']) EPYON_MAP['longest_destination'] = distance;
+			if (distance < EPYON_MAP['shortest_destination']) EPYON_MAP['shortest_destination'] = distance;
+		}
+	});
+	
+	debug('longst dest: '+EPYON_MAP['longest_destination']);
+	debug('shortest dest: '+EPYON_MAP['shortest_destination']);
+}
+
 function epyon_cScorerDestination(eCell){
-	var distance = getPathLength(eCell['id'], EPYON_CONFIG['_destination']);
+	var distance = getPathLength(eCell['id'], EPYON_MAP['_destination']);
 	
-	if (!distance) return null;
+	if (!distance) return 0;
 	
-	debug(eCell['x']+'/'+eCell['y']);
 	distance -= EPYON_CONFIG['pack'];
 	debug('distance to ideal position: '+distance);
 	
-	return 1 - (distance / EPYON_CONFIG['_destination_distance']);
+	return 1 - ((distance - EPYON_MAP['shortest_destination']) / (EPYON_MAP['longest_destination'] - EPYON_MAP['shortest_destination']));
+}
+
+function epyon_prepareEngageScoring(cells){
+	EPYON_MAP['longest_engage_dif'] = 1;
+	EPYON_MAP['shortest_engage_dif'] = MAP_WIDTH * 2;
+	
+	var engageCell = eGetCell(target);
+	
+	arrayIter(cells, function(cell){
+		var distance = getPathLength(cell, engageCell);
+		if (distance){
+			var dif = abs(distance - EPYON_CONFIG['engage']);
+			if (dif > EPYON_MAP['longest_engage_dif']) EPYON_MAP['longest_engage_dif'] = dif;
+			if (dif < EPYON_MAP['shortest_engage_dif']) EPYON_MAP['shortest_engage_dif'] = dif;
+		}
+	});
 }
 
 function epyon_cScorerEngage(eCell){
@@ -16,11 +48,7 @@ function epyon_cScorerEngage(eCell){
 	var dif = abs(distance - EPYON_CONFIG['engage']);
 	debug('difference to engage: '+dif);
 	
-	if (dif > EPYON_CONFIG['engage']){
-		debug('ignored');
-		return null;
-	}
-	else return 1 - (dif / EPYON_CONFIG['engage']);
+	return 1 - ((dif - EPYON_MAP['shortest_engage_dif']) / (EPYON_MAP['longest_engage_dif'] - EPYON_MAP['shortest_engage_dif']));
 }
 
 function epyon_cScorerBorder(eCell){
@@ -84,7 +112,7 @@ function epyon_cScorerEnemyProximity(eCell){
 function epyon_cScorerAllyProximity(eCell){
 	if (count(getAliveAllies()) === 0) return null;
 	
-	var maxDistance = self['range'];//MP would be "right", but range let's us explore more cells
+	var maxDistance = self['MP'];
 	var cumulatedScore = 0,
 		alliesInRange = 0;
 	

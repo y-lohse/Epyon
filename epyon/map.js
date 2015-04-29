@@ -1,5 +1,6 @@
 global MAP_WIDTH = 0;
 global MAP_HEIGHT = 0;
+global EPYON_MAP = [];
 
 if (getTurn() == 1){
 	var width = -1,
@@ -21,6 +22,11 @@ if (getTurn() == 1){
 	
 	MAP_WIDTH = width;
 	MAP_HEIGHT = height;
+	
+	//rpivate, DO NOT OVERRIDE
+	EPYON_MAP['_destination'] = 1;
+	EPYON_MAP['longest_destination'] = 1;
+	EPYON_MAP['shortest_destination'] = MAP_WIDTH*2;
 }
 
 function epyon_getDefaultDestination(){
@@ -29,13 +35,12 @@ function epyon_getDefaultDestination(){
 
 function epyon_moveTowardsDestination(mpCost){
 	debug('updating destination');
-	EPYON_CONFIG['_destination'] = EPYON_CONFIG['destination']();
-	EPYON_CONFIG['_destination_distance'] = getPathLength(eGetCell(self), EPYON_CONFIG['_destination_distance']);
-	if (!EPYON_CONFIG['_destination_distance']) EPYON_CONFIG['_destination_distance'] = getCellDistance(eGetCell(self), EPYON_CONFIG['_destination']);
+	EPYON_MAP['_destination'] = EPYON_CONFIG['destination']();
 	
-	debug('Destination is '+getCellX(EPYON_CONFIG['_destination'])+'/'+getCellY(EPYON_CONFIG['_destination']));
-	debug('desination distance from '+getCellX(eGetCell(self))+'/'+getCellY(eGetCell(self))+': '+EPYON_CONFIG['_destination_distance']);
-	mark(EPYON_CONFIG['_destination'], COLOR_BLUE);
+	debug('Destination is '+getCellX(EPYON_MAP['_destination'])+'/'+getCellY(EPYON_MAP['_destination']));
+	mark(EPYON_MAP['_destination'], COLOR_BLUE);
+	
+	//@TODO: load ignored cells
 	
 	var cellsAround = epyon_analyzeCellsWithin(eGetCell(self), mpCost);
 	
@@ -55,7 +60,7 @@ function epyon_moveTowardsDestination(mpCost){
 	}
 	else{
 		epyon_debug('no good cell found');
-		eMoveTowardCellWithMax(EPYON_CONFIG['_destination'], mpCost);
+		eMoveTowardCellWithMax(EPYON_MAP['_destination'], mpCost);
 	}
 }
 
@@ -85,6 +90,9 @@ function epyon_moveToSafety(mpCost){
 function epyon_analyzeCellsWithin(center, distance){
 	var eCells = [],
 		toGrade = getCellsWithin(center, distance);
+		
+	epyon_prepareDestinationScoring(toGrade);
+	epyon_prepareEngageScoring(toGrade);
 	
 	arrayIter(toGrade, function(cell){
 		//grade each cell in reach
@@ -92,7 +100,7 @@ function epyon_analyzeCellsWithin(center, distance){
 			'id': cell,
 			'x': getCellX(cell),
 			'y': getCellY(cell),
-			'distance': getPathLength(center, cell)
+//			'distance': getPathLength(center, cell)
 		];
 		
 		var cumulatedScore = 0,

@@ -274,6 +274,7 @@ epyon_updateSelfRef();
 
 global MAP_WIDTH = 0;
 global MAP_HEIGHT = 0;
+global EPYON_MAP = [];
 
 if (getTurn() == 1){
 	var width = -1,
@@ -295,6 +296,11 @@ if (getTurn() == 1){
 	
 	MAP_WIDTH = width;
 	MAP_HEIGHT = height;
+	
+	//rpivate, DO NOT OVERRIDE
+	EPYON_MAP['_destination'] = 1;
+	EPYON_MAP['longest_destination'] = 1;
+	EPYON_MAP['shortest_destination'] = MAP_WIDTH*2;
 }
 
 function epyon_getDefaultDestination(){
@@ -303,13 +309,12 @@ function epyon_getDefaultDestination(){
 
 function epyon_moveTowardsDestination(mpCost){
 	debug('updating destination');
-	EPYON_CONFIG['_destination'] = EPYON_CONFIG['destination']();
-	EPYON_CONFIG['_destination_distance'] = getPathLength(eGetCell(self), EPYON_CONFIG['_destination_distance']);
-	if (!EPYON_CONFIG['_destination_distance']) EPYON_CONFIG['_destination_distance'] = getCellDistance(eGetCell(self), EPYON_CONFIG['_destination']);
+	EPYON_MAP['_destination'] = EPYON_CONFIG['destination']();
 	
-	debug('Destination is '+getCellX(EPYON_CONFIG['_destination'])+'/'+getCellY(EPYON_CONFIG['_destination']));
-	debug('desination distance from '+getCellX(eGetCell(self))+'/'+getCellY(eGetCell(self))+': '+EPYON_CONFIG['_destination_distance']);
-	mark(EPYON_CONFIG['_destination'], COLOR_BLUE);
+	debug('Destination is '+getCellX(EPYON_MAP['_destination'])+'/'+getCellY(EPYON_MAP['_destination']));
+	mark(EPYON_MAP['_destination'], COLOR_BLUE);
+	
+	//@TODO: load ignored cells
 	
 	var cellsAround = epyon_analyzeCellsWithin(eGetCell(self), mpCost);
 	
@@ -329,7 +334,7 @@ function epyon_moveTowardsDestination(mpCost){
 	}
 	else{
 		epyon_debug('no good cell found');
-		eMoveTowardCellWithMax(EPYON_CONFIG['_destination'], mpCost);
+		eMoveTowardCellWithMax(EPYON_MAP['_destination'], mpCost);
 	}
 }
 
@@ -359,6 +364,9 @@ function epyon_moveToSafety(mpCost){
 function epyon_analyzeCellsWithin(center, distance){
 	var eCells = [],
 		toGrade = getCellsWithin(center, distance);
+		
+	epyon_prepareDestinationScoring(toGrade);
+	epyon_prepareEngageScoring(toGrade);
 	
 	arrayIter(toGrade, function(cell){
 		//grade each cell in reach
@@ -366,7 +374,7 @@ function epyon_analyzeCellsWithin(center, distance){
 			'id': cell,
 			'x': getCellX(cell),
 			'y': getCellY(cell),
-			'distance': getPathLength(center, cell)
+//			'distance': getPathLength(center, cell)
 		];
 		
 		var cumulatedScore = 0,
@@ -459,16 +467,48 @@ function epyon_aScorerRelativeShield(eLeek){
 	
 	return (relShield > 0) ? relShield/100 : null;
 }
+function epyon_prepareDestinationScoring(cells){
+	EPYON_MAP['longest_destination'] = 1;
+	EPYON_MAP['shortest_destination'] = MAP_WIDTH*2;
+	
+	arrayIter(cells, function(cell){
+		var distance = getPathLength(cell, EPYON_MAP['_destination']);
+		if (distance){
+			distance -= EPYON_CONFIG['pack'];
+			if (distance > EPYON_MAP['longest_destination']) EPYON_MAP['longest_destination'] = distance;
+			if (distance < EPYON_MAP['shortest_destination']) EPYON_MAP['shortest_destination'] = distance;
+		}
+	});
+	
+	debug('longst dest: '+EPYON_MAP['longest_destination']);
+	debug('shortest dest: '+EPYON_MAP['shortest_destination']);
+}
+
 function epyon_cScorerDestination(eCell){
-	var distance = getPathLength(eCell['id'], EPYON_CONFIG['_destination']);
+	var distance = getPathLength(eCell['id'], EPYON_MAP['_destination']);
 	
-	if (!distance) return null;
+	if (!distance) return 0;
 	
-	debug(eCell['x']+'/'+eCell['y']);
 	distance -= EPYON_CONFIG['pack'];
 	debug('distance to ideal position: '+distance);
 	
-	return 1 - (distance / EPYON_CONFIG['_destination_distance']);
+	return 1 - ((distance - EPYON_MAP['shortest_destination']) / (EPYON_MAP['longest_destination'] - EPYON_MAP['shortest_destination']));
+}
+
+function epyon_prepareEngageScoring(cells){
+	EPYON_MAP['longest_engage_dif'] = 1;
+	EPYON_MAP['shortest_engage_dif'] = MAP_WIDTH * 2;
+	
+	var engageCell = eGetCell(target);
+	
+	arrayIter(cells, function(cell){
+		var distance = getPathLength(cell, engageCell);
+		if (distance){
+			var dif = abs(distance - EPYON_CONFIG['engage']);
+			if (dif > EPYON_MAP['longest_engage_dif']) EPYON_MAP['longest_engage_dif'] = dif;
+			if (dif < EPYON_MAP['shortest_engage_dif']) EPYON_MAP['shortest_engage_dif'] = dif;
+		}
+	});
 }
 
 function epyon_cScorerEngage(eCell){
@@ -477,11 +517,7 @@ function epyon_cScorerEngage(eCell){
 	var dif = abs(distance - EPYON_CONFIG['engage']);
 	debug('difference to engage: '+dif);
 	
-	if (dif > EPYON_CONFIG['engage']){
-		debug('ignored');
-		return null;
-	}
-	else return 1 - (dif / EPYON_CONFIG['engage']);
+	return 1 - ((dif - EPYON_MAP['shortest_engage_dif']) / (EPYON_MAP['longest_engage_dif'] - EPYON_MAP['shortest_engage_dif']));
 }
 
 function epyon_cScorerBorder(eCell){
@@ -545,7 +581,7 @@ function epyon_cScorerEnemyProximity(eCell){
 function epyon_cScorerAllyProximity(eCell){
 	if (count(getAliveAllies()) === 0) return null;
 	
-	var maxDistance = self['range'];//MP would be "right", but range let's us explore more cells
+	var maxDistance = self['MP'];
 	var cumulatedScore = 0,
 		alliesInRange = 0;
 	
@@ -857,10 +893,6 @@ if (getTurn() === 1){
 	
 	EPYON_CONFIG['destination'] = epyon_getDefaultDestination;
 	
-	//rpivate, DO NOT OVERRIDE
-	EPYON_CONFIG['_destination'] = 1;
-	EPYON_CONFIG['_destination_distance'] = 0;
-	
 	//scorer functions receive a leek as parameter and score him on any criteria the ysee fit, where 0 is shit and 1 is great. Return values are clamped between 0 and 1 anyway. Each scorer is weighted. If the weight (coef) is 0 for a scorer, the scorer is ignored.
 	EPYON_CONFIG['A'] = [
 		'health': ['fn': epyon_aScorerHealth, 'coef': 1],
@@ -869,11 +901,11 @@ if (getTurn() === 1){
 	];
 	
 	EPYON_CONFIG['C'] = [
-		'destination': ['fn': epyon_cScorerDestination, 'coef': 8],
-		'engage': ['fn': epyon_cScorerEngage, 'coef': 6],
+		'destination': ['fn': epyon_cScorerDestination, 'coef': 5],
+		'engage': ['fn': epyon_cScorerEngage, 'coef': 4],
 		'border': ['fn': epyon_cScorerBorder, 'coef': 1],
 		'obstacles': ['fn': epyon_cScorerObstacles, 'coef': (EPYON_LEVEL >= 21) ? 1 : 0],
-		'los': ['fn': epyon_cScorerLoS, 'coef': 2],
+		'los': ['fn': epyon_cScorerLoS, 'coef': 3],
 		'enemyprox': ['fn': epyon_cScorerEnemyProximity, 'coef': 2],
 		'allyprox': ['fn': epyon_cScorerAllyProximity, 'coef': 1],
 	];

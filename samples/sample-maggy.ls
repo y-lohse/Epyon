@@ -1,16 +1,47 @@
 include('gy.epyon');
 
+global isTeamfight = (count(getAllies()) > 1);
+
+function gyDestination(){
+	if (!isTeamfight) return eGetCell(target);
+	else{
+		//find the closes tank
+		var myCell = eGetCell(self);
+		var closestCell = eGetCell(target);
+		var closestDistance = getDistance(myCell, closestCell);//par défaut l'adversaire
+		arrayIter(eGetAliveAllies(), function(ally){
+			var allyCell = eGetCell(ally);
+			var distance = getDistance(myCell, allyCell);
+			
+			if (inArray(['magdonalds', 'Shiki', 'Senjougahara'], ally['name']) && distance < closestDistance){
+				closestCell = allyCell;
+				closestDistance = distance;
+			}
+		});
+		
+		return closestCell;
+	}
+}
+
+function needsTurtle(){
+	var turtle = false;
+	
+	if (eGetLife(self)/self['totalLife'] < 0.4) turtle = true;
+}
+
+var targetCriticalHealth = 150;
+
 function attackByDamage(attacks, allocatedAP, allocatedMP){
 	var byDamages = [];
 	
 	arrayIter(attacks, function(attack){
 		var score = 1;
 	
-		if (attack['name'] == 'stalactite' &&
+		if (attack['type'] == CHIP_STALACTITE &&
 			allocatedAP < 10){
 			score = 3;
 		}
-		else if (attack['name'] == 'magnum'){
+		else if (attack['type'] == WEAPON_MAGNUM){
 			score = 2;
 		}
 		
@@ -28,35 +59,28 @@ function prefightByPreference(behaviors, allocatedAP, allocatedMP){
 	arrayIter(behaviors, function(behavior){
 		var score = 0;
 		
-		if (behavior['name'] == 'shield'){
-			if (EPYON_TARGET_DISTANCE < 14 && //moins de 14 cases
-				eGetLife(target) > 80){
-				score = 4;
-			}
-		}
-		else if (behavior['name'] == 'wall'){
-			if (EPYON_TARGET_DISTANCE < 10 && 
-				getCooldown(CHIP_SHIELD) < 3 &&
-				eGetLife(target) > 50){
-				score = 3;
-			}
-		}
-		else if (behavior['name'] == 'puny bulb'){
+		if (behavior['type'] == CHIP_PUNY_BULB){
 			if (EPYON_TARGET_DISTANCE > 13){
 				score = 10;
 			}
 		}
-		else if (behavior['name'] == 'steroid'){
+		else if (behavior['type'] == CHIP_SHIELD){
+			if (EPYON_TARGET_DISTANCE < 14 && //moins de 14 cases
+				eGetLife(target) > targetCriticalHealth){
+				score = 4;
+			}
+		}
+		else if (behavior['type'] == CHIP_STEROID){
 			score = (EPYON_TARGET_DISTANCE < 15 && 
-					EPYON_TARGET_DISTANCE > 3 && 
-					eGetLife(target) > 90 &&
-					eGetLife(self) > 150) ? 2 : 0;
+					eGetLife(target) > targetCriticalHealth &&
+					!needsTurtle()) ? 2 : 0;
 		}
-		else if (behavior['name'] == 'cure'){
-			if (eGetLife(self) < 150) score = 1;
-			else if (eGetLife(self) < 70) score = 4;
+		else if (behavior['type'] == CHIP_CURE && behavior['target']['id'] == getLeek()){
+			if (needsTurtle()) score = 4;
+			else score = 1;
 		}
-		debug('preparation '+behavior['name']+' scored '+score);
+		
+		debug('preparation '+behavior['type']+' scored '+score);
 		
 		if (score > 0) byPreference[score] = behavior;
 	});
@@ -71,13 +95,15 @@ function postfightByPreference(behaviors, allocatedAP, allocatedMP){
 }
 
 if (getTurn() == 1){
+	EPYON_CONFIG[EPYON_PREFIGHT] = [CHIP_PUNY_BULB, CHIP_CURE, CHIP_SHIELD, CHIP_STEROID];
 	EPYON_CONFIG[EPYON_FIGHT] = [WEAPON_MAGNUM, CHIP_STALACTITE];
-	EPYON_CONFIG[EPYON_PREFIGHT] = [CHIP_PUNY_BULB, CHIP_CURE, CHIP_WALL, CHIP_SHIELD, CHIP_STEROID];
-	EPYON_CONFIG[EPYON_POSTFIGHT] = [EQUIP_MAGNUM, CHIP_SPARK, CHIP_CURE, CHIP_BANDAGE];
+	EPYON_CONFIG[EPYON_POSTFIGHT] = [EQUIP_MAGNUM, CHIP_CURE, CHIP_SPARK, CHIP_BANDAGE];
 	
 	EPYON_CONFIG['select_prefight'] = prefightByPreference;
 	EPYON_CONFIG['select_postfight'] = postfightByPreference;
 	EPYON_CONFIG['select_fight'] = attackByDamage;
+	
+	EPYON_CONFIG['destination'] = gyDestination;
 	
 	EPYON_CONFIG['engage'] = 8;
 	EPYON_CONFIG['flee'] = -0.3;
@@ -88,10 +114,8 @@ if (getTurn() == 1){
 epyon_startStats('global');
 
 epyon_denyChallenge();
-epyon_loadAliveEnemies();
 epyon_updateAgressions();
 epyon_aquireTarget();
-if (getTurn() == 1)self['MP'] = 0;
 epyon_act();
 
 var globalStats = epyon_stopStats('global');

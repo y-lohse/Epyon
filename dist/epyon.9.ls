@@ -321,8 +321,15 @@ function epyon_moveTowardsDestination(mpCost){
 	debug('Destination is '+getCellX(EPYON_MAP['_destination'])+'/'+getCellY(EPYON_MAP['_destination']));
 	mark(EPYON_MAP['_destination'], COLOR_BLUE);
 	
-	//@TODO: load ignored cells
+	EPYON_CONFIG['C']['destination']['coef'] = 5;
+	EPYON_CONFIG['C']['engage']['coef'] = 4;
+	EPYON_CONFIG['C']['border']['coef'] = 1;
+	EPYON_CONFIG['C']['obstacles']['coef'] = 1;
+	EPYON_CONFIG['C']['los']['coef'] = 3;
+	EPYON_CONFIG['C']['enemyprox']['coef'] = 2;
+	EPYON_CONFIG['C']['allyprox']['coef'] = 1;
 	
+	//@TODO: load ignored cells
 	var cellsAround = epyon_analyzeCellsWithin(eGetCell(self), mpCost);
 	
 	var scoredCells = [];
@@ -346,6 +353,14 @@ function epyon_moveTowardsDestination(mpCost){
 }
 
 function epyon_moveToSafety(mpCost){
+	EPYON_CONFIG['C']['destination']['coef'] = 0;
+	EPYON_CONFIG['C']['engage']['coef'] = 0;
+	EPYON_CONFIG['C']['border']['coef'] = 1;
+	EPYON_CONFIG['C']['obstacles']['coef'] = 1;
+	EPYON_CONFIG['C']['los']['coef'] = 4;
+	EPYON_CONFIG['C']['enemyprox']['coef'] = 3;
+	EPYON_CONFIG['C']['allyprox']['coef'] = 2;
+	
 	var cellsAround = epyon_analyzeCellsWithin(eGetCell(self), mpCost);
 	
 	var scoredCells = [];
@@ -466,13 +481,13 @@ function epyon_aScorerHealth(eLeek){
 function epyon_aScorerAbsoluteShield(eLeek){
 	var absShield = getAbsoluteShield(eLeek['id']);
 	
-	return absShield / (eLeek['maxAbsShield'] || 1);
+	return (absShield > 0) ? absShield / (eLeek['maxAbsShield'] || 1) : null;
 }
 
 function epyon_aScorerRelativeShield(eLeek){
 	var relShield = getRelativeShield(eLeek['id']);
 	
-	return relShield/100;
+	return (relShield) ? relShield/100 : null;
 }
 function epyon_prepareDestinationScoring(cells){
 	EPYON_MAP['longest_destination'] = 1;
@@ -824,7 +839,7 @@ function epyon_factoryBehaviorSummon(CHIP_ID){
 	};
 	
 	return function(maxAP, maxMP){
-		if (getCooldown(CHIP_ID) > 0 || maxAP < cost) return false;
+		if (getCooldown(CHIP_ID) > 0 || maxAP < cost) return [];
 
 		epyon_debug(epyon_getHumanBehaviorName(CHIP_ID)+' is a candidate');
 

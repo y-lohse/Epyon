@@ -218,7 +218,7 @@ function epyon_factoryBehaviorSummon(CHIP_ID){
 	};
 	
 	return function(maxAP, maxMP){
-		if (getCooldown(CHIP_ID) > 0 || maxAP < cost) return false;
+		if (getCooldown(CHIP_ID) > 0 || maxAP < cost) return [];
 
 		epyon_debug(epyon_getHumanBehaviorName(CHIP_ID)+' is a candidate');
 

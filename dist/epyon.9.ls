@@ -419,7 +419,7 @@ function getCellsWithin(center, distance){
 			var cell = getCellFromXY(x, y),
 				dist = getPathLength(center, cell);
 				
-			if (cell && dist && dist <= distance) push(cells, cell);
+			if ((cell && dist && dist <= distance) || cell == center) push(cells, cell);
 		}
 	}
 	
@@ -484,7 +484,10 @@ function epyon_cScorerEngage(eCell){
 	var dif = abs(distance - EPYON_CONFIG['engage']);
 	debug('difference to engage: '+dif);
 	
-	if (dif > EPYON_CONFIG['engage']) return null;
+	if (dif > EPYON_CONFIG['engage']){
+		debug('ignored');
+		return null;
+	}
 	else return 1 - (dif / EPYON_CONFIG['engage']);
 }
 
@@ -873,12 +876,12 @@ if (getTurn() === 1){
 	];
 	
 	EPYON_CONFIG['C'] = [
-		'destination': ['fn': epyon_cScorerDestination, 'coef': 5],
-		'engage': ['fn': epyon_cScorerEngage, 'coef': 5],
+		'destination': ['fn': epyon_cScorerDestination, 'coef': 8],
+		'engage': ['fn': epyon_cScorerEngage, 'coef': 6],
 		'border': ['fn': epyon_cScorerBorder, 'coef': 1],
-		'obstacles': ['fn': epyon_cScorerObstacles, 'coef': (EPYON_LEVEL >= 21) ? 2 : 0],
+		'obstacles': ['fn': epyon_cScorerObstacles, 'coef': (EPYON_LEVEL >= 21) ? 1 : 0],
 		'los': ['fn': epyon_cScorerLoS, 'coef': 2],
-		'enemyprox': ['fn': epyon_cScorerEnemyProximity, 'coef': 3],
+		'enemyprox': ['fn': epyon_cScorerEnemyProximity, 'coef': 2],
 		'allyprox': ['fn': epyon_cScorerAllyProximity, 'coef': 1],
 	];
 	

@@ -16,7 +16,10 @@ function epyon_cScorerEngage(eCell){
 	var dif = abs(distance - EPYON_CONFIG['engage']);
 	debug('difference to engage: '+dif);
 	
-	if (dif > EPYON_CONFIG['engage']) return null;
+	if (dif > EPYON_CONFIG['engage']){
+		debug('ignored');
+		return null;
+	}
 	else return 1 - (dif / EPYON_CONFIG['engage']);
 }
 

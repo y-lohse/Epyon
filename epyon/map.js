@@ -138,7 +138,7 @@ function getCellsWithin(center, distance){
 			var cell = getCellFromXY(x, y),
 				dist = getPathLength(center, cell);
 				
-			if (cell && dist && dist <= distance) push(cells, cell);
+			if ((cell && dist && dist <= distance) || cell == center) push(cells, cell);
 		}
 	}
 	

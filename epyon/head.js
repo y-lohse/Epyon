@@ -1,4 +1,4 @@
-global EPYON_VERSION = '5.0a';
+global EPYON_VERSION = '5.0b';
 global EPYON_LEVEL = getLevel();
 
 function epyon_debug(message){

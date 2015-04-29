@@ -51,7 +51,7 @@ grunt.loadNpmTasks('grunt-contrib-concat');
 grunt.registerTask('build', function(){
 	var concat = grunt.config.get('concat') || {};
 	
-	[5, 9, 13, 37, 50].forEach(function(level){
+	[5, 9, 13, 29, 37, 50].forEach(function(level){
 		var pfs = loadPolyfills(level);
 	
 		concat['epyon'+level] = {

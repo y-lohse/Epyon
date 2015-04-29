@@ -6,9 +6,11 @@ function needsShield(leekId){
 }
 
 function needsHeal(){
-	var turtle = false;
+	var heal = false;
 	
-	if (eGetLife(self)/self['totalLife'] < 0.4) turtle = true;
+	if (eGetLife(self)/self['totalLife'] < 0.4) heal = true;
+	
+	return heal;
 }
 
 function prefightByPreference(behaviors, allocatedAP, allocatedMP){

@@ -141,7 +141,6 @@ function epyon_analyzeCellsWithin(center, distance){
 				if (returnedScore === null) return;
 				
 				var score = min(1, max(returnedScore, 0));
-				debug(scorerName+' for '+eCell['x']+'/'+eCell['y']+' scored '+score);
 				
 				cumulatedScore += score * scorer['coef'];
 				totalCoef += scorer['coef'];

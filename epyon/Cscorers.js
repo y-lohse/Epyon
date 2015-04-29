@@ -10,9 +10,6 @@ function epyon_prepareDestinationScoring(cells){
 			if (distance < EPYON_MAP['shortest_destination']) EPYON_MAP['shortest_destination'] = distance;
 		}
 	});
-	
-	debug('longst dest: '+EPYON_MAP['longest_destination']);
-	debug('shortest dest: '+EPYON_MAP['shortest_destination']);
 }
 
 function epyon_cScorerDestination(eCell){
@@ -21,7 +18,6 @@ function epyon_cScorerDestination(eCell){
 	if (!distance) return 0;
 	
 	distance -= EPYON_CONFIG['pack'];
-	debug('distance to ideal position: '+distance);
 	
 	return 1 - ((distance - EPYON_MAP['shortest_destination']) / (EPYON_MAP['longest_destination'] - EPYON_MAP['shortest_destination']));
 }
@@ -46,7 +42,6 @@ function epyon_cScorerEngage(eCell){
 	var engageCell = eGetCell(target);
 	var distance = epyon_getCachedPathLength(eCell['id'], engageCell);
 	var dif = abs(distance - EPYON_CONFIG['engage']);
-	debug('difference to engage: '+dif);
 	
 	return 1 - ((dif - EPYON_MAP['shortest_engage_dif']) / (EPYON_MAP['longest_engage_dif'] - EPYON_MAP['shortest_engage_dif']));
 }

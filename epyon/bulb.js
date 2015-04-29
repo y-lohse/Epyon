@@ -38,11 +38,12 @@ function epyon_bulb(){
 		return behaviors[0];
 	};
 	
-	epyon_loadAliveEnemies();
-	epyon_loadAliveAllies();
+	EPYON_CONFIG['destination'] = function(){
+		return getCell(getSummoner());
+	};
+	
 	epyon_updateAgressions();
 	epyon_aquireTarget();
-	if (getTurn() < getBirthTurn()+2) self['MP'] = 0;
 	epyon_act();
 	
 	EPYON_CONFIG = configBackup;

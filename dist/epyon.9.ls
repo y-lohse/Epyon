@@ -422,7 +422,6 @@ function epyon_analyzeCellsWithin(center, distance){
 				if (returnedScore === null) return;
 				
 				var score = min(1, max(returnedScore, 0));
-				debug(scorerName+' for '+eCell['x']+'/'+eCell['y']+' scored '+score);
 				
 				cumulatedScore += score * scorer['coef'];
 				totalCoef += scorer['coef'];
@@ -514,9 +513,6 @@ function epyon_prepareDestinationScoring(cells){
 			if (distance < EPYON_MAP['shortest_destination']) EPYON_MAP['shortest_destination'] = distance;
 		}
 	});
-	
-	debug('longst dest: '+EPYON_MAP['longest_destination']);
-	debug('shortest dest: '+EPYON_MAP['shortest_destination']);
 }
 
 function epyon_cScorerDestination(eCell){
@@ -525,7 +521,6 @@ function epyon_cScorerDestination(eCell){
 	if (!distance) return 0;
 	
 	distance -= EPYON_CONFIG['pack'];
-	debug('distance to ideal position: '+distance);
 	
 	return 1 - ((distance - EPYON_MAP['shortest_destination']) / (EPYON_MAP['longest_destination'] - EPYON_MAP['shortest_destination']));
 }
@@ -550,7 +545,6 @@ function epyon_cScorerEngage(eCell){
 	var engageCell = eGetCell(target);
 	var distance = epyon_getCachedPathLength(eCell['id'], engageCell);
 	var dif = abs(distance - EPYON_CONFIG['engage']);
-	debug('difference to engage: '+dif);
 	
 	return 1 - ((dif - EPYON_MAP['shortest_engage_dif']) / (EPYON_MAP['longest_engage_dif'] - EPYON_MAP['shortest_engage_dif']));
 }
@@ -800,6 +794,7 @@ function epyon_factoryBehaviorHeal(CHIP_ID){
 				toHeal = eLeek['totalLife'] - eGetLife(eLeek);
 
 			if (!eLeek['summon'] && mpToBeInReach <= maxMP && toHeal > maxHeal){
+				debug('adding '+eLeek['name']+' as a candidate');
 				push(candidates, [
 					'type': CHIP_ID,
 					'AP': cost,
@@ -1177,11 +1172,12 @@ function epyon_bulb(){
 		return behaviors[0];
 	};
 	
-	epyon_loadAliveEnemies();
-	epyon_loadAliveAllies();
+	EPYON_CONFIG['destination'] = function(){
+		return getCell(getSummoner());
+	};
+	
 	epyon_updateAgressions();
 	epyon_aquireTarget();
-	if (getTurn() < getBirthTurn()+2) self['MP'] = 0;
 	epyon_act();
 	
 	EPYON_CONFIG = configBackup;

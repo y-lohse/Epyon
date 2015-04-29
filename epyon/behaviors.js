@@ -166,6 +166,7 @@ function epyon_factoryBehaviorHeal(CHIP_ID){
 				toHeal = eLeek['totalLife'] - eGetLife(eLeek);
 
 			if (!eLeek['summon'] && mpToBeInReach <= maxMP && toHeal > maxHeal){
+				debug('adding '+eLeek['name']+' as a candidate');
 				push(candidates, [
 					'type': CHIP_ID,
 					'AP': cost,

@@ -262,6 +262,20 @@ if (getTurn() == 1){
 	EPYON_MAP['shortest_destination'] = MAP_WIDTH*2;
 }
 
+global EPYON_CACHED_PATH = [];
+
+function epyon_getCachedPathLength(start, end){
+	if (!EPYON_CACHED_PATH[start]){
+		EPYON_CACHED_PATH[start] = [];
+	}
+	
+	if (!EPYON_CACHED_PATH[start][end]){
+		EPYON_CACHED_PATH[start][end] = getPathLength(start, end);
+	}
+	
+	return EPYON_CACHED_PATH[start][end];
+}
+
 function epyon_getDefaultDestination(){
 	return eGetCell(target);
 }
@@ -275,7 +289,7 @@ function epyon_moveTowardsDestination(mpCost){
 	
 	EPYON_CONFIG['C']['destination']['coef'] = 5;
 	EPYON_CONFIG['C']['engage']['coef'] = 4;
-	EPYON_CONFIG['C']['border']['coef'] = 1;
+	EPYON_CONFIG['C']['border']['coef'] = 2;
 	EPYON_CONFIG['C']['obstacles']['coef'] = 1;
 	EPYON_CONFIG['C']['los']['coef'] = 3;
 	EPYON_CONFIG['C']['enemyprox']['coef'] = 2;
@@ -388,11 +402,10 @@ function getCellsWithin(center, distance){
 	var maxX = centerX + distance,
 		maxY = centerY + distance;
 		
-	//we're using getPathLength, but getCellDistance could be a good approximation
 	for (var x = centerX - distance; x <= maxX; x++){
 		for (var y = centerY - distance; y <= maxY; y++){
 			var cell = getCellFromXY(x, y),
-				dist = getPathLength(center, cell);
+				dist = epyon_getCachedPathLength(center, cell);
 				
 			if ((cell && dist && dist <= distance) || cell == center) push(cells, cell);
 		}
@@ -446,7 +459,7 @@ function epyon_prepareDestinationScoring(cells){
 	EPYON_MAP['shortest_destination'] = MAP_WIDTH*2;
 	
 	arrayIter(cells, function(cell){
-		var distance = getPathLength(cell, EPYON_MAP['_destination']);
+		var distance = epyon_getCachedPathLength(cell, EPYON_MAP['_destination']);
 		if (distance){
 			distance -= EPYON_CONFIG['pack'];
 			if (distance > EPYON_MAP['longest_destination']) EPYON_MAP['longest_destination'] = distance;
@@ -459,7 +472,7 @@ function epyon_prepareDestinationScoring(cells){
 }
 
 function epyon_cScorerDestination(eCell){
-	var distance = getPathLength(eCell['id'], EPYON_MAP['_destination']);
+	var distance = epyon_getCachedPathLength(eCell['id'], EPYON_MAP['_destination']);
 	
 	if (!distance) return 0;
 	
@@ -476,7 +489,7 @@ function epyon_prepareEngageScoring(cells){
 	var engageCell = eGetCell(target);
 	
 	arrayIter(cells, function(cell){
-		var distance = getPathLength(cell, engageCell);
+		var distance = epyon_getCachedPathLength(cell, engageCell);
 		if (distance){
 			var dif = abs(distance - EPYON_CONFIG['engage']);
 			if (dif > EPYON_MAP['longest_engage_dif']) EPYON_MAP['longest_engage_dif'] = dif;
@@ -487,7 +500,7 @@ function epyon_prepareEngageScoring(cells){
 
 function epyon_cScorerEngage(eCell){
 	var engageCell = eGetCell(target);
-	var distance = getPathLength(eCell['id'], engageCell);
+	var distance = epyon_getCachedPathLength(eCell['id'], engageCell);
 	var dif = abs(distance - EPYON_CONFIG['engage']);
 	debug('difference to engage: '+dif);
 	

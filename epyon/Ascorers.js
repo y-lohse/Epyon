@@ -10,11 +10,11 @@ function epyon_aScorerHealth(eLeek){
 function epyon_aScorerAbsoluteShield(eLeek){
 	var absShield = getAbsoluteShield(eLeek['id']);
 	
-	return (absShield > 0) ? absShield / (eLeek['maxAbsShield'] || 1) : null;
+	return absShield / (eLeek['maxAbsShield'] || 1);
 }
 
 function epyon_aScorerRelativeShield(eLeek){
 	var relShield = getRelativeShield(eLeek['id']);
 	
-	return (relShield > 0) ? relShield/100 : null;
+	return relShield/100;
 }

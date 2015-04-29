@@ -134,7 +134,7 @@ function epyon_getLeek(leekId){
 			if (CHIP_ID == CHIP_HELMET) eLeek['maxAbsShield'] += 15;
 			else if (CHIP_ID == CHIP_SHIELD) eLeek['maxAbsShield'] += 20;
 			else if (CHIP_ID == CHIP_ARMOR) eLeek['maxAbsShield'] += 25;
-			else if (CHIP_ID == CHIP_CARAPACE) eLeek['maxAbsShield'] += 55;
+			else if (eLeek['summon'] && CHIP_ID == CHIP_CARAPACE) eLeek['maxAbsShield'] += 55;
 		});
 	}
 	else if (EPYON_LEVEL >= 13){
@@ -143,7 +143,7 @@ function epyon_getLeek(leekId){
 		if (level >= 11) eLeek['maxAbsShield'] += 15;//helmet
 		if (level >= 19) eLeek['maxAbsShield'] += 20;//shield
 		if (level >= 55) eLeek['maxAbsShield'] += 25;//armor
-		if (level >= 259) eLeek['maxAbsShield'] += 55;//carapace
+		if (eLeek['summon'] && level >= 259) eLeek['maxAbsShield'] += 55;//carapace
 	}
 	
 	//dynamic props
@@ -466,13 +466,13 @@ function epyon_aScorerHealth(eLeek){
 function epyon_aScorerAbsoluteShield(eLeek){
 	var absShield = getAbsoluteShield(eLeek['id']);
 	
-	return (absShield > 0) ? absShield / (eLeek['maxAbsShield'] || 1) : null;
+	return absShield / (eLeek['maxAbsShield'] || 1);
 }
 
 function epyon_aScorerRelativeShield(eLeek){
 	var relShield = getRelativeShield(eLeek['id']);
 	
-	return (relShield > 0) ? relShield/100 : null;
+	return relShield/100;
 }
 function epyon_prepareDestinationScoring(cells){
 	EPYON_MAP['longest_destination'] = 1;

@@ -37,7 +37,7 @@ function epyon_getCachedPathLength(start, end){
 	}
 	
 	if (!EPYON_CACHED_PATH[start][end]){
-		EPYON_CACHED_PATH[start][end] = getPathLength(start, end);
+		EPYON_CACHED_PATH[start][end] = getPathLength(start, end, epyon_computeIgnoredCells());
 	}
 	
 	return EPYON_CACHED_PATH[start][end];
@@ -45,6 +45,18 @@ function epyon_getCachedPathLength(start, end){
 
 function epyon_getDefaultDestination(){
 	return eGetCell(target);
+}
+
+function epyon_computeIgnoredCells(){
+	var cells = [];
+	
+	arrayIter(EPYON_LEEKS, function(eLeek){
+		if (eLeek){
+			if (isAlive(eLeek['id'])) push(cells, eGetCell(eLeek));
+		}
+	});
+	
+	return cells;
 }
 
 function epyon_moveTowardsDestination(mpCost){
@@ -62,7 +74,6 @@ function epyon_moveTowardsDestination(mpCost){
 	EPYON_CONFIG['C']['enemyprox']['coef'] = 2;
 	EPYON_CONFIG['C']['allyprox']['coef'] = 1;
 	
-	//@TODO: load ignored cells
 	var cellsAround = epyon_analyzeCellsWithin(eGetCell(self), mpCost);
 	
 	var scoredCells = [];

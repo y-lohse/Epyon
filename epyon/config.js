@@ -32,12 +32,12 @@ if (getTurn() === 1){
 	];
 	
 	EPYON_CONFIG['C'] = [
-		'destination': ['fn': epyon_cScorerDestination, 'coef': 5],
-		'engage': ['fn': epyon_cScorerEngage, 'coef': 4],
+		'destination': ['fn': epyon_cScorerDestination, 'coef': 1],
+		'engage': ['fn': epyon_cScorerEngage, 'coef': 1],
 		'border': ['fn': epyon_cScorerBorder, 'coef': 1],
 		'obstacles': ['fn': epyon_cScorerObstacles, 'coef': (EPYON_LEVEL >= 21) ? 1 : 0],
-		'los': ['fn': epyon_cScorerLoS, 'coef': 3],
-		'enemyprox': ['fn': epyon_cScorerEnemyProximity, 'coef': 2],
+		'los': ['fn': epyon_cScorerLoS, 'coef': 1],
+		'enemyprox': ['fn': epyon_cScorerEnemyProximity, 'coef': 1],
 		'allyprox': ['fn': epyon_cScorerAllyProximity, 'coef': 1],
 	];
 	

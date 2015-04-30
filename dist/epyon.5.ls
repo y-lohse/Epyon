@@ -355,11 +355,11 @@ function epyon_getDefaultDestination(){
 
 function epyon_defaultCellCoef(S){
 	if (S >= EPYON_CONFIG['flee']){
-		EPYON_CONFIG['C']['destination']['coef'] = 5;
-		EPYON_CONFIG['C']['engage']['coef'] = 4;
+		EPYON_CONFIG['C']['destination']['coef'] = 7;
+		EPYON_CONFIG['C']['engage']['coef'] = 6;
 		EPYON_CONFIG['C']['border']['coef'] = 2;
 		EPYON_CONFIG['C']['obstacles']['coef'] = 1;
-		EPYON_CONFIG['C']['los']['coef'] = 3;
+		EPYON_CONFIG['C']['los']['coef'] = 4;
 		EPYON_CONFIG['C']['enemyprox']['coef'] = 2;
 		EPYON_CONFIG['C']['allyprox']['coef'] = 1;
 	}
@@ -368,7 +368,7 @@ function epyon_defaultCellCoef(S){
 		EPYON_CONFIG['C']['engage']['coef'] = 0;
 		EPYON_CONFIG['C']['border']['coef'] = 1;
 		EPYON_CONFIG['C']['obstacles']['coef'] = 1;
-		EPYON_CONFIG['C']['los']['coef'] = 4;
+		EPYON_CONFIG['C']['los']['coef'] = 6;
 		EPYON_CONFIG['C']['enemyprox']['coef'] = 3;
 		EPYON_CONFIG['C']['allyprox']['coef'] = 2;
 	}
@@ -950,12 +950,12 @@ if (getTurn() === 1){
 	];
 	
 	EPYON_CONFIG['C'] = [
-		'destination': ['fn': epyon_cScorerDestination, 'coef': 5],
-		'engage': ['fn': epyon_cScorerEngage, 'coef': 4],
+		'destination': ['fn': epyon_cScorerDestination, 'coef': 1],
+		'engage': ['fn': epyon_cScorerEngage, 'coef': 1],
 		'border': ['fn': epyon_cScorerBorder, 'coef': 1],
 		'obstacles': ['fn': epyon_cScorerObstacles, 'coef': (EPYON_LEVEL >= 21) ? 1 : 0],
-		'los': ['fn': epyon_cScorerLoS, 'coef': 3],
-		'enemyprox': ['fn': epyon_cScorerEnemyProximity, 'coef': 2],
+		'los': ['fn': epyon_cScorerLoS, 'coef': 1],
+		'enemyprox': ['fn': epyon_cScorerEnemyProximity, 'coef': 1],
 		'allyprox': ['fn': epyon_cScorerAllyProximity, 'coef': 1],
 	];
 	

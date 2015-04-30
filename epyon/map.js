@@ -47,6 +47,27 @@ function epyon_getDefaultDestination(){
 	return eGetCell(target);
 }
 
+function epyon_defaultCellCoef(S){
+	if (S >= EPYON_CONFIG['flee']){
+		EPYON_CONFIG['C']['destination']['coef'] = 5;
+		EPYON_CONFIG['C']['engage']['coef'] = 4;
+		EPYON_CONFIG['C']['border']['coef'] = 2;
+		EPYON_CONFIG['C']['obstacles']['coef'] = 1;
+		EPYON_CONFIG['C']['los']['coef'] = 3;
+		EPYON_CONFIG['C']['enemyprox']['coef'] = 2;
+		EPYON_CONFIG['C']['allyprox']['coef'] = 1;
+	}
+	else{
+		EPYON_CONFIG['C']['destination']['coef'] = 0;
+		EPYON_CONFIG['C']['engage']['coef'] = 0;
+		EPYON_CONFIG['C']['border']['coef'] = 1;
+		EPYON_CONFIG['C']['obstacles']['coef'] = 1;
+		EPYON_CONFIG['C']['los']['coef'] = 4;
+		EPYON_CONFIG['C']['enemyprox']['coef'] = 3;
+		EPYON_CONFIG['C']['allyprox']['coef'] = 2;
+	}
+}
+
 function epyon_computeIgnoredCells(){
 	var cells = [];
 	
@@ -59,20 +80,12 @@ function epyon_computeIgnoredCells(){
 	return cells;
 }
 
-function epyon_moveTowardsDestination(mpCost){
+function epyon_move(mpCost){
 	debug('updating destination');
 	EPYON_MAP['_destination'] = EPYON_CONFIG['destination']();
 	
 	debug('Destination is '+getCellX(EPYON_MAP['_destination'])+'/'+getCellY(EPYON_MAP['_destination']));
 	mark(EPYON_MAP['_destination'], COLOR_BLUE);
-	
-	EPYON_CONFIG['C']['destination']['coef'] = 5;
-	EPYON_CONFIG['C']['engage']['coef'] = 4;
-	EPYON_CONFIG['C']['border']['coef'] = 2;
-	EPYON_CONFIG['C']['obstacles']['coef'] = 1;
-	EPYON_CONFIG['C']['los']['coef'] = 3;
-	EPYON_CONFIG['C']['enemyprox']['coef'] = 2;
-	EPYON_CONFIG['C']['allyprox']['coef'] = 1;
 	
 	var cellsAround = epyon_analyzeCellsWithin(eGetCell(self), mpCost);
 	
@@ -93,37 +106,6 @@ function epyon_moveTowardsDestination(mpCost){
 	else{
 		epyon_debug('no good cell found');
 		eMoveTowardCellWithMax(EPYON_MAP['_destination'], mpCost);
-	}
-}
-
-function epyon_moveToSafety(mpCost){
-	EPYON_CONFIG['C']['destination']['coef'] = 0;
-	EPYON_CONFIG['C']['engage']['coef'] = 0;
-	EPYON_CONFIG['C']['border']['coef'] = 1;
-	EPYON_CONFIG['C']['obstacles']['coef'] = 1;
-	EPYON_CONFIG['C']['los']['coef'] = 4;
-	EPYON_CONFIG['C']['enemyprox']['coef'] = 3;
-	EPYON_CONFIG['C']['allyprox']['coef'] = 2;
-	
-	var cellsAround = epyon_analyzeCellsWithin(eGetCell(self), mpCost);
-	
-	var scoredCells = [];
-	
-	arrayIter(cellsAround, function(eCell){
-		scoredCells[round(eCell['score']*100)] = eCell;
-	});
-	
-	keySort(scoredCells, SORT_DESC);
-	
-	var cell = shift(scoredCells);
-	
-	if (cell){
-		epyon_debug('moving to '+cell);
-		eMoveTowardCellWithMax(cell['id'], mpCost);
-	}
-	else{
-		epyon_debug('no good cell found');
-		eMoveAwayFrom(eGetCell(target), mpCost);
 	}
 }
 

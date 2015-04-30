@@ -28,7 +28,7 @@ function epyon_computeAgression(epyonLeek){
 	});
 	
 	return (totalCoef > 0) ? cumulatedA / totalCoef : 1;
-}	
+}
 
 function epyon_aquireTarget(){
 	var enemy = null;
@@ -76,7 +76,7 @@ function epyon_act(){
 		var adds = enemy['agression'] * (1 - max(0, min(1, (distance - enemy['range']) / (enemy['range']))));
 		
 		totalEnemyA += adds;
-		//debug(enemy['name']+' A '+enemy['agression']+' at distance '+distance+' with range '+enemy['range']+' weights for '+adds);
+		debug(enemy['name']+' A '+enemy['agression']+' at distance '+distance+' with range '+enemy['range']+' weights for '+adds);
 	});
 	
 	var S = self['agression'] - totalEnemyA;
@@ -116,14 +116,8 @@ function epyon_act(){
 	epyon_debug('remaining MP after attacks: '+remainingMP);
 	epyon_debug('remaining AP after attacks: '+remainingAP);
 	
-	if (remainingMP > 0 && S > EPYON_CONFIG['flee']){
-		epyon_debug('move towards destination');
-		epyon_moveTowardsDestination(remainingMP);
-	}
-	else if (S <= EPYON_CONFIG['flee']){
-		epyon_debug('fleeing');
-		epyon_moveToSafety(remainingMP);
-	}
+	EPYON_CONFIG['cell_scoring'](S);
+	epyon_move(remainingMP);
 	
 	if (remainingAP > 0) epyon_postfight(remainingAP, 0);//spend the remaining AP on whatever
 }

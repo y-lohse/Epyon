@@ -328,6 +328,27 @@ function epyon_getDefaultDestination(){
 	return eGetCell(target);
 }
 
+function epyon_defaultCellCoef(S){
+	if (S >= EPYON_CONFIG['flee']){
+		EPYON_CONFIG['C']['destination']['coef'] = 5;
+		EPYON_CONFIG['C']['engage']['coef'] = 4;
+		EPYON_CONFIG['C']['border']['coef'] = 2;
+		EPYON_CONFIG['C']['obstacles']['coef'] = 1;
+		EPYON_CONFIG['C']['los']['coef'] = 3;
+		EPYON_CONFIG['C']['enemyprox']['coef'] = 2;
+		EPYON_CONFIG['C']['allyprox']['coef'] = 1;
+	}
+	else{
+		EPYON_CONFIG['C']['destination']['coef'] = 0;
+		EPYON_CONFIG['C']['engage']['coef'] = 0;
+		EPYON_CONFIG['C']['border']['coef'] = 1;
+		EPYON_CONFIG['C']['obstacles']['coef'] = 1;
+		EPYON_CONFIG['C']['los']['coef'] = 4;
+		EPYON_CONFIG['C']['enemyprox']['coef'] = 3;
+		EPYON_CONFIG['C']['allyprox']['coef'] = 2;
+	}
+}
+
 function epyon_computeIgnoredCells(){
 	var cells = [];
 	
@@ -340,20 +361,12 @@ function epyon_computeIgnoredCells(){
 	return cells;
 }
 
-function epyon_moveTowardsDestination(mpCost){
+function epyon_move(mpCost){
 	debug('updating destination');
 	EPYON_MAP['_destination'] = EPYON_CONFIG['destination']();
 	
 	debug('Destination is '+getCellX(EPYON_MAP['_destination'])+'/'+getCellY(EPYON_MAP['_destination']));
 	mark(EPYON_MAP['_destination'], COLOR_BLUE);
-	
-	EPYON_CONFIG['C']['destination']['coef'] = 5;
-	EPYON_CONFIG['C']['engage']['coef'] = 4;
-	EPYON_CONFIG['C']['border']['coef'] = 2;
-	EPYON_CONFIG['C']['obstacles']['coef'] = 1;
-	EPYON_CONFIG['C']['los']['coef'] = 3;
-	EPYON_CONFIG['C']['enemyprox']['coef'] = 2;
-	EPYON_CONFIG['C']['allyprox']['coef'] = 1;
 	
 	var cellsAround = epyon_analyzeCellsWithin(eGetCell(self), mpCost);
 	
@@ -374,37 +387,6 @@ function epyon_moveTowardsDestination(mpCost){
 	else{
 		epyon_debug('no good cell found');
 		eMoveTowardCellWithMax(EPYON_MAP['_destination'], mpCost);
-	}
-}
-
-function epyon_moveToSafety(mpCost){
-	EPYON_CONFIG['C']['destination']['coef'] = 0;
-	EPYON_CONFIG['C']['engage']['coef'] = 0;
-	EPYON_CONFIG['C']['border']['coef'] = 1;
-	EPYON_CONFIG['C']['obstacles']['coef'] = 1;
-	EPYON_CONFIG['C']['los']['coef'] = 4;
-	EPYON_CONFIG['C']['enemyprox']['coef'] = 3;
-	EPYON_CONFIG['C']['allyprox']['coef'] = 2;
-	
-	var cellsAround = epyon_analyzeCellsWithin(eGetCell(self), mpCost);
-	
-	var scoredCells = [];
-	
-	arrayIter(cellsAround, function(eCell){
-		scoredCells[round(eCell['score']*100)] = eCell;
-	});
-	
-	keySort(scoredCells, SORT_DESC);
-	
-	var cell = shift(scoredCells);
-	
-	if (cell){
-		epyon_debug('moving to '+cell);
-		eMoveTowardCellWithMax(cell['id'], mpCost);
-	}
-	else{
-		epyon_debug('no good cell found');
-		eMoveAwayFrom(eGetCell(target), mpCost);
 	}
 }
 
@@ -933,12 +915,13 @@ if (getTurn() === 1){
 	EPYON_CONFIG['select_postfight'] = epyon_dummy_selector;
 	
 	EPYON_CONFIG['destination'] = epyon_getDefaultDestination;
+	EPYON_CONFIG['cell_scoring'] = epyon_defaultCellCoef;
 	
 	//scorer functions receive a leek as parameter and score him on any criteria the ysee fit, where 0 is shit and 1 is great. Return values are clamped between 0 and 1 anyway. Each scorer is weighted. If the weight (coef) is 0 for a scorer, the scorer is ignored.
 	EPYON_CONFIG['A'] = [
 		'health': ['fn': epyon_aScorerHealth, 'coef': 1],
-		'absShield': ['fn': epyon_aScorerAbsoluteShield, 'coef': (EPYON_LEVEL >= 38) ? 3 : 0],
-		'relShield': ['fn': epyon_aScorerRelativeShield, 'coef': (EPYON_LEVEL >= 38) ? 3 : 0],
+		'absShield': ['fn': epyon_aScorerAbsoluteShield, 'coef': (EPYON_LEVEL >= 38) ? 1.5 : 0],
+		'relShield': ['fn': epyon_aScorerRelativeShield, 'coef': (EPYON_LEVEL >= 38) ? 1.5 : 0],
 	];
 	
 	EPYON_CONFIG['C'] = [
@@ -987,7 +970,7 @@ function epyon_computeAgression(epyonLeek){
 	});
 	
 	return (totalCoef > 0) ? cumulatedA / totalCoef : 1;
-}	
+}
 
 function epyon_aquireTarget(){
 	var enemy = null;
@@ -1035,7 +1018,7 @@ function epyon_act(){
 		var adds = enemy['agression'] * (1 - max(0, min(1, (distance - enemy['range']) / (enemy['range']))));
 		
 		totalEnemyA += adds;
-		//debug(enemy['name']+' A '+enemy['agression']+' at distance '+distance+' with range '+enemy['range']+' weights for '+adds);
+		debug(enemy['name']+' A '+enemy['agression']+' at distance '+distance+' with range '+enemy['range']+' weights for '+adds);
 	});
 	
 	var S = self['agression'] - totalEnemyA;
@@ -1075,14 +1058,8 @@ function epyon_act(){
 	epyon_debug('remaining MP after attacks: '+remainingMP);
 	epyon_debug('remaining AP after attacks: '+remainingAP);
 	
-	if (remainingMP > 0 && S > EPYON_CONFIG['flee']){
-		epyon_debug('move towards destination');
-		epyon_moveTowardsDestination(remainingMP);
-	}
-	else if (S <= EPYON_CONFIG['flee']){
-		epyon_debug('fleeing');
-		epyon_moveToSafety(remainingMP);
-	}
+	EPYON_CONFIG['cell_scoring'](S);
+	epyon_move(remainingMP);
 	
 	if (remainingAP > 0) epyon_postfight(remainingAP, 0);//spend the remaining AP on whatever
 }

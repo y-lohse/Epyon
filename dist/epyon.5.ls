@@ -440,13 +440,14 @@ function epyon_aScorerHealth(eLeek){
 function epyon_aScorerAbsoluteShield(eLeek){
 	var absShield = getAbsoluteShield(eLeek['id']);
 	
-	return (absShield > 0) ? absShield / (eLeek['maxAbsShield'] || 1) : null;
+	return 0.3 + ((absShield / (eLeek['maxAbsShield'] || 1)) * 0.7);
 }
 
 function epyon_aScorerRelativeShield(eLeek){
 	var relShield = getRelativeShield(eLeek['id']);
 	
-	return (relShield > 0) ? relShield/100 : null;
+	
+	return 0.3 + ((relShield / 100) * 0.7);
 }
 function epyon_cScorerBorder(eCell){
 	var edge = 4;
@@ -1009,7 +1010,22 @@ function epyon_computeAgression(epyonLeek){
 
 function epyon_act(){
 	//compute S
-	var S = self['agression'] - target['agression'];
+	var totalEnemyA = 0;
+	
+	arrayIter(eGetAliveEnemies(), function(enemy){
+		//plus on est dans la range d'un adversaire, plus on compte son score
+		var distance = getPathLength(eGetCell(enemy), eGetCell(self));
+		
+		var adds = enemy['agression'] * (1 - max(0, min(1, (distance - enemy['range']) / (enemy['range']))));
+		
+		totalEnemyA += adds;
+		debug(enemy['name']+' A '+enemy['agression']+' at distance '+distance+' with range '+enemy['range']+' weights for '+adds);
+	});
+	
+	var averageA = totalEnemyA / count(eGetAliveEnemies());
+	debug('average enemy a is'+averageA);
+	
+	var S = self['agression'] - averageA;
 	epyon_debug('S computed to '+S);
 	
 	var totalMP = self['MP'],

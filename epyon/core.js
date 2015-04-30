@@ -64,7 +64,22 @@ function epyon_computeAgression(epyonLeek){
 
 function epyon_act(){
 	//compute S
-	var S = self['agression'] - target['agression'];
+	var totalEnemyA = 0;
+	
+	arrayIter(eGetAliveEnemies(), function(enemy){
+		//plus on est dans la range d'un adversaire, plus on compte son score
+		var distance = getPathLength(eGetCell(enemy), eGetCell(self));
+		
+		var adds = enemy['agression'] * (1 - max(0, min(1, (distance - enemy['range']) / (enemy['range']))));
+		
+		totalEnemyA += adds;
+		debug(enemy['name']+' A '+enemy['agression']+' at distance '+distance+' with range '+enemy['range']+' weights for '+adds);
+	});
+	
+	var averageA = totalEnemyA / count(eGetAliveEnemies());
+	debug('average enemy a is'+averageA);
+	
+	var S = self['agression'] - averageA;
 	epyon_debug('S computed to '+S);
 	
 	var totalMP = self['MP'],

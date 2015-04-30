@@ -44,5 +44,5 @@ if (getTurn() === 1){
 	
 	EPYON_CONFIG['engage'] = 5;
 	EPYON_CONFIG['pack'] = 3;
-	EPYON_CONFIG['flee'] = -0.4;//[-1;1] relative to the S score. With S lower or equal than the flee value, the IA will back off
+	EPYON_CONFIG['flee'] = -0.4;
 }

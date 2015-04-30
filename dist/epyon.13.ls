@@ -497,13 +497,13 @@ function epyon_aScorerHealth(eLeek){
 function epyon_aScorerAbsoluteShield(eLeek){
 	var absShield = getAbsoluteShield(eLeek['id']);
 	
-	return (absShield > 0) ? absShield / (eLeek['maxAbsShield'] || 1) : null;
+	return 0.3 + ((absShield / (eLeek['maxAbsShield'] || 1)) * 0.7);
 }
 
 function epyon_aScorerRelativeShield(eLeek){
 	var relShield = getRelativeShield(eLeek['id']);
 	
-	return (relShield) ? relShield/100 : null;
+	return 0.3 + ((relShield / 100) * 0.7);
 }
 function epyon_prepareDestinationScoring(cells){
 	EPYON_MAP['longest_destination'] = 1;
@@ -948,7 +948,7 @@ if (getTurn() === 1){
 	
 	EPYON_CONFIG['engage'] = 5;
 	EPYON_CONFIG['pack'] = 3;
-	EPYON_CONFIG['flee'] = -0.4;//[-1;1] relative to the S score. With S lower or equal than the flee value, the IA will back off
+	EPYON_CONFIG['flee'] = -0.4;
 }
 function epyon_updateAgressions(){
 	epyon_loadAliveEnemies();
@@ -1019,7 +1019,19 @@ function epyon_aquireTarget(){
 
 function epyon_act(){
 	//compute S
-	var S = self['agression'] - target['agression'];
+	var totalEnemyA = 0;
+	
+	arrayIter(eGetAliveEnemies(), function(enemy){
+		//plus on est dans la range d'un adversaire, plus on compte son score
+		var distance = getPathLength(eGetCell(enemy), eGetCell(self));
+		
+		var adds = enemy['agression'] * (1 - max(0, min(1, (distance - enemy['range']) / (enemy['range']))));
+		
+		totalEnemyA += adds;
+		//debug(enemy['name']+' A '+enemy['agression']+' at distance '+distance+' with range '+enemy['range']+' weights for '+adds);
+	});
+	
+	var S = self['agression'] - totalEnemyA;
 	epyon_debug('S computed to '+S);
 	
 	var totalMP = self['MP'],
@@ -1028,13 +1040,12 @@ function epyon_act(){
 	var spentPoints = epyon_prefight(S, totalAP, totalMP);
 	
 	var allocatedAP = totalAP - spentPoints[0];
-	var allocatedMP = epyon_allocateAttackMP(S, totalMP - spentPoints[1]);
+	var allocatedMP = (S > EPYON_CONFIG['flee']) ? totalMP - spentPoints[1] : 0;
 	
 	//init vars for later
 	var remainingMP = totalMP - allocatedMP - spentPoints[1];
 	var remainingAP = 0;//totalAP - spentAP - allocatedAP is always 0
 	
-//	if (allocatedMP > 0){
 	epyon_debug('allocated MP: '+allocatedMP);
 	epyon_debug('allocated AP: '+allocatedAP);
 		
@@ -1067,13 +1078,6 @@ function epyon_act(){
 	}
 	
 	if (remainingAP > 0) epyon_postfight(remainingAP, 0);//spend the remaining AP on whatever
-}
-
-//determines how many Mp it is safe to spend on attacks this turn
-function epyon_allocateAttackMP(S, max){
-	if (S <= EPYON_CONFIG['flee']) return 0;
-	else if (S < 0) return round(max / 2);
-	else return max;
 }
 
 //spends AP on actions that are prioritized over combat

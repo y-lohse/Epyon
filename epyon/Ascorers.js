@@ -26,3 +26,7 @@ function epyon_aScorerForce(eLeek){
 	
 	return eLeek['force'] / maxForce;
 }
+
+function epyon_aScorerSummon(eLeek){
+	return (eLeek['summon']) ? 0 : null;
+}

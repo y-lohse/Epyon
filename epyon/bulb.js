@@ -47,13 +47,13 @@ function epyon_bulb(){
 	};
 	
 	EPYON_CONFIG['cell_scoring'] = function(S){
-		EPYON_CONFIG['C']['destination']['coef'] = 8;
-		EPYON_CONFIG['C']['engage']['coef'] = 4;
+		EPYON_CONFIG['C']['destination']['coef'] = 5;
+		EPYON_CONFIG['C']['engage']['coef'] = 2;
 		EPYON_CONFIG['C']['border']['coef'] = 3;
 		EPYON_CONFIG['C']['obstacles']['coef'] = 0;
 		EPYON_CONFIG['C']['los']['coef'] = 2;
 		EPYON_CONFIG['C']['enemyprox']['coef'] = 1;
-		EPYON_CONFIG['C']['allyprox']['coef'] = 0;
+		EPYON_CONFIG['C']['allyprox']['coef'] = 2;
 	};
 	
 	epyon_updateAgressions();

@@ -30,6 +30,7 @@ if (getTurn() === 1){
 		'absShield': ['fn': epyon_aScorerAbsoluteShield, 'coef': (EPYON_LEVEL >= 38) ? 1 : 0],
 		'relShield': ['fn': epyon_aScorerRelativeShield, 'coef': (EPYON_LEVEL >= 38) ? 1 : 0],
 		'force': ['fn': epyon_aScorerForce, 'coef': 3],
+		'summon': ['fn': epyon_aScorerSummon, 'coef': 2],
 	];
 	
 	EPYON_CONFIG['C'] = [

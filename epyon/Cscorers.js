@@ -112,14 +112,25 @@ function epyon_cScorerAllyProximity(eCell){
 		alliesInRange = 0;
 	
 	arrayIter(eGetAliveAllies(), function(eLeek){
-		var distance = getDistance(eCell['id'], eGetCell(eLeek));
+		var distance = getCellDistance(eCell['id'], eGetCell(eLeek));
 		if (distance < maxDistance){
-			//http://fooplot.com/#W3sidHlwZSI6MCwiZXEiOiJzaW4oKHgrMSkvMi41KSIsImNvbG9yIjoiIzAwMDAwMCJ9LHsidHlwZSI6MTAwMCwid2luZG93IjpbIi0xLjk4NDAwMDAwMDAwMDAwMDkiLCI4LjQxNTk5OTk5OTk5OTk5NyIsIi0zLjU2IiwiMi44Mzk5OTk5OTk5OTk5OTk0Il19XQ--
-			cumulatedScore += sin((distance+1)/2.5);
+			if (distance < EPYON_CONFIG['pack']) cumulatedScore += distance / EPYON_CONFIG['pack'];
+			else cumulatedScore += EPYON_CONFIG['pack'] / distance;
+			
 			alliesInRange++;
 		}
 	});
 	
 	if (alliesInRange === 0) return null;
 	else return cumulatedScore / alliesInRange;
+}
+
+function epyon_cScorerInline(eCell){
+	var onSameLine = 0;
+	
+	arrayIter(eGetAliveAllies(), function(ally){
+		if (isOnSameLine(eCell['id'], eGetCell(ally))) onSameLine++;
+	});
+	
+	return onSameLine / count(eGetAliveAllies());
 }

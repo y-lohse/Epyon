@@ -308,6 +308,7 @@ function epyon_defaultCellCoef(S){
 		EPYON_CONFIG['C']['los']['coef'] = 4;
 		EPYON_CONFIG['C']['enemyprox']['coef'] = 2;
 		EPYON_CONFIG['C']['allyprox']['coef'] = 1;
+		EPYON_CONFIG['C']['inline']['coef'] = 1;
 	}
 	else{
 		EPYON_CONFIG['C']['destination']['coef'] = 0;
@@ -317,6 +318,7 @@ function epyon_defaultCellCoef(S){
 		EPYON_CONFIG['C']['los']['coef'] = 6;
 		EPYON_CONFIG['C']['enemyprox']['coef'] = 3;
 		EPYON_CONFIG['C']['allyprox']['coef'] = 2;
+		EPYON_CONFIG['C']['inline']['coef'] = 3;
 	}
 }
 
@@ -591,16 +593,27 @@ function epyon_cScorerAllyProximity(eCell){
 		alliesInRange = 0;
 	
 	arrayIter(eGetAliveAllies(), function(eLeek){
-		var distance = getDistance(eCell['id'], eGetCell(eLeek));
+		var distance = getCellDistance(eCell['id'], eGetCell(eLeek));
 		if (distance < maxDistance){
-			//http://fooplot.com/#W3sidHlwZSI6MCwiZXEiOiJzaW4oKHgrMSkvMi41KSIsImNvbG9yIjoiIzAwMDAwMCJ9LHsidHlwZSI6MTAwMCwid2luZG93IjpbIi0xLjk4NDAwMDAwMDAwMDAwMDkiLCI4LjQxNTk5OTk5OTk5OTk5NyIsIi0zLjU2IiwiMi44Mzk5OTk5OTk5OTk5OTk0Il19XQ--
-			cumulatedScore += sin((distance+1)/2.5);
+			if (distance < EPYON_CONFIG['pack']) cumulatedScore += distance / EPYON_CONFIG['pack'];
+			else cumulatedScore += EPYON_CONFIG['pack'] / distance;
+			
 			alliesInRange++;
 		}
 	});
 	
 	if (alliesInRange === 0) return null;
 	else return cumulatedScore / alliesInRange;
+}
+
+function epyon_cScorerInline(eCell){
+	var onSameLine = 0;
+	
+	arrayIter(eGetAliveAllies(), function(ally){
+		if (isOnSameLine(eCell['id'], eGetCell(ally))) onSameLine++;
+	});
+	
+	return onSameLine / count(eGetAliveAllies());
 }
 global EPYON_PREFIGHT = 'prefight';
 global EPYON_FIGHT = 'fight';
@@ -917,6 +930,7 @@ if (getTurn() === 1){
 		'los': ['fn': epyon_cScorerLoS, 'coef': 1],
 		'enemyprox': ['fn': epyon_cScorerEnemyProximity, 'coef': 1],
 		'allyprox': ['fn': epyon_cScorerAllyProximity, 'coef': 1],
+		'inline': ['fn': epyon_cScorerInline, 'coef': 1],
 	];
 	
 	EPYON_CONFIG['suicidal'] = 0;//[0;1] with a higher suicidal value, the leek will stay agressive despite being low on health
@@ -1119,6 +1133,7 @@ function epyon_bulb(){
 	EPYON_CONFIG[EPYON_POSTFIGHT] = [];
 	
 	EPYON_CONFIG['engage'] = configBackup['engage'] + 2;//stay out of the fights
+	EPYON_CONFIG['pack'] = 3;
 	
 	var summoner = epyon_getLeek(getSummoner());
 	
@@ -1165,7 +1180,8 @@ function epyon_bulb(){
 		EPYON_CONFIG['C']['obstacles']['coef'] = 0;
 		EPYON_CONFIG['C']['los']['coef'] = 2;
 		EPYON_CONFIG['C']['enemyprox']['coef'] = 1;
-		EPYON_CONFIG['C']['allyprox']['coef'] = 2;
+		EPYON_CONFIG['C']['allyprox']['coef'] = 3;
+		EPYON_CONFIG['C']['inline']['coef'] = 4;
 	};
 	
 	epyon_updateAgressions();

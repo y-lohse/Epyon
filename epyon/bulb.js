@@ -7,6 +7,7 @@ function epyon_bulb(){
 	EPYON_CONFIG[EPYON_POSTFIGHT] = [];
 	
 	EPYON_CONFIG['engage'] = configBackup['engage'] + 2;//stay out of the fights
+	EPYON_CONFIG['pack'] = 3;
 	
 	var summoner = epyon_getLeek(getSummoner());
 	
@@ -53,7 +54,8 @@ function epyon_bulb(){
 		EPYON_CONFIG['C']['obstacles']['coef'] = 0;
 		EPYON_CONFIG['C']['los']['coef'] = 2;
 		EPYON_CONFIG['C']['enemyprox']['coef'] = 1;
-		EPYON_CONFIG['C']['allyprox']['coef'] = 2;
+		EPYON_CONFIG['C']['allyprox']['coef'] = 3;
+		EPYON_CONFIG['C']['inline']['coef'] = 4;
 	};
 	
 	epyon_updateAgressions();

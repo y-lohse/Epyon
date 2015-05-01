@@ -56,6 +56,7 @@ function epyon_defaultCellCoef(S){
 		EPYON_CONFIG['C']['los']['coef'] = 4;
 		EPYON_CONFIG['C']['enemyprox']['coef'] = 2;
 		EPYON_CONFIG['C']['allyprox']['coef'] = 1;
+		EPYON_CONFIG['C']['inline']['coef'] = 1;
 	}
 	else{
 		EPYON_CONFIG['C']['destination']['coef'] = 0;
@@ -65,6 +66,7 @@ function epyon_defaultCellCoef(S){
 		EPYON_CONFIG['C']['los']['coef'] = 6;
 		EPYON_CONFIG['C']['enemyprox']['coef'] = 3;
 		EPYON_CONFIG['C']['allyprox']['coef'] = 2;
+		EPYON_CONFIG['C']['inline']['coef'] = 3;
 	}
 }
 

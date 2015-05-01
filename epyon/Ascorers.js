@@ -18,3 +18,11 @@ function epyon_aScorerRelativeShield(eLeek){
 	
 	return 0.3 + ((relShield / 100) * 0.7);
 }
+
+function epyon_aScorerForce(eLeek){
+	var maxForce = arrayMax(arrayMap(EPYON_LEEKS, function(leek){
+		return leek['force'];
+	}));
+	
+	return eLeek['force'] / maxForce;
+}

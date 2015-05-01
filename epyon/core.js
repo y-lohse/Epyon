@@ -4,7 +4,8 @@ function epyon_updateAgressions(){
 	
 	var copy = EPYON_LEEKS;
 	arrayIter(copy, function(leekId, eLeek){
-		EPYON_LEEKS[leekId]['agression'] = epyon_computeAgression(eLeek);
+		var a = epyon_computeAgression(eLeek);
+		EPYON_LEEKS[leekId]['agression'] = a;
 		epyon_debug('A for '+EPYON_LEEKS[leekId]['name']+' : '+EPYON_LEEKS[leekId]['agression']);
 	});
 	

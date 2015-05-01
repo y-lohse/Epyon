@@ -156,6 +156,8 @@ function epyon_getLeek(leekId){
 function epyon_updateLeek(eLeek){
 	eLeek['_cell'] = getCell(eLeek['id']);
 	eLeek['_cellIsDirty'] = false;
+	eLeek['agility'] = getAgility(eLeek['id']);
+	eLeek['force'] = getForce(eLeek['id']);
 	
 	if (EPYON_LEVEL < 10){
 		eLeek['_weapon'] = (eLeek['id'] === getLeek()) ? getWeapon() : WEAPON_PISTOL;
@@ -510,6 +512,14 @@ function epyon_aScorerRelativeShield(eLeek){
 	var relShield = getRelativeShield(eLeek['id']);
 	
 	return 0.3 + ((relShield / 100) * 0.7);
+}
+
+function epyon_aScorerForce(eLeek){
+	var maxForce = arrayMax(arrayMap(EPYON_LEEKS, function(leek){
+		return leek['force'];
+	}));
+	
+	return eLeek['force'] / maxForce;
 }
 function epyon_prepareDestinationScoring(cells){
 	EPYON_MAP['longest_destination'] = 1;
@@ -939,6 +949,7 @@ if (getTurn() === 1){
 		'health': ['fn': epyon_aScorerHealth, 'coef': 2],
 		'absShield': ['fn': epyon_aScorerAbsoluteShield, 'coef': (EPYON_LEVEL >= 38) ? 1 : 0],
 		'relShield': ['fn': epyon_aScorerRelativeShield, 'coef': (EPYON_LEVEL >= 38) ? 1 : 0],
+		'force': ['fn': epyon_aScorerForce, 'coef': 3],
 	];
 	
 	EPYON_CONFIG['C'] = [
@@ -963,7 +974,8 @@ function epyon_updateAgressions(){
 	
 	var copy = EPYON_LEEKS;
 	arrayIter(copy, function(leekId, eLeek){
-		EPYON_LEEKS[leekId]['agression'] = epyon_computeAgression(eLeek);
+		var a = epyon_computeAgression(eLeek);
+		EPYON_LEEKS[leekId]['agression'] = a;
 		epyon_debug('A for '+EPYON_LEEKS[leekId]['name']+' : '+EPYON_LEEKS[leekId]['agression']);
 	});
 	
@@ -1196,7 +1208,7 @@ function epyon_bulb(){
 		EPYON_CONFIG['C']['obstacles']['coef'] = 0;
 		EPYON_CONFIG['C']['los']['coef'] = 2;
 		EPYON_CONFIG['C']['enemyprox']['coef'] = 1;
-		EPYON_CONFIG['C']['allyprox']['coef'] = 2;
+		EPYON_CONFIG['C']['allyprox']['coef'] = 0;
 	};
 	
 	epyon_updateAgressions();

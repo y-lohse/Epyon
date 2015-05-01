@@ -64,6 +64,8 @@ function epyon_getLeek(leekId){
 function epyon_updateLeek(eLeek){
 	eLeek['_cell'] = getCell(eLeek['id']);
 	eLeek['_cellIsDirty'] = false;
+	eLeek['agility'] = getAgility(eLeek['id']);
+	eLeek['force'] = getForce(eLeek['id']);
 	
 	if (EPYON_LEVEL < 10){
 		eLeek['_weapon'] = (eLeek['id'] === getLeek()) ? getWeapon() : WEAPON_PISTOL;

@@ -53,7 +53,7 @@ function epyon_bulb(){
 		EPYON_CONFIG['C']['obstacles']['coef'] = 0;
 		EPYON_CONFIG['C']['los']['coef'] = 2;
 		EPYON_CONFIG['C']['enemyprox']['coef'] = 1;
-		EPYON_CONFIG['C']['allyprox']['coef'] = 2;
+		EPYON_CONFIG['C']['allyprox']['coef'] = 0;
 	};
 	
 	epyon_updateAgressions();

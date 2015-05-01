@@ -17,7 +17,7 @@ function epyon_cScorerDestination(eCell){
 	
 	if (!distance) return 0;
 	
-	distance -= EPYON_CONFIG['pack'];
+	distance = abs(distance-EPYON_CONFIG['pack']);
 	
 	return 1 - ((distance - EPYON_MAP['shortest_destination']) / (EPYON_MAP['longest_destination'] - EPYON_MAP['shortest_destination']));
 }
@@ -112,17 +112,25 @@ function epyon_cScorerAllyProximity(eCell){
 		alliesInRange = 0;
 	
 	arrayIter(eGetAliveAllies(), function(eLeek){
+		if (eLeek['id'] == self['id']) return;
+		
 		var distance = getCellDistance(eCell['id'], eGetCell(eLeek));
 		if (distance < maxDistance){
-			if (distance < EPYON_CONFIG['pack']) cumulatedScore += distance / EPYON_CONFIG['pack'];
-			else cumulatedScore += EPYON_CONFIG['pack'] / distance;
+			var toAdd = 0;
+			if (distance < EPYON_CONFIG['pack']) toAdd = distance / EPYON_CONFIG['pack'];
+			else toAdd = EPYON_CONFIG['pack'] / distance;
 			
+			debug('added '+toAdd+' because '+eLeek['name']+' is at '+distance);
+			cumulatedScore += toAdd;
 			alliesInRange++;
 		}
 	});
 	
 	if (alliesInRange === 0) return null;
-	else return cumulatedScore / alliesInRange;
+	else{
+		debug('total score '+(cumulatedScore / alliesInRange));
+		return cumulatedScore / alliesInRange;
+	}
 }
 
 function epyon_cScorerInline(eCell){

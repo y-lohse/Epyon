@@ -449,7 +449,6 @@ function epyon_analyzeCellsWithin(center, distance){
 			'id': cell,
 			'x': getCellX(cell),
 			'y': getCellY(cell),
-//			'distance': getPathLength(center, cell)
 		];
 		
 		var cumulatedScore = 0,
@@ -461,6 +460,7 @@ function epyon_analyzeCellsWithin(center, distance){
 				if (returnedScore === null) return;
 				
 				var score = min(1, max(returnedScore, 0));
+				//epyon_debug(scorerName+' scored '+score);
 				
 				cumulatedScore += score * scorer['coef'];
 				totalCoef += scorer['coef'];
@@ -571,7 +571,7 @@ function epyon_cScorerDestination(eCell){
 	
 	if (!distance) return 0;
 	
-	distance -= EPYON_CONFIG['pack'];
+	distance = abs(distance-EPYON_CONFIG['pack']);
 	
 	return 1 - ((distance - EPYON_MAP['shortest_destination']) / (EPYON_MAP['longest_destination'] - EPYON_MAP['shortest_destination']));
 }
@@ -666,17 +666,25 @@ function epyon_cScorerAllyProximity(eCell){
 		alliesInRange = 0;
 	
 	arrayIter(eGetAliveAllies(), function(eLeek){
+		if (eLeek['id'] == self['id']) return;
+		
 		var distance = getCellDistance(eCell['id'], eGetCell(eLeek));
 		if (distance < maxDistance){
-			if (distance < EPYON_CONFIG['pack']) cumulatedScore += distance / EPYON_CONFIG['pack'];
-			else cumulatedScore += EPYON_CONFIG['pack'] / distance;
+			var toAdd = 0;
+			if (distance < EPYON_CONFIG['pack']) toAdd = distance / EPYON_CONFIG['pack'];
+			else toAdd = EPYON_CONFIG['pack'] / distance;
 			
+			debug('added '+toAdd+' because '+eLeek['name']+' is at '+distance);
+			cumulatedScore += toAdd;
 			alliesInRange++;
 		}
 	});
 	
 	if (alliesInRange === 0) return null;
-	else return cumulatedScore / alliesInRange;
+	else{
+		debug('total score '+(cumulatedScore / alliesInRange));
+		return cumulatedScore / alliesInRange;
+	}
 }
 
 function epyon_cScorerInline(eCell){
@@ -1248,13 +1256,13 @@ function epyon_bulb(){
 	
 	EPYON_CONFIG['cell_scoring'] = function(S){
 		EPYON_CONFIG['C']['destination']['coef'] = 5;
-		EPYON_CONFIG['C']['engage']['coef'] = 2;
-		EPYON_CONFIG['C']['border']['coef'] = 3;
+		EPYON_CONFIG['C']['engage']['coef'] = 3;
+		EPYON_CONFIG['C']['border']['coef'] = 2;
 		EPYON_CONFIG['C']['obstacles']['coef'] = 0;
-		EPYON_CONFIG['C']['los']['coef'] = 2;
-		EPYON_CONFIG['C']['enemyprox']['coef'] = 1;
-		EPYON_CONFIG['C']['allyprox']['coef'] = 3;
-		EPYON_CONFIG['C']['inline']['coef'] = 4;
+		EPYON_CONFIG['C']['los']['coef'] = 0;
+		EPYON_CONFIG['C']['enemyprox']['coef'] = 2;
+		EPYON_CONFIG['C']['allyprox']['coef'] = 2;
+		EPYON_CONFIG['C']['inline']['coef'] = 0;
 	};
 	
 	epyon_updateAgressions();

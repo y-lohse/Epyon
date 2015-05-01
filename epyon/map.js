@@ -124,7 +124,6 @@ function epyon_analyzeCellsWithin(center, distance){
 			'id': cell,
 			'x': getCellX(cell),
 			'y': getCellY(cell),
-//			'distance': getPathLength(center, cell)
 		];
 		
 		var cumulatedScore = 0,
@@ -136,6 +135,7 @@ function epyon_analyzeCellsWithin(center, distance){
 				if (returnedScore === null) return;
 				
 				var score = min(1, max(returnedScore, 0));
+				//epyon_debug(scorerName+' scored '+score);
 				
 				cumulatedScore += score * scorer['coef'];
 				totalCoef += scorer['coef'];

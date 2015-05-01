@@ -8,8 +8,12 @@ function epyon_bulb(){
 	
 	EPYON_CONFIG['engage'] = configBackup['engage'] + 2;//stay out of the fights
 	
+	var summoner = epyon_getLeek(getSummoner());
+	
 	EPYON_CONFIG['select_prefight'] = function(behaviors, allocatedAP, allocatedMP){
 		var byPreference = [];
+		var turnsToImpact = eGetTurnsToImpact(summoner);
+		debug('imapct for summoner: '+turnsToImpact);
 	
 		arrayIter(behaviors, function(behavior){
 			var score = 0;
@@ -17,10 +21,10 @@ function epyon_bulb(){
 			if (behavior['type'] == CHIP_BANDAGE){
 				score = 1;
 			}
-			else if (behavior['type'] == CHIP_HELMET && EPYON_TARGET_DISTANCE < 14){
+			else if (behavior['type'] == CHIP_HELMET && turnsToImpact < 1){
 				score = 2;
 			}
-			else if (behavior['type'] == CHIP_PROTEIN && EPYON_TARGET_DISTANCE < 12){
+			else if (behavior['type'] == CHIP_PROTEIN && turnsToImpact < 1){
 				score = 3;
 			}
 
@@ -39,7 +43,17 @@ function epyon_bulb(){
 	};
 	
 	EPYON_CONFIG['destination'] = function(){
-		return getCell(getSummoner());
+		return eGetCell(summoner);
+	};
+	
+	EPYON_CONFIG['cell_scoring'] = function(S){
+		EPYON_CONFIG['C']['destination']['coef'] = 8;
+		EPYON_CONFIG['C']['engage']['coef'] = 4;
+		EPYON_CONFIG['C']['border']['coef'] = 3;
+		EPYON_CONFIG['C']['obstacles']['coef'] = 0;
+		EPYON_CONFIG['C']['los']['coef'] = 2;
+		EPYON_CONFIG['C']['enemyprox']['coef'] = 1;
+		EPYON_CONFIG['C']['allyprox']['coef'] = 2;
 	};
 	
 	epyon_updateAgressions();

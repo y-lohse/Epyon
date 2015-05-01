@@ -185,4 +185,21 @@ function eGetAliveAllies(){
 	return allies;
 }
 
+function eGetTurnsToImpact(eLeek){
+	var turns = 64,
+		enemyLeeks;
+	
+	if (eLeek['ally']) enemyLeeks = eGetAliveEnemies();
+	else enemyLeeks = eGetAliveAllies();
+	
+	arrayIter(enemyLeeks, function(leek){
+		var distance = getPathLength(eGetCell(leek), eGetCell(eLeek)),
+			leekTurns = (distance - leek['range']) / leek['MP'];
+		
+		if (leekTurns < turns) turns = leekTurns;
+	});
+	
+	return turns;
+}
+
 epyon_updateSelfRef();

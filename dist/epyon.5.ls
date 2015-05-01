@@ -302,6 +302,23 @@ function eGetAliveAllies(){
 	return allies;
 }
 
+function eGetTurnsToImpact(eLeek){
+	var turns = 64,
+		enemyLeeks;
+	
+	if (eLeek['ally']) enemyLeeks = eGetAliveEnemies();
+	else enemyLeeks = eGetAliveAllies();
+	
+	arrayIter(enemyLeeks, function(leek){
+		var distance = getPathLength(eGetCell(leek), eGetCell(eLeek)),
+			leekTurns = (distance - leek['range']) / leek['MP'];
+		
+		if (leekTurns < turns) turns = leekTurns;
+	});
+	
+	return turns;
+}
+
 epyon_updateSelfRef();
 
 global MAP_WIDTH = 0;
@@ -944,9 +961,9 @@ if (getTurn() === 1){
 	
 	//scorer functions receive a leek as parameter and score him on any criteria the ysee fit, where 0 is shit and 1 is great. Return values are clamped between 0 and 1 anyway. Each scorer is weighted. If the weight (coef) is 0 for a scorer, the scorer is ignored.
 	EPYON_CONFIG['A'] = [
-		'health': ['fn': epyon_aScorerHealth, 'coef': 1],
-		'absShield': ['fn': epyon_aScorerAbsoluteShield, 'coef': (EPYON_LEVEL >= 38) ? 1.5 : 0],
-		'relShield': ['fn': epyon_aScorerRelativeShield, 'coef': (EPYON_LEVEL >= 38) ? 1.5 : 0],
+		'health': ['fn': epyon_aScorerHealth, 'coef': 2],
+		'absShield': ['fn': epyon_aScorerAbsoluteShield, 'coef': (EPYON_LEVEL >= 38) ? 1 : 0],
+		'relShield': ['fn': epyon_aScorerRelativeShield, 'coef': (EPYON_LEVEL >= 38) ? 1 : 0],
 	];
 	
 	EPYON_CONFIG['C'] = [
@@ -1159,8 +1176,12 @@ function epyon_bulb(){
 	
 	EPYON_CONFIG['engage'] = configBackup['engage'] + 2;//stay out of the fights
 	
+	var summoner = epyon_getLeek(getSummoner());
+	
 	EPYON_CONFIG['select_prefight'] = function(behaviors, allocatedAP, allocatedMP){
 		var byPreference = [];
+		var turnsToImpact = eGetTurnsToImpact(summoner);
+		debug('imapct for summoner: '+turnsToImpact);
 	
 		arrayIter(behaviors, function(behavior){
 			var score = 0;
@@ -1168,10 +1189,10 @@ function epyon_bulb(){
 			if (behavior['type'] == CHIP_BANDAGE){
 				score = 1;
 			}
-			else if (behavior['type'] == CHIP_HELMET && EPYON_TARGET_DISTANCE < 14){
+			else if (behavior['type'] == CHIP_HELMET && turnsToImpact < 1){
 				score = 2;
 			}
-			else if (behavior['type'] == CHIP_PROTEIN && EPYON_TARGET_DISTANCE < 12){
+			else if (behavior['type'] == CHIP_PROTEIN && turnsToImpact < 1){
 				score = 3;
 			}
 
@@ -1190,7 +1211,17 @@ function epyon_bulb(){
 	};
 	
 	EPYON_CONFIG['destination'] = function(){
-		return getCell(getSummoner());
+		return eGetCell(summoner);
+	};
+	
+	EPYON_CONFIG['cell_scoring'] = function(S){
+		EPYON_CONFIG['C']['destination']['coef'] = 8;
+		EPYON_CONFIG['C']['engage']['coef'] = 4;
+		EPYON_CONFIG['C']['border']['coef'] = 3;
+		EPYON_CONFIG['C']['obstacles']['coef'] = 0;
+		EPYON_CONFIG['C']['los']['coef'] = 2;
+		EPYON_CONFIG['C']['enemyprox']['coef'] = 1;
+		EPYON_CONFIG['C']['allyprox']['coef'] = 2;
 	};
 	
 	epyon_updateAgressions();
